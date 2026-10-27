@@ -15,6 +15,13 @@ przewodnik-ar/
 └── modele/        ← modele 3D w formacie .glb
 ```
 
+## 🧑‍🏫 Lekcja AR (moduł dla nauczycieli)
+
+Folder `lekcje/` to prezentacja w AR zamiast PowerPointa: nauczyciel wgrywa slajdy (PDF), filmy, zdjęcia i modele 3D,
+**AI (Claude) układa sceny**, a uczniowie dołączają telefonami (kod QR / kod / e-mail) i widzą wspólną scenę ze swojej perspektywy.
+Start: `lekcje/nauczyciel.html`. Pełna instrukcja: **`lekcje/LEKCJE-INSTRUKCJA.md`** (tryb demo działa od razu, a do pracy z klasą
+potrzebny jest darmowy Supabase). Kod serwera: `supabase/schema.sql` i `supabase/functions/claude/index.ts`.
+
 ## Jak to działa
 
 1. Przy atrakcji wisi kod QR z adresem typu `https://…/index.html?a=baszta`.
@@ -52,6 +59,15 @@ Lokalny podgląd na komputerze (bez AR): `python3 -m http.server` w tym folderze
 - Trzymaj modele **poniżej ~10 MB** i w skali metrycznej (1 jednostka = 1 m).
 
 **Etykiety na modelu (`punkty`)**: pozycję w metrach najłatwiej znaleźć w edytorze https://modelviewer.dev/editor/ (klikasz w model i odczytujesz współrzędne hotspota).
+
+## ✋ Sterowanie dłonią (bez dotykania ekranu)
+
+Na stronie każdej atrakcji przycisk **🤏 Steruj dłonią** (w rogu podglądu 3D) włącza przednią kamerę i śledzenie dłoni (MediaPipe, w przeglądarce):
+- 🤏 chwyć (kciuk + palec wskazujący) i przesuń: obrót modelu; przybliż dłoń do kamery: zoom
+- ✋ otwarta dłoń: powrót do widoku startowego · 👍 kciuk: Bartek opowiada · 👋 machnięcie: kolejna / poprzednia atrakcja
+
+Dobre np. na ekran dotykowy w muzeum albo kiosk, gdzie ludzie wolą nie dotykać ekranu. Gesty dla nauczyciela i uczniów są opisane w `lekcje/LEKCJE-INSTRUKCJA.md`.
+Moduł: `gesty.js` (wspólny dla całej aplikacji).
 
 ## AR na plakacie (MindAR)
 
@@ -123,6 +139,7 @@ Generator: `tools/hq/modele_hq.py` (geometria), `tools/hq/tekstury.py` (tekstury
 | ✅ 2 | Model „przyklejony” do plakatu lub tablicy zamiast podłogi | **MindAR** (image tracking, WebAR) |
 | 3 | Atrakcje pokazujące się według GPS, bez kodów QR | **AR.js** (location-based) |
 | ✅ 4 | Awatar 3D, który stoi obok modelu i macha | model postaci z animacjami (np. Mixamo → Blender → GLB) |
+| ✅ + | Lekcje AR dla nauczycieli (wspólna scena, sterowanie na żywo, quiz, AI) | MindAR + three.js + Supabase Realtime + Claude |
 | 5 | Pełna aplikacja z mapą, trwałym śledzeniem i treściami offline | **Unity + AR Foundation** (ARCore/ARKit) |
 | 6 | Treści zakotwiczone w konkretnych miejscach na świecie | Google **Geospatial API** (ARCore); 8th Wall jest od 2026 r. open source (8thwall.org), ale hosting Nianticu zamknięto |
 

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Dołącz do lekcji · Lekcja AR</title>
+<meta name="theme-color" content="#1f2a2e">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+  "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js",
+  "mindar-image": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"
+} }
+</script>
+<script src="konfiguracja.js"></script>
+<link rel="stylesheet" href="styl.css">
+<style>
+  html, body { height: 100%; }
+  body.live { overflow: hidden; background: #111; }
+  .screen { min-height: 100%; display: grid; place-items: center; padding: 20px; }
+  .join { max-width: 420px; width: 100%; }
+  .join h1 { font-size: 28px; margin: 6px 0 4px; }
+  .codeIn { font: 800 28px ui-monospace, Menlo, monospace !important; letter-spacing: 6px; text-transform: uppercase; text-align: center; }
+  .modes { display: grid; gap: 10px; margin-top: 14px; }
+  .mode { display: flex; gap: 12px; align-items: center; text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 16px; padding: 14px; cursor: pointer; font: inherit; color: inherit; }
+  .mode b { display: block; font-size: 16px; }
+  .mode .e { font-size: 30px; }
+  .mode.rec { border-color: var(--gold); box-shadow: 0 0 0 3px #f6e2b8; }
+  #stage { position: fixed; inset: 0; }
+  #stage video, #stage canvas { object-fit: cover; }
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; color: #fff; }
+  #hud > * { pointer-events: auto; }
+  .bar { display: flex; gap: 8px; align-items: center; padding: max(10px, env(safe-area-inset-top)) 12px 10px; background: linear-gradient(rgba(0,0,0,.6), transparent); }
+  .bar.bottom { padding: 10px 12px max(14px, env(safe-area-inset-bottom)); background: linear-gradient(transparent, rgba(0,0,0,.65)); flex-wrap: wrap; justify-content: center; }
+  .bar .t { flex: 1; min-width: 0; }
+  .bar .t b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 16px; }
+  .bar .t small { opacity: .8; }
+  .round { width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); color: #111; font-size: 20px; display: grid; place-items: center; cursor: pointer; flex: none; }
+  .chipw { background: rgba(255,255,255,.92); color: #111; border-radius: 99px; padding: 10px 14px; border: 0; font: 600 14px system-ui, sans-serif; cursor: pointer; }
+  .status { font-size: 12px; padding: 3px 8px; border-radius: 99px; background: rgba(0,0,0,.45); }
+  .mid { flex: 1; display: grid; place-items: center; pointer-events: none; }
+  .hint { pointer-events: none; background: rgba(255,255,255,.95); color: #111; border-radius: 16px; padding: 12px 16px; max-width: 86%; text-align: center; font-size: 15px; display: flex; gap: 10px; align-items: center; }
+  .hint img { width: 48px; height: 48px; border-radius: 8px; animation: pulse 1.6s infinite; }
+  @keyframes pulse { 50% { transform: scale(.88); opacity: .7; } }
+  .bubble { margin: 0 12px 8px; background: rgba(20,28,32,.86); border-radius: 14px; padding: 10px 14px; font-size: 15px; line-height: 1.4; }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--card); color: var(--ink); border-radius: 20px 20px 0 0; padding: 18px 16px max(18px, env(safe-area-inset-bottom)); box-shadow: 0 -10px 40px rgba(0,0,0,.3); max-height: 80vh; overflow: auto; }
+  .sheet h3 { font-size: 19px; margin-bottom: 10px; }
+  .qa { display: grid; gap: 8px; }
+  .qa button { text-align: left; border: 2px solid var(--line); background: #fff; border-radius: 14px; padding: 12px 14px; font: 600 16px system-ui, sans-serif; display: flex; gap: 10px; align-items: center; color: var(--ink); }
+  .qa button .L { width: 30px; height: 30px; border-radius: 8px; background: var(--ink); color: #fff; display: grid; place-items: center; flex: none; }
+  .qa button.sel { border-color: var(--gold); background: #fff6e4; }
+  .qa button.ok { border-color: #3d9a58; background: #eaf7ee; }
+  .qa button.bad { border-color: #c0392b; background: #fdecea; }
+  .scalebtns { position: fixed; right: 12px; top: 40%; display: grid; gap: 8px; z-index: 11; }
+  #reticleHint { pointer-events: none; }
+</style>
+</head>
+<body>
+<!-- 1. dołączanie -->
+<div class="screen" id="sJoin">
+  <div class="join card">
+    <div class="row"><div class="logo" style="width:34px;height:34px;border-radius:9px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px">AR</div><b>Lekcja AR</b></div>
+    <h1>Dołącz do lekcji</h1>
+    <p class="muted" style="margin:0 0 6px">Wpisz kod z tablicy (albo zeskanuj kod QR nauczyciela).</p>
+    <label class="l" for="kod">Kod lekcji</label><input type="text" id="kod" class="codeIn" maxlength="6" autocomplete="off" autocapitalize="characters">
+    <label class="l" for="imie">Twoje imię</label><input type="text" id="imie" maxlength="24" placeholder="np. Ola" autocomplete="given-name">
+    <button class="btn accent" id="joinBtn" style="width:100%;justify-content:center;margin-top:14px;padding:13px;font-size:16px">Dołącz →</button>
+    <p class="small" id="joinMsg"></p>
+  </div>
+</div>
+
+<!-- 2. wybór trybu -->
+<div class="screen" id="sMode" hidden>
+  <div class="join card">
+    <h1 id="lessonTitle" style="font-size:24px"></h1>
+    <p class="muted" style="margin:2px 0 0">Jak chcesz oglądać?</p>
+    <div class="modes">
+      <button class="mode rec" data-mode="znacznik"><span class="e">🎯</span><span><b>Wspólny znacznik (zalecane)</b><span class="small muted">Wyceluj telefon w znacznik na biurku nauczyciela. Scena stanie w klasie, a Ty zobaczysz ją ze swojego miejsca.</span></span></button>
+      <button class="mode" data-mode="lawka" id="mLawka" hidden><span class="e">🪑</span><span><b>Na mojej ławce</b><span class="small muted">Postaw scenę przed sobą na stole (AR bez znacznika).</span></span></button>
+      <button class="mode" data-mode="3d"><span class="e">🧊</span><span><b>Widok 3D</b><span class="small muted">Bez kamery: obracaj scenę palcem. Działa na każdym telefonie.</span></span></button>
+    </div>
+    <p class="small muted" id="modeMsg" style="margin-top:10px"></p>
+  </div>
+</div>
+
+<!-- 3. lekcja -->
+<div id="stage" hidden></div>
+<div id="hud" hidden>
+  <div class="bar">
+    <div class="t"><b id="hTitle">Czekam na nauczyciela…</b><small id="hSub"></small></div>
+    <span class="status" id="hStatus">łączenie…</span>
+    <button class="round" id="bMode" title="Zmień tryb">⇄</button>
+  </div>
+  <div class="mid"><div class="hint" id="hint" hidden></div></div>
+  <div>
+    <div class="bubble" id="bubble" hidden></div>
+    <div class="bar bottom">
+      <button class="chipw" id="bHand">✋ Mam pytanie</button>
+      <button class="chipw" id="bLike">👍</button>
+      <button class="chipw" id="bWow">😮</button>
+      <button class="chipw" id="bAsk" hidden>💬 Zapytaj Bartka</button>
+      <button class="chipw" id="bSound">🔇</button>
+      <button class="chipw" id="bGrab" title="Steruj sceną dłonią przed kamerą">🤏 Chwyć</button>
+      <button class="chipw" id="bOrient" hidden>Znacznik: leży</button>
+    </div>
+  </div>
+</div>
+<div class="scalebtns" id="scaleBtns" hidden><button class="round" id="bBig">＋</button><button class="round" id="bSmall">－</button></div>
+
+<div class="sheet" id="quizSheet" hidden></div>
+<div class="sheet" id="askSheet" hidden>
+  <div class="row" style="justify-content:space-between"><h3>💬 Zapytaj Bartka</h3><button class="btn sm ghost" id="askClose">✕</button></div>
+  <p class="small muted" style="margin:-4px 0 10px">Bartek zna treść tej lekcji. Zapytaj o coś, czego nie rozumiesz.</p>
+  <div class="row" style="flex-wrap:nowrap"><input type="text" id="askIn" placeholder="Np. Po co był krenelaż?" maxlength="300"><button class="round" id="askMic" title="Mów" style="background:var(--paper)">🎤</button></div>
+  <button class="btn accent" id="askGo" style="margin-top:10px;width:100%;justify-content:center">Zapytaj</button>
+  <div id="askOut" style="margin-top:12px"></div>
+</div>
+
+<script type="module">
+import * as THREE from "three";
+import { backend, DEMO, esc, toast, uid, resolveUrl } from "./wspolne.js";
+import { ScenaLekcji, swiatla } from "./silnik-sceny.js";
+import { widok3D } from "./widok3d.js";
+
+const $ = s => document.querySelector(s);
+const params = new URLSearchParams(location.search);
+const b = await backend();
+const me = { uid: (() => { try { let u = sessionStorage.getItem("lekcjeAR-uid"); if (!u) sessionStorage.setItem("lekcjeAR-uid", u = "u-" + uid().slice(0, 10)); return u; } catch { return "u-" + uid().slice(0, 10); } })(), rola: "uczen", imie: "" };
+$("#kod").value = (params.get("l") || "").toUpperCase();
+try { $("#imie").value = localStorage.getItem("lekcjeAR-imie") || ""; } catch {}
+if ($("#kod").value) setTimeout(() => $("#imie").focus(), 50);
+
+let lesson = null, mats = [], plan = { sceny: [] }, ch = null;
+let S = null, shownScene = -1, followTeacher = true;
+const lekcja = new ScenaLekcji({ wycisz: true });
+lekcja.dodajPrzewodnika("../modele/przewodnik.glb").catch(() => {});
+
+/* ------------------------------------------------------------------ dołączanie */
+$("#joinBtn").onclick = join;
+$("#imie").onkeydown = e => { if (e.key === "Enter") join(); };
+async function join() {
+  const kod = $("#kod").value.trim().toUpperCase(), imie = $("#imie").value.trim();
+  if (kod.length < 4) return ($("#joinMsg").textContent = "Wpisz kod lekcji.");
+  if (!imie) return ($("#joinMsg").textContent = "Wpisz swoje imię.");
+  $("#joinMsg").textContent = "Szukam lekcji…";
+  try { lesson = await b.lessons.byCode(kod); } catch (e) { $("#joinMsg").textContent = "❌ " + e.message; return; }
+  if (!lesson) return ($("#joinMsg").textContent = DEMO ? "Nie ma takiej lekcji w tej przeglądarce (tryb demo)." : "Nie ma lekcji o takim kodzie. Sprawdź kod na tablicy.");
+  me.imie = imie; try { localStorage.setItem("lekcjeAR-imie", imie); } catch {}
+  history.replaceState(null, "", `?l=${lesson.kod}`);
+  ustawLekcje(lesson);
+  $("#lessonTitle").textContent = lesson.tytul;
+  $("#sJoin").hidden = true; $("#sMode").hidden = false;
+  ch = b.channel(lesson.kod, { onMessage, onReady: () => { $("#hStatus").textContent = "połączono"; ch.send("hej", { uid: me.uid }); }, onError: () => $("#hStatus").textContent = "brak połączenia" }, me);
+  if (navigator.xr?.isSessionSupported) navigator.xr.isSessionSupported("immersive-ar").then(ok => $("#mLawka").hidden = !ok).catch(() => {});
+  $("#bAsk").hidden = !b.ai.dostepne;
+}
+function ustawLekcje(l) {
+  lesson = l; mats = l.materialy || []; plan = l.plan || { sceny: [] }; shownScene = -1;
+}
+
+/* ------------------------------------------------------------------ synchronizacja z nauczycielem */
+let lastSeen = 0;
+async function onMessage(ev, p) {
+  if (ev !== "stan") return;
+  lastSeen = Date.now(); $("#hStatus").textContent = "na żywo";
+  if (p.wersja && lesson.zmieniono && p.wersja !== lesson.zmieniono) {     // nauczyciel zmienił lekcję – pobierz ponownie
+    const l = await b.lessons.byCode(lesson.kod); if (l) { ustawLekcje({ ...l, zmieniono: p.wersja }); }
+  }
+  const prev = S; S = p;
+  if (shownScene !== S.scena) { shownScene = S.scena; await lekcja.pokaz(plan, mats, S.scena); lekcja.przewodnikMacha(); naglowek(); if (view3d && followTeacher) view3d.lecDo(null); }
+  if (!prev || prev.fokus !== S.fokus || prev.scena !== S.scena) { lekcja.ustawFokus(S.fokus); if (view3d && followTeacher) view3d.lecDo(S.fokus); }
+  lekcja.ustawWideo(S.wideo);
+  lekcja.przewodnikMowi(!!S.mowi);
+  const narr = plan.sceny[S.scena]?.narracja;
+  $("#bubble").hidden = !(S.mowi && narr); if (S.mowi) $("#bubble").textContent = "🧑‍🏫 " + narr;
+  quiz();
+}
+setInterval(() => { if (lesson && Date.now() - lastSeen > 12000) $("#hStatus").textContent = S ? "nauczyciel offline" : "czekam na nauczyciela"; }, 3000);
+function naglowek() {
+  const s = plan.sceny[S.scena];
+  $("#hTitle").textContent = s ? s.tytul : lesson.tytul;
+  $("#hSub").textContent = s ? `Scena ${S.scena + 1} z ${plan.sceny.length} · ${lesson.tytul}` : "";
+}
+
+/* ------------------------------------------------------------------ quiz */
+const myAns = {};
+function quiz() {
+  const q = S?.quiz && plan.sceny[S.quiz.scena]?.quiz?.[S.quiz.nr];
+  if (!q) { $("#quizSheet").hidden = true; return; }
+  const key = `${S.quiz.scena}-${S.quiz.nr}`, mine = myAns[key];
+  $("#quizSheet").hidden = false;
+  $("#quizSheet").innerHTML = `<h3>❓ ${esc(q.pytanie)}</h3><div class="qa">${q.odpowiedzi.map((o, j) => {
+    let c = mine === j ? "sel" : ""; if (S.quiz.pokaz) c = j === q.poprawna ? "ok" : (mine === j ? "bad" : "");
+    return `<button class="${c}" data-a="${j}" ${S.quiz.pokaz ? "disabled" : ""}><span class="L">${"ABCDE"[j]}</span>${esc(o)}</button>`; }).join("")}</div>
+    <p class="small muted" style="margin:10px 0 0">${S.quiz.pokaz ? (mine === q.poprawna ? "🎉 Brawo, dobrze!" : mine == null ? "Poprawna odpowiedź jest zaznaczona na zielono." : "Tym razem nie. Poprawna jest na zielono.") : mine != null ? "Odpowiedź wysłana. Możesz ją jeszcze zmienić." : "Wybierz odpowiedź."}</p>`;
+  $("#quizSheet").querySelectorAll("[data-a]").forEach(btn => btn.onclick = () => {
+    myAns[key] = +btn.dataset.a; ch.send("odpowiedz", { uid: me.uid, imie: me.imie, klucz: key, wybor: +btn.dataset.a }); quiz();
+  });
+}
+
+/* ------------------------------------------------------------------ tryby oglądania */
+let cleanup = null, view3d = null, mode = null, worldScale = 0.5, holder = null;
+document.querySelectorAll("[data-mode]").forEach(m => m.onclick = () => start(m.dataset.mode));
+$("#bMode").onclick = async () => { await stopMode(); document.body.classList.remove("live"); $("#stage").hidden = $("#hud").hidden = true; $("#scaleBtns").hidden = true; $("#sMode").hidden = false; };
+
+async function stopMode() { if (gesty) chwytanie(false); if (cleanup) { try { await cleanup(); } catch {} cleanup = null; } view3d = null; $("#stage").innerHTML = ""; }
+function hint(html) { $("#hint").innerHTML = html || ""; $("#hint").hidden = !html; }
+
+async function start(m) {
+  // gest użytkownika: odblokuj filmy (iOS/Android)
+  for (const v of lekcja.videos.values()) v.play().then(() => v.pause()).catch(() => {});
+  await stopMode(); mode = m;
+  $("#sMode").hidden = true; $("#stage").hidden = $("#hud").hidden = false; document.body.classList.add("live");
+  $("#bOrient").hidden = m !== "znacznik"; $("#scaleBtns").hidden = m === "3d";
+  if (!S) { ch?.send("hej", { uid: me.uid }); }
+  try {
+    if (m === "3d") start3D();
+    if (m === "znacznik") await startZnacznik();
+    if (m === "lawka") await startLawka();
+  } catch (e) {
+    console.error(e); toast("Nie udało się uruchomić trybu: " + (e.message || e), 6000);
+    $("#bMode").onclick();
+    $("#modeMsg").textContent = /Permission|NotAllowed/i.test(e?.name + e?.message) ? "Brak dostępu do kamery. Zezwól na kamerę w ustawieniach przeglądarki albo wybierz Widok 3D." : "Spróbuj innego trybu, np. Widok 3D.";
+  }
+}
+
+function start3D() {
+  hint("");
+  view3d = widok3D($("#stage"), lekcja, { tlo: 0x1b2226 });
+  view3d.controls.addEventListener("start", () => { followTeacher = false; });
+  cleanup = () => { view3d.dispose(); view3d.scene.remove(lekcja.root); };
+  if (S) view3d.lecDo(S.fokus);
+}
+
+async function startZnacznik() {
+  hint(`<img src="znacznik-lekcji.jpg" alt=""><span>Przygotowuję rozpoznawanie znacznika…</span>`);
+  const { getMindUrl } = await import("../ar-plakat.js");
+  const { MindARThree } = await import("mindar-image-three");
+  const mindUrl = await getMindUrl({ image: "znacznik-lekcji.jpg" }, p => hint(`<img src="znacznik-lekcji.jpg" alt=""><span>Uczę się znacznika… ${Math.round(p)}% (tylko za pierwszym razem)</span>`));
+  const mindar = new MindARThree({ container: $("#stage"), imageTargetSrc: mindUrl, uiLoading: "no", uiScanning: "no", uiError: "yes" });
+  const { renderer, scene, camera } = mindar;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  swiatla(scene);
+  const anchor = mindar.addAnchor(0);
+  holder = new THREE.Group(); holder.add(lekcja.root); anchor.group.add(holder);
+  let flat = true;
+  const orient = () => {
+    holder.rotation.set(flat ? Math.PI / 2 : 0, 0, 0);
+    holder.position.set(0, flat ? 0 : -0.55, flat ? 0 : 0.5);
+    holder.scale.setScalar(worldScale);
+    $("#bOrient").textContent = flat ? "Znacznik: leży" : "Znacznik: wisi";
+  };
+  orient();
+  $("#bOrient").onclick = () => { flat = !flat; orient(); };
+  const lost = () => hint(`<img src="znacznik-lekcji.jpg" alt=""><span>Wyceluj telefon w znacznik na biurku nauczyciela.</span>`);
+  anchor.onTargetFound = () => hint(""); anchor.onTargetLost = lost;
+  await mindar.start(); lost();
+  const clock = new THREE.Clock();
+  renderer.setAnimationLoop(() => { lekcja.update(Math.min(clock.getDelta(), 0.1)); renderer.render(scene, camera); });
+  cleanup = () => { renderer.setAnimationLoop(null); anchor.group.remove(holder); holder.remove(lekcja.root); mindar.stop(); renderer.dispose(); };
+}
+
+async function startLawka() {
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.xr.enabled = true;
+  $("#stage").appendChild(renderer.domElement);
+  const scene = new THREE.Scene(); swiatla(scene);
+  const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.01, 30);
+  holder = new THREE.Group(); holder.visible = false; holder.add(lekcja.root); scene.add(holder);
+  const reticle = new THREE.Mesh(new THREE.RingGeometry(0.06, 0.08, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xe0a030 }));
+  reticle.matrixAutoUpdate = false; reticle.visible = false; scene.add(reticle);
+  const session = await navigator.xr.requestSession("immersive-ar", { requiredFeatures: ["hit-test"], optionalFeatures: ["dom-overlay"], domOverlay: { root: document.getElementById("hud") } });
+  renderer.xr.setReferenceSpaceType("local");
+  await renderer.xr.setSession(session);
+  const hitSource = await session.requestHitTestSource({ space: await session.requestReferenceSpace("viewer") });
+  hint("Powoli przesuń telefonem nad stołem. Gdy pojawi się złote kółko, dotknij ekranu, żeby postawić scenę.");
+  let placed = false;
+  session.addEventListener("select", () => {
+    if (!reticle.visible) return;
+    holder.position.setFromMatrixPosition(reticle.matrix);
+    const cam = renderer.xr.getCamera().position;
+    holder.rotation.set(0, Math.atan2(cam.x - holder.position.x, cam.z - holder.position.z), 0);
+    holder.scale.setScalar(worldScale * 0.6); holder.visible = true; placed = true; reticle.visible = false;
+    hint("");
+  });
+  session.addEventListener("end", () => { if (mode === "lawka") $("#bMode").onclick(); });
+  const clock = new THREE.Clock();
+  renderer.setAnimationLoop((t, frame) => {
+    if (frame && !placed) {
+      const hits = frame.getHitTestResults(hitSource);
+      reticle.visible = hits.length > 0;
+      if (hits.length) reticle.matrix.fromArray(hits[0].getPose(renderer.xr.getReferenceSpace()).transform.matrix);
+    }
+    lekcja.update(Math.min(clock.getDelta(), 0.1)); renderer.render(scene, camera);
+  });
+  cleanup = async () => { renderer.setAnimationLoop(null); holder.remove(lekcja.root); try { await session.end(); } catch {} renderer.dispose(); };
+}
+
+$("#bBig").onclick = () => { worldScale = Math.min(2, worldScale * 1.25); if (holder) holder.scale.setScalar(worldScale * (mode === "lawka" ? 0.6 : 1)); };
+$("#bSmall").onclick = () => { worldScale = Math.max(0.15, worldScale / 1.25); if (holder) holder.scale.setScalar(worldScale * (mode === "lawka" ? 0.6 : 1)); };
+
+/* ------------------------------------------------------------------ chwytanie dłonią (MediaPipe) */
+let gesty = null;
+async function chwytanie(on) {
+  if (!on) { gesty?.stop(); gesty = null; $("#bGrab").textContent = "🤏 Chwyć"; return; }
+  if (mode === "lawka") return toast("W trybie „na ławce” kamera jest zajęta przez AR. Użyj znacznika albo widoku 3D.", 4000);
+  $("#bGrab").textContent = "⏳";
+  try {
+    const { uruchomGesty } = await import("../gesty.js");
+    // w trybie znacznika korzystamy z obrazu tylnej kamery, który już ma MindAR; w widoku 3D – z przedniej kamery
+    const vid = mode === "znacznik" ? $("#stage video") : null;
+    gesty = await uruchomGesty({ video: vid, facing: vid ? "environment" : "user", miejscePodgladu: "lewy-gora", symulacja: window.__symulacjaGestow || null,
+      onZdarzenie(typ, d) {
+        if (typ === "szczypniecie") {
+          if (view3d) { followTeacher = false; view3d.obroc(-d.dx * 6, d.dy * 4); if (Math.abs(d.skala - 1) > 0.01) view3d.przybliz(Math.pow(1 / d.skala, 1.5)); }
+          else if (holder) {
+            lekcja.root.rotation.y += d.dx * 6;
+            worldScale = Math.min(2, Math.max(0.15, worldScale * (1 - d.dy * 2.5)));
+            holder.scale.setScalar(worldScale);
+          }
+        }
+        if (typ === "gest" && d.nazwa === "Open_Palm") { lekcja.root.rotation.y = 0; if (view3d) { followTeacher = true; view3d.lecDo(S?.fokus || null); } toast("✋ Widok jak u nauczyciela", 1500); }
+        if (typ === "gest" && d.nazwa === "Thumb_Up") react("👍");
+      },
+    });
+    $("#bGrab").textContent = "🤏 Wyłącz";
+    toast("Złącz kciuk z palcem wskazującym i przesuwaj: w bok obraca, w górę i w dół powiększa", 4500);
+  } catch (e) {
+    console.error(e); gesty = null; $("#bGrab").textContent = "🤏 Chwyć";
+    toast(/Permission|NotAllowed/i.test(e.name + e.message) ? "Brak dostępu do kamery" : "Gesty niedostępne: " + e.message, 5000);
+  }
+}
+$("#bGrab").onclick = () => chwytanie(!gesty);
+
+/* ------------------------------------------------------------------ reakcje, dźwięk */
+const react = e => { ch?.send("reakcja", { uid: me.uid, imie: me.imie, e }); toast(e === "✋" ? "Nauczyciel widzi, że masz pytanie" : "Wysłano " + e, 1500); };
+$("#bHand").onclick = () => react("✋"); $("#bLike").onclick = () => react("👍"); $("#bWow").onclick = () => react("😮");
+$("#bSound").onclick = () => { const on = $("#bSound").textContent === "🔇"; lekcja.wyciszenie(!on); $("#bSound").textContent = on ? "🔊" : "🔇"; };
+
+/* ------------------------------------------------------------------ Zapytaj Bartka (Claude) */
+$("#bAsk").onclick = () => { $("#askSheet").hidden = false; setTimeout(() => $("#askIn").focus(), 50); };
+$("#askClose").onclick = () => $("#askSheet").hidden = true;
+$("#askIn").onkeydown = e => { if (e.key === "Enter") $("#askGo").click(); };
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!SR) $("#askMic").hidden = true;
+$("#askMic").onclick = () => {
+  const r = new SR(); r.lang = "pl-PL"; r.interimResults = false;
+  $("#askMic").textContent = "⏺"; r.onresult = e => { $("#askIn").value = e.results[0][0].transcript; $("#askGo").click(); };
+  r.onend = () => $("#askMic").textContent = "🎤"; r.start();
+};
+$("#askGo").onclick = async () => {
+  const q = $("#askIn").value.trim(); if (!q) return;
+  const s = plan.sceny[S?.scena ?? 0];
+  const byId = Object.fromEntries(mats.map(m => [m.id, m]));
+  const tekst = [s?.narracja, ...(s?.elementy || []).map(id => byId[id]?.tekst), "Cała lekcja:", ...mats.filter(m => m.typ === "slajd").map(m => m.tekst)].filter(Boolean).join("\n");
+  $("#askOut").innerHTML = `<p class="muted">Bartek myśli…</p>`; lekcja.przewodnikMowi(true);
+  try {
+    const odp = await b.ai.ask(q, { tytul: `${lesson.tytul}${s ? " – " + s.tytul : ""}`, tekst });
+    $("#askOut").innerHTML = `<div class="card" style="background:var(--paper)"><b>🧑‍🏫 Bartek:</b> ${esc(odp)}</div>`;
+    const synth = window.speechSynthesis;
+    if (synth) { const u = new SpeechSynthesisUtterance(odp); u.lang = "pl-PL"; u.onend = () => lekcja.przewodnikMowi(!!S?.mowi); synth.cancel(); synth.speak(u); }
+    else lekcja.przewodnikMowi(!!S?.mowi);
+  } catch (e) { $("#askOut").innerHTML = `<p style="color:var(--bad)">Nie udało się: ${esc(e.message)}</p>`; lekcja.przewodnikMowi(!!S?.mowi); }
+};
+window.__dbg = { get S() { return S; }, lekcja };
+</script>
+</body>
+</html>

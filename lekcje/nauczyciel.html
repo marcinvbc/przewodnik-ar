@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel nauczyciela · Lekcja AR</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script src="konfiguracja.js"></script>
+<link rel="stylesheet" href="styl.css">
+<style>
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) 460px; gap: 18px; align-items: start; }
+  @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } .side { position: static !important; } }
+  .side { position: sticky; top: 76px; display: grid; gap: 12px; }
+  .preview { height: 330px; border-radius: 14px; overflow: hidden; background: #e9edf0; position: relative; }
+  .preview .hint { position: absolute; left: 10px; bottom: 8px; font-size: 12px; color: var(--muted); background: rgba(255,255,255,.85); padding: 2px 8px; border-radius: 99px; }
+  section.card { margin-bottom: 16px; }
+  section.card > h2 { font-size: 18px; display: flex; gap: 10px; align-items: center; margin-bottom: 4px; }
+  section.card > h2 span.n { width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 13px; }
+  .drop { border: 2px dashed var(--line); border-radius: 14px; padding: 22px; text-align: center; cursor: pointer; color: var(--muted); transition: background .15s, border-color .15s; display: block; margin-top: 10px; }
+  .drop.over { background: #fff6e8; border-color: var(--gold); }
+  .drop input { display: none; }
+  .mats { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; margin-top: 12px; }
+  .mat { position: relative; background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 12px; }
+  .mat .th { aspect-ratio: 4/3; background: #eef0ee center/cover no-repeat; display: grid; place-items: center; font-size: 34px; }
+  .mat .th video { width: 100%; height: 100%; object-fit: cover; }
+  .mat .nm { padding: 5px 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mat .ty { position: absolute; top: 5px; left: 5px; background: rgba(31,42,46,.85); color: #fff; border-radius: 99px; padding: 1px 7px; font-size: 11px; font-weight: 700; }
+  .mat .x { position: absolute; top: 4px; right: 4px; border: 0; width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,.92); cursor: pointer; font-weight: 700; }
+  .queue { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .queue div { padding: 3px 0; }
+  .scene { border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-top: 12px; background: #fff; }
+  .scene.sel { border-color: var(--gold); box-shadow: 0 0 0 3px #f6e2b8; }
+  .scene .head { display: flex; gap: 8px; align-items: center; }
+  .scene .head .num { font-weight: 800; color: var(--accent); min-width: 24px; }
+  .scene .head input { font-weight: 700; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .chip { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 10px; padding: 3px 6px 3px 3px; background: var(--card); font-size: 12px; max-width: 220px; }
+  .chip i { width: 34px; height: 26px; border-radius: 6px; background: #eef0ee center/cover; display: grid; place-items: center; font-style: normal; flex: none; }
+  .chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip button { border: 0; background: none; cursor: pointer; color: var(--muted); padding: 0 2px; font-size: 14px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 700px) { .two { grid-template-columns: 1fr; } }
+  .quiz { background: var(--paper); border-radius: 10px; padding: 8px; margin-top: 6px; }
+  .lessons { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
+  .lesson h3 { font-size: 17px; margin-bottom: 4px; }
+  .note { background: #fff6e0; border: 1px solid #f0d58a; color: #6b5200; border-radius: 12px; padding: 10px 12px; font-size: 13px; }
+  .note.ok { background: #eef6ef; border-color: #b9dcc0; color: var(--ok); }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">AR</div><b>Lekcja AR · panel nauczyciela</b>
+  <span class="badge" id="mode"></span>
+  <span class="sp"></span>
+  <span class="small muted" id="who"></span>
+  <a class="btn sm ghost" href="../index.html">Przewodnik AR</a>
+  <button class="btn sm" id="logout" hidden>Wyloguj</button>
+</header>
+
+<!-- LOGOWANIE -->
+<main class="wrap" id="vLogin" hidden>
+  <div class="card" style="max-width:420px;margin:40px auto">
+    <h2 style="font-size:22px;margin-bottom:6px">Zaloguj się</h2>
+    <p class="muted small">Konto nauczyciela przechowuje Twoje lekcje i pliki. Uczniowie nie potrzebują kont, dołączają kodem.</p>
+    <label class="l" for="em">E-mail</label><input type="email" id="em" autocomplete="email">
+    <label class="l" for="pw">Hasło (min. 6 znaków)</label><input type="password" id="pw" autocomplete="current-password">
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="signin">Zaloguj</button><button class="btn" id="signup">Załóż konto</button></div>
+    <p class="small" id="loginMsg"></p>
+  </div>
+</main>
+
+<!-- LISTA LEKCJI -->
+<main class="wrap" id="vList" hidden>
+  <div class="row" style="justify-content:space-between">
+    <div><h1 style="font-size:26px">Twoje lekcje</h1><p class="muted" style="margin:2px 0 0">Wgraj materiały, a sceny AR ułożą się same. Potem uczniowie dołączą telefonami.</p></div>
+    <div class="row"><input type="text" id="newTitle" placeholder="Temat lekcji, np. Średniowieczne zamki" style="width:300px"><button class="btn accent" id="create">➕ Nowa lekcja</button></div>
+  </div>
+  <div id="demoNote" class="note" style="margin-top:14px" hidden>
+    <b>Tryb demo:</b> wszystko zapisuje się tylko w tej przeglądarce. „Uczniów” możesz symulować w kolejnych kartach tej samej przeglądarki.
+    Żeby uczniowie dołączali z własnych telefonów i żeby działał Claude, połącz Supabase (instrukcja w <code>LEKCJE-INSTRUKCJA.md</code>).
+  </div>
+  <div class="lessons" id="lessons"></div>
+</main>
+
+<!-- EDYTOR LEKCJI -->
+<main class="wrap" id="vEdit" hidden>
+  <div class="row" style="justify-content:space-between;margin-bottom:14px">
+    <div class="row" style="flex:1;min-width:280px">
+      <button class="btn sm" id="back">← Lekcje</button>
+      <input type="text" id="title" style="font-size:20px;font-weight:800;max-width:520px">
+    </div>
+    <div class="row">
+      <span class="muted small">Kod:</span><span class="code" id="code"></span>
+      <a class="btn" id="marker" href="znacznik.html" target="_blank">🖨 Znacznik</a>
+      <a class="btn accent" id="start" target="_blank">▶ Rozpocznij lekcję</a>
+    </div>
+  </div>
+  <div class="grid">
+    <div>
+      <section class="card">
+        <h2><span class="n">1</span>Materiały</h2>
+        <p class="muted small" style="margin:0">PDF (np. prezentacja z PowerPointa: <i>Plik → Zapisz jako → PDF</i>) zamieni się w slajdy.
+          Obsługiwane: PDF, JPG/PNG/WebP, MP4/WebM, modele 3D GLB. <span id="limitInfo"></span></p>
+        <label class="drop" id="drop"><input type="file" id="files" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.mp4,.webm,.mov,.m4v,.glb">
+          <b style="color:var(--ink)">📂 Przeciągnij pliki tutaj albo kliknij</b><br><span class="small">możesz wgrać wiele naraz</span></label>
+        <div class="queue" id="queue"></div>
+        <div class="mats" id="mats"></div>
+      </section>
+
+      <section class="card">
+        <h2><span class="n">2</span>Sceny lekcji</h2>
+        <p class="muted small" style="margin:0 0 10px">AI podzieli materiał na sceny, ułoży przestrzeń, napisze tekst dla przewodnika i quiz. Wszystko możesz poprawić.</p>
+        <div class="row">
+          <button class="btn gold" id="planAI">✨ Zaplanuj z AI</button>
+          <button class="btn" id="planAuto">⚡ Ułóż automatycznie</button>
+          <button class="btn" id="addScene">➕ Pusta scena</button>
+          <span class="small muted" id="planInfo"></span>
+        </div>
+        <div id="scenes"></div>
+      </section>
+    </div>
+
+    <aside class="side">
+      <div class="card" style="padding:10px">
+        <div class="row" style="justify-content:space-between;margin:0 4px 8px"><b>Podgląd sceny</b><span class="small muted" id="pvName"></span></div>
+        <div class="preview" id="preview"><span class="hint">Obracaj myszką · kliknij element, by go wyróżnić</span></div>
+      </div>
+      <div class="card small">
+        <b>Jak poprowadzić lekcję</b>
+        <ol style="margin:6px 0 0;padding-left:18px">
+          <li>Wydrukuj <b>znacznik lekcji</b> (A4 lub A3) i połóż na biurku albo przypnij do tablicy.</li>
+          <li>Kliknij <b>Rozpocznij lekcję</b> i wyświetl ekran na projektorze.</li>
+          <li>Przycisk <b>Zaproś</b> pokaże kod QR. Uczniowie skanują go telefonem.</li>
+          <li>Przełączaj sceny i wyróżniaj elementy, a telefony uczniów nadążają same.</li>
+        </ol>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script type="module">
+import { backend, DEMO, esc, toast, resolveUrl, uid, linkProwadzenia } from "./wspolne.js";
+import { zaplanuj, planRegulowy, UKLADY } from "./planer.js";
+import { ScenaLekcji } from "./silnik-sceny.js";
+import { widok3D } from "./widok3d.js";
+
+const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs";
+const PDFJS_WORKER = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
+const MAX_MB = DEMO ? 300 : 50;
+const $ = s => document.querySelector(s);
+const show = id => ["vLogin", "vList", "vEdit"].forEach(v => $("#" + v).hidden = v !== id);
+const ICON = { slajd: "📄", obraz: "🖼", wideo: "🎬", model: "🧊", pdf: "📕" };
+const TYP = { slajd: "slajd", obraz: "zdjęcie", wideo: "film", model: "model 3D", pdf: "PDF" };
+
+const b = await backend();
+$("#mode").textContent = DEMO ? "TRYB DEMO" : "Supabase"; $("#mode").classList.toggle("on", !DEMO);
+$("#limitInfo").textContent = DEMO ? "" : `Limit: ${MAX_MB} MB na plik (darmowy plan Supabase).`;
+if (!b.ai.dostepne) { $("#planAI").title = DEMO ? "AI działa po podłączeniu Supabase i funkcji „claude”" : "AI wyłączone w konfiguracji"; }
+
+let lesson = null, selScene = 0, saveT = null, view = null;
+const lekcja3D = new ScenaLekcji();
+
+/* ------------------------------------------------------------------ logowanie */
+async function init() {
+  const u = await b.auth.user();
+  if (!u) { show("vLogin"); $("#logout").hidden = true; $("#who").textContent = ""; return; }
+  $("#who").textContent = u.email || ""; $("#logout").hidden = DEMO;
+  const id = new URLSearchParams(location.search).get("id");
+  if (id) openLesson(id); else listLessons();
+}
+$("#signin").onclick = async () => {
+  try { await b.auth.signIn($("#em").value.trim(), $("#pw").value); init(); }
+  catch (e) { $("#loginMsg").textContent = "❌ " + e.message; }
+};
+$("#signup").onclick = async () => {
+  try {
+    const r = await b.auth.signUp($("#em").value.trim(), $("#pw").value);
+    if (r?.session) init(); else $("#loginMsg").textContent = "✅ Konto założone. Sprawdź skrzynkę e-mail i kliknij link potwierdzający, potem zaloguj się.";
+  } catch (e) { $("#loginMsg").textContent = "❌ " + e.message; }
+};
+$("#logout").onclick = async () => { await b.auth.signOut(); location.href = location.pathname; };
+
+/* ------------------------------------------------------------------ lista */
+async function listLessons() {
+  history.replaceState(null, "", location.pathname);
+  show("vList"); $("#demoNote").hidden = !DEMO;
+  const list = await b.lessons.list();
+  $("#lessons").innerHTML = list.length ? list.map(l => `
+    <div class="card lesson">
+      <h3>${esc(l.tytul)}</h3>
+      <div class="small muted">Kod: <b>${esc(l.kod)}</b> · materiałów: ${(l.materialy || []).filter(m => m.typ !== "pdf").length} · ${new Date(l.zmieniono).toLocaleString("pl-PL")}</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn sm primary" data-open="${l.id}">✏️ Edytuj</button>
+        <a class="btn sm accent" href="${linkProwadzenia(l.kod)}&id=${l.id}" target="_blank">▶ Prowadź</a>
+        <button class="btn sm ghost" data-del="${l.id}">🗑</button>
+      </div>
+    </div>`).join("") : `<div class="empty card">Nie masz jeszcze lekcji. Wpisz temat i kliknij <b>Nowa lekcja</b>.</div>`;
+}
+$("#lessons").onclick = async e => {
+  const o = e.target.closest("[data-open]"), d = e.target.closest("[data-del]");
+  if (o) openLesson(o.dataset.open);
+  if (d && confirm("Usunąć lekcję razem z plikami?")) { await b.lessons.remove(d.dataset.del); listLessons(); }
+};
+$("#create").onclick = async () => {
+  const t = $("#newTitle").value.trim() || "Nowa lekcja";
+  const l = await b.lessons.create(t); openLesson(l.id);
+};
+
+/* ------------------------------------------------------------------ edytor */
+async function openLesson(id) {
+  lesson = await b.lessons.get(id);
+  if (!lesson) { toast("Nie znaleziono lekcji"); return listLessons(); }
+  lesson.materialy ||= [];
+  history.replaceState(null, "", `?id=${id}`);
+  show("vEdit");
+  $("#title").value = lesson.tytul; $("#code").textContent = lesson.kod;
+  $("#start").href = `${linkProwadzenia(lesson.kod)}&id=${lesson.id}`;
+  $("#marker").href = `znacznik.html?l=${lesson.kod}`;
+  if (!view) view = widok3D($("#preview"), lekcja3D, { onClick: id => { lekcja3D.ustawFokus(id); view.lecDo(id); } });
+  renderMats(); renderScenes(); preview();
+}
+$("#back").onclick = () => { lesson = null; listLessons(); };
+$("#title").oninput = () => { lesson.tytul = $("#title").value; save(); };
+
+function save() {
+  clearTimeout(saveT);
+  saveT = setTimeout(async () => {
+    try { await b.lessons.update(lesson.id, { tytul: lesson.tytul, materialy: lesson.materialy, plan: lesson.plan }); }
+    catch (e) { toast("❌ Nie zapisano: " + e.message, 5000); }
+  }, 700);
+}
+
+/* ------------------------------------------------------------------ materiały */
+const drop = $("#drop");
+["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => wgraj([...e.dataTransfer.files]));
+$("#files").onchange = e => { wgraj([...e.target.files]); e.target.value = ""; };
+
+async function wgraj(files) {
+  for (const f of files) {
+    const row = document.createElement("div"); row.textContent = `⏳ ${f.name}…`; $("#queue").appendChild(row);
+    try {
+      const n = await przetworz(f, msg => row.textContent = `⏳ ${f.name}: ${msg}`);
+      row.textContent = `✅ ${f.name}${n > 1 ? ` (${n} elementów)` : ""}`;
+      setTimeout(() => row.remove(), 4000);
+    } catch (e) { console.error(e); row.textContent = `❌ ${f.name}: ${e.message}`; }
+    renderMats(); save();
+  }
+  if (!lesson.plan?.sceny?.length && lesson.materialy.some(m => m.typ !== "pdf")) {
+    lesson.plan = planRegulowy(lesson.tytul, lesson.materialy); selScene = 0; renderScenes(); preview(); save();
+    $("#planInfo").textContent = "Wstępny układ gotowy. Możesz go ulepszyć przyciskiem AI.";
+  }
+}
+
+const ext = n => n.split(".").pop().toLowerCase();
+async function upload(blob, name, type) { return b.files.upload(lesson.id, blob, name, type); }
+const pushMat = m => { lesson.materialy.push({ id: uid(), ...m }); };
+
+async function przetworz(f, status) {
+  const e = ext(f.name);
+  if (f.size > MAX_MB * 1048576) throw new Error(`plik ma ${(f.size / 1048576).toFixed(0)} MB, limit to ${MAX_MB} MB${e.match(/mp4|mov|webm/) ? " (zmniejsz film, np. w HandBrake albo nagraj w 720p)" : ""}`);
+  if (e === "pptx" || e === "ppt" || e === "key") throw new Error("zapisz prezentację jako PDF (Plik → Zapisz jako → PDF) i wgraj PDF");
+  if (e === "pdf") return pdf(f, status);
+  if (["png", "jpg", "jpeg", "webp", "gif"].includes(e)) {
+    status("przygotowuję obraz");
+    const { blob, w, h } = await zmniejsz(f, 2048);
+    const { url, path } = await upload(blob, f.name.replace(/\.\w+$/, ".jpg"), "image/jpeg");
+    pushMat({ typ: "obraz", nazwa: f.name, url, path, w, h }); return 1;
+  }
+  if (["mp4", "webm", "mov", "m4v"].includes(e)) {
+    status("odczytuję film");
+    const { w, h } = await wymiaryWideo(f);
+    status("wysyłam");
+    const { url, path } = await upload(f, f.name, f.type || "video/mp4");
+    pushMat({ typ: "wideo", nazwa: f.name, url, path, w, h }); return 1;
+  }
+  if (e === "glb") {
+    status("wysyłam model");
+    const { url, path } = await upload(f, f.name, "model/gltf-binary");
+    pushMat({ typ: "model", nazwa: f.name, url, path }); return 1;
+  }
+  throw new Error("nieobsługiwany format");
+}
+
+async function zmniejsz(file, max) {
+  const img = await createImageBitmap(file);
+  const k = Math.min(1, max / Math.max(img.width, img.height));
+  const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.88));
+  return { blob, w: c.width, h: c.height };
+}
+function wymiaryWideo(file) {
+  return new Promise(res => {
+    const v = document.createElement("video"); v.preload = "metadata"; v.muted = true;
+    v.onloadedmetadata = () => { res({ w: v.videoWidth || 16, h: v.videoHeight || 9 }); URL.revokeObjectURL(v.src); };
+    v.onerror = () => res({ w: 16, h: 9 });
+    v.src = URL.createObjectURL(file);
+  });
+}
+async function pdf(f, status) {
+  status("otwieram PDF");
+  const pdfjs = await import(PDFJS);
+  pdfjs.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
+  const n = Math.min(doc.numPages, 60);
+  const orig = await upload(f, f.name, "application/pdf");
+  pushMat({ typ: "pdf", nazwa: f.name, url: orig.url, path: orig.path, strony: doc.numPages });
+  for (let i = 1; i <= n; i++) {
+    status(`strona ${i} z ${n}`);
+    const page = await doc.getPage(i);
+    const v1 = page.getViewport({ scale: 1 }), scale = 1600 / v1.width, vp = page.getViewport({ scale });
+    const c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: g, viewport: vp }).promise;
+    const items = (await page.getTextContent()).items.filter(t => t.str && t.str.trim());
+    const tekst = items.map(t => t.str).join(" ").replace(/\s+/g, " ").trim().slice(0, 1500);
+    // tytuł slajdu = tekst z największą czcionką na stronie
+    const big = items.reduce((a, t) => Math.abs(t.transform?.[3] || 0) > Math.abs(a?.transform?.[3] || 0) ? t : a, items[0]);
+    const tytulSlajdu = (big?.str || "").trim().slice(0, 70);
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.86));
+    const { url, path } = await upload(blob, `${f.name.replace(/\.pdf$/i, "")}-s${i}.jpg`, "image/jpeg");
+    pushMat({ typ: "slajd", nazwa: `${f.name.replace(/\.pdf$/i, "")} – str. ${i}`, zrodlo: f.name, strona: i, url, path, w: c.width, h: c.height, tekst, tytulSlajdu });
+    renderMats();
+  }
+  return n;
+}
+
+async function thumbs(root) {
+  for (const el of root.querySelectorAll("[data-thumb]")) {
+    const m = lesson.materialy.find(x => x.id === el.dataset.thumb); if (!m) continue;
+    try {
+      const u = await resolveUrl(m.url);
+      if (m.typ === "slajd" || m.typ === "obraz") el.style.backgroundImage = `url("${u}")`;
+      if (m.typ === "wideo" && el.classList.contains("th")) el.innerHTML = `<video src="${u}#t=0.5" muted preload="metadata"></video>`;
+    } catch {}
+  }
+}
+function renderMats() {
+  const ms = lesson.materialy;
+  $("#mats").innerHTML = ms.length ? ms.map(m => `
+    <div class="mat"><div class="th" data-thumb="${m.id}">${m.typ === "slajd" || m.typ === "obraz" ? "" : ICON[m.typ]}</div>
+      <span class="ty">${TYP[m.typ]}</span><button class="x" title="Usuń" data-rm="${m.id}">×</button>
+      <div class="nm" title="${esc(m.nazwa)}">${esc(m.nazwa)}</div></div>`).join("") : "";
+  thumbs($("#mats"));
+}
+$("#mats").onclick = async e => {
+  const r = e.target.closest("[data-rm]"); if (!r) return;
+  const m = lesson.materialy.find(x => x.id === r.dataset.rm);
+  if (!confirm(`Usunąć „${m.nazwa}”?`)) return;
+  lesson.materialy = lesson.materialy.filter(x => x !== m);
+  if (m.path) b.files.remove([m.path]).catch(() => {});
+  for (const s of lesson.plan?.sceny || []) s.elementy = s.elementy.filter(id => id !== m.id);
+  renderMats(); renderScenes(); preview(); save();
+};
+
+/* ------------------------------------------------------------------ plan scen */
+$("#planAI").onclick = () => plan(true);
+$("#planAuto").onclick = () => plan(false);
+async function plan(ai) {
+  if (!lesson.materialy.some(m => m.typ !== "pdf")) return toast("Najpierw wgraj materiały");
+  if (lesson.plan?.sceny?.length && !confirm("Ułożyć sceny od nowa? Obecne zmiany w scenach zostaną zastąpione.")) return;
+  if (ai && !b.ai.dostepne) toast(DEMO ? "W trybie demo AI jest niedostępne. Układam automatycznie." : "AI wyłączone. Układam automatycznie.", 3500);
+  $("#planInfo").textContent = ai && b.ai.dostepne ? "✨ Claude układa lekcję…" : "Układam…";
+  $("#planAI").disabled = $("#planAuto").disabled = true;
+  const r = await zaplanuj(b, lesson.tytul, lesson.materialy, { ai });
+  $("#planAI").disabled = $("#planAuto").disabled = false;
+  lesson.plan = r.plan; selScene = 0;
+  $("#planInfo").textContent = r.zrodlo === "ai" ? `✨ Plan od Claude: ${r.plan.sceny.length} scen.` :
+    (r.blad ? `AI niedostępne (${r.blad}). Ułożono automatycznie.` : `Ułożono automatycznie: ${r.plan.sceny.length} scen.`);
+  renderScenes(); preview(); save();
+}
+$("#addScene").onclick = () => {
+  lesson.plan ||= { tytul: lesson.tytul, sceny: [] };
+  lesson.plan.sceny.push({ id: uid(), tytul: "Nowa scena", uklad: "muzeum", elementy: [], narracja: "", quiz: [] });
+  selScene = lesson.plan.sceny.length - 1; renderScenes(); preview(); save();
+};
+
+function renderScenes() {
+  const sc = lesson.plan?.sceny || [];
+  const mat = id => lesson.materialy.find(m => m.id === id);
+  const usable = lesson.materialy.filter(m => m.typ !== "pdf");
+  $("#scenes").innerHTML = sc.length ? sc.map((s, i) => `
+    <div class="scene ${i === selScene ? "sel" : ""}" data-i="${i}">
+      <div class="head">
+        <span class="num">${i + 1}.</span>
+        <input type="text" data-f="tytul" value="${esc(s.tytul)}">
+        <select data-f="uklad" style="width:auto">${Object.entries(UKLADY).map(([k, v]) => `<option value="${k}" ${k === s.uklad ? "selected" : ""}>${v.split(" –")[0]}</option>`).join("")}</select>
+        <button class="btn sm ghost" data-act="up" title="W górę">↑</button><button class="btn sm ghost" data-act="down" title="W dół">↓</button>
+        <button class="btn sm ghost" data-act="del" title="Usuń scenę">🗑</button>
+      </div>
+      <div class="chips">${s.elementy.map((id, k) => { const m = mat(id); return m ? `
+        <span class="chip"><i data-thumb="${id}">${m.typ === "slajd" || m.typ === "obraz" ? "" : ICON[m.typ]}</i><span title="${esc(m.nazwa)}">${esc(m.nazwa)}</span>
+        <button data-act="left" data-k="${k}" title="Wcześniej">‹</button><button data-act="rm" data-k="${k}" title="Usuń ze sceny">×</button></span>` : ""; }).join("")}
+        <select data-act="add" style="width:auto;font-size:12px;padding:4px 8px"><option value="">+ dodaj element…</option>
+          ${usable.filter(m => !s.elementy.includes(m.id)).map(m => `<option value="${m.id}">${ICON[m.typ]} ${esc(m.nazwa)}</option>`).join("")}</select>
+      </div>
+      <div class="two" style="margin-top:8px">
+        <div><label class="l">Tekst przewodnika (Bartek czyta go uczniom)</label><textarea data-f="narracja">${esc(s.narracja)}</textarea></div>
+        <div><label class="l">Quiz (${(s.quiz || []).length})</label>
+          ${(s.quiz || []).map((q, k) => `<div class="quiz">
+            <input type="text" data-q="${k}" data-qf="pytanie" value="${esc(q.pytanie)}" placeholder="Pytanie">
+            <textarea data-q="${k}" data-qf="odpowiedzi" style="min-height:52px;margin-top:4px" placeholder="Odpowiedzi – każda w osobnej linii">${esc(q.odpowiedzi.join("\n"))}</textarea>
+            <div class="row small" style="margin-top:4px">Poprawna:
+              <select data-q="${k}" data-qf="poprawna" style="width:auto">${q.odpowiedzi.map((a, j) => `<option value="${j}" ${j === q.poprawna ? "selected" : ""}>${j + 1}. ${esc(a).slice(0, 30)}</option>`).join("")}</select>
+              <button class="btn sm ghost" data-act="qdel" data-k="${k}">🗑</button></div></div>`).join("")}
+          <button class="btn sm" data-act="qadd" style="margin-top:6px">+ pytanie</button>
+        </div>
+      </div>
+    </div>`).join("") : `<div class="empty">Wgraj materiały i kliknij <b>Zaplanuj z AI</b> albo <b>Ułóż automatycznie</b>.</div>`;
+  thumbs($("#scenes"));
+}
+
+$("#scenes").addEventListener("click", e => {
+  const card = e.target.closest(".scene"); if (!card) return;
+  const i = +card.dataset.i, s = lesson.plan.sceny[i];
+  const act = e.target.closest("[data-act]")?.dataset.act, k = +e.target.closest("[data-k]")?.dataset.k;
+  if (act === "add") return;
+  if (!act) { if (selScene !== i) { selScene = i; document.querySelectorAll(".scene").forEach((c, j) => c.classList.toggle("sel", j === i)); preview(); } return; }
+  const sc = lesson.plan.sceny;
+  if (act === "up" && i > 0) { [sc[i - 1], sc[i]] = [sc[i], sc[i - 1]]; selScene = i - 1; }
+  if (act === "down" && i < sc.length - 1) { [sc[i + 1], sc[i]] = [sc[i], sc[i + 1]]; selScene = i + 1; }
+  if (act === "del" && confirm("Usunąć scenę?")) { sc.splice(i, 1); selScene = Math.max(0, i - 1); }
+  if (act === "rm") s.elementy.splice(k, 1);
+  if (act === "left" && k > 0) [s.elementy[k - 1], s.elementy[k]] = [s.elementy[k], s.elementy[k - 1]];
+  if (act === "qadd") (s.quiz ||= []).push({ pytanie: "", odpowiedzi: ["Tak", "Nie"], poprawna: 0 });
+  if (act === "qdel") s.quiz.splice(k, 1);
+  renderScenes(); preview(); save();
+});
+$("#scenes").addEventListener("change", e => {
+  const card = e.target.closest(".scene"); if (!card) return;
+  const s = lesson.plan.sceny[+card.dataset.i];
+  if (e.target.dataset.act === "add" && e.target.value) { s.elementy.push(e.target.value); renderScenes(); preview(); save(); return; }
+  if (e.target.dataset.f === "uklad") { s.uklad = e.target.value; preview(); save(); }
+  if (e.target.dataset.qf === "poprawna") { s.quiz[+e.target.dataset.q].poprawna = +e.target.value; save(); }
+  if (e.target.dataset.qf === "odpowiedzi") renderScenes();
+});
+$("#scenes").addEventListener("input", e => {
+  const card = e.target.closest(".scene"); if (!card) return;
+  const s = lesson.plan.sceny[+card.dataset.i];
+  const f = e.target.dataset.f, qf = e.target.dataset.qf;
+  if (f === "tytul" || f === "narracja") { s[f] = e.target.value; save(); if (f === "tytul") clearTimeout(window._pv), window._pv = setTimeout(preview, 600); }
+  if (qf === "pytanie") { s.quiz[+e.target.dataset.q].pytanie = e.target.value; save(); }
+  if (qf === "odpowiedzi") { const q = s.quiz[+e.target.dataset.q]; q.odpowiedzi = e.target.value.split("\n").map(x => x.trim()).filter(Boolean); q.poprawna = Math.min(q.poprawna, Math.max(0, q.odpowiedzi.length - 1)); save(); }
+});
+
+function preview() {
+  const s = lesson.plan?.sceny?.[selScene];
+  $("#pvName").textContent = s ? `Scena ${selScene + 1}: ${s.tytul}` : "";
+  if (s) lekcja3D.pokaz(lesson.plan, lesson.materialy, selScene).then(() => view.lecDo(null));
+  else lekcja3D.pokaz({ sceny: [] }, [], 0);
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prowadzenie lekcji · Lekcja AR</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="konfiguracja.js"></script>
+<link rel="stylesheet" href="styl.css">
+<style>
+  html, body { height: 100%; overflow: hidden; }
+  .app { display: grid; grid-template-columns: minmax(0, 1fr) 360px; height: 100vh; }
+  .app.full { grid-template-columns: 1fr 0; }
+  .stage { position: relative; background: #e9edf0; min-height: 0; }
+  #v3d { position: absolute; inset: 0; }
+  .hud { position: absolute; left: 0; right: 0; top: 0; display: flex; gap: 10px; align-items: center; padding: 12px 14px; pointer-events: none; }
+  .hud > * { pointer-events: auto; }
+  .pill { background: rgba(255,255,255,.94); border-radius: 99px; padding: 7px 14px; font-weight: 700; box-shadow: 0 2px 10px rgba(0,0,0,.08); display: flex; gap: 8px; align-items: center; }
+  .pill .code { font-size: 18px; letter-spacing: 2px; }
+  .hud .sp { flex: 1; }
+  .narr { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); max-width: min(820px, 90%); background: rgba(31,42,46,.88); color: #fff;
+    border-radius: 16px; padding: 12px 18px; font-size: 18px; line-height: 1.45; text-align: center; }
+  .panel { background: var(--card); border-left: 1px solid var(--line); overflow-y: auto; overflow-x: hidden; padding: 14px; display: grid; gap: 14px; align-content: start; }
+  .panel h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+  .list { display: grid; gap: 6px; }
+  .it { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 7px 9px; cursor: pointer; font-size: 14px; text-align: left; font: inherit; width: 100%; }
+  .it:hover { border-color: #cfc5b0; }
+  .it.on { border-color: var(--gold); background: #fff6e4; box-shadow: 0 0 0 2px #f6e2b8; }
+  .it i { width: 38px; height: 28px; border-radius: 6px; background: #eef0ee center/cover; display: grid; place-items: center; font-style: normal; flex: none; }
+  .it .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .it .n { font-weight: 800; color: var(--accent); min-width: 18px; }
+  .navbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .navbtns .btn { justify-content: center; padding: 12px; font-size: 15px; }
+  .students { display: flex; flex-wrap: wrap; gap: 5px; }
+  .students span { background: var(--paper); border: 1px solid var(--line); border-radius: 99px; padding: 2px 9px; font-size: 13px; }
+  .students span.hand { background: #fff1d0; border-color: var(--gold); }
+  .kbd { font-size: 12px; color: var(--muted); }
+  /* quiz na projektorze */
+  .quizbox { position: absolute; inset: 70px 6% auto 6%; background: rgba(255,255,255,.97); border-radius: 22px; padding: 22px 26px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+  .quizbox h2 { font-size: 30px; margin-bottom: 14px; }
+  .ans { display: grid; grid-template-columns: 40px 1fr 70px; gap: 10px; align-items: center; margin: 8px 0; font-size: 20px; }
+  .ans .bar { height: 34px; background: #eee; border-radius: 10px; overflow: hidden; position: relative; }
+  .ans .bar div { height: 100%; background: var(--gold); width: 0; transition: width .4s; }
+  .ans .bar span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 600; }
+  .ans.ok .bar div { background: #4caf6a; }
+  .ans .L { width: 40px; height: 40px; border-radius: 10px; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 800; }
+  /* zaproszenie */
+  .invite { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; }
+  .invite .qr svg { width: min(46vh, 380px); height: auto; display: block; }
+  @media (max-width: 760px) { .invite { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
+  .bigcode { font: 900 clamp(34px, 6vw, 64px) ui-monospace, Menlo, monospace; letter-spacing: 6px; color: var(--accent); }
+  .cursor { position: absolute; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; pointer-events: none; z-index: 5;
+    background: conic-gradient(var(--gold) calc(var(--p, 0) * 1turn), rgba(255,255,255,.35) 0); transition: left .06s linear, top .06s linear; }
+  .cursor div { position: absolute; inset: 6px; border-radius: 50%; background: rgba(31,42,46,.85); border: 2px solid #fff; }
+  .heard { position: absolute; left: 14px; top: 64px; background: rgba(31,42,46,.88); color: #fff; padding: 6px 12px; border-radius: 99px; font-size: 14px; }
+  .btn.live { background: #2f6b3a; color: #fff; border-color: #2f6b3a; }
+  .legend { display: grid; grid-template-columns: 34px 1fr; gap: 3px 6px; font-size: 13px; }
+  .float { position: absolute; font-size: 42px; animation: up 2.6s ease-out forwards; pointer-events: none; }
+  @keyframes up { to { transform: translateY(-260px); opacity: 0; } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="stage" id="stage">
+    <div id="v3d"></div>
+    <div class="hud">
+      <div class="pill" id="sceneName">Ładowanie…</div>
+      <span class="sp"></span>
+      <div class="pill">👥 <span id="count">0</span></div>
+      <div class="pill">Kod: <span class="code" id="code"></span></div>
+      <button class="btn" id="gestBtn" title="Sterowanie gestami dłoni przed kamerą (G)">✋ Gesty</button>
+      <button class="btn" id="voiceBtn" title="Komendy głosowe (V)">🎙 Głos</button>
+      <button class="btn accent" id="inviteBtn">📲 Zaproś</button>
+      <button class="btn" id="fullBtn" title="Ukryj panel (F)">⛶</button>
+    </div>
+    <div class="narr" id="narr" hidden></div>
+    <div class="cursor" id="cursor" hidden><div></div></div>
+    <div class="heard" id="heard" hidden></div>
+    <div class="quizbox" id="quizbox" hidden></div>
+  </div>
+
+  <aside class="panel" id="panel">
+    <div>
+      <h3>Sterowanie</h3>
+      <div class="navbtns"><button class="btn" id="prev">← Poprzednia</button><button class="btn primary" id="next">Następna →</button></div>
+      <p class="kbd" style="margin:6px 2px 0">Klawisze: ← → sceny · Esc zdejmij wyróżnienie · Z zaproś · F pełny ekran · G gesty · V głos</p>
+    </div>
+    <div><h3>Sceny</h3><div class="list" id="scenes"></div></div>
+    <div><h3>Elementy sceny <span style="text-transform:none;letter-spacing:0">(kliknij, by wyróżnić)</span></h3><div class="list" id="items"></div></div>
+    <div>
+      <h3>Przewodnik Bartek</h3>
+      <div class="row"><button class="btn" id="speak">🔊 Przeczytaj tekst sceny</button><button class="btn sm" id="narrToggle">Napisy: wł.</button></div>
+    </div>
+    <div id="gestPanel" hidden>
+      <h3>Gesty (kamera laptopa)</h3>
+      <div class="legend">
+        <span>👋</span><span>machnięcie w lewo / w prawo: następna / poprzednia scena</span>
+        <span>☝️</span><span>wskaż element i przytrzymaj: wyróżnij go</span>
+        <span>✋</span><span>otwarta dłoń (przytrzymaj): zdejmij wyróżnienie</span>
+        <span>🤏</span><span>chwyć (kciuk + palec) i przesuń: obróć scenę, przybliż dłoń: zoom</span>
+        <span>👍</span><span>kciuk w górę: pokaż odpowiedź w quizie / Bartek czyta</span>
+        <span>✊</span><span>pięść: film start / pauza</span>
+        <span>✌️</span><span>znak V: okno zaproszenia</span>
+      </div>
+    </div>
+    <div id="voicePanel" hidden>
+      <h3>Komendy głosowe</h3>
+      <p class="small" style="margin:0">„dalej”, „wstecz”, „scena trzy”, „pokaż model”, „pokaż slajd dwa”, „odznacz”, „quiz”, „pokaż odpowiedź”,
+        „przeczytaj”, „film start”, „film stop”, „zaproś”, „zamknij”, „pełny ekran”</p>
+    </div>
+    <div id="quizPanel"><h3>Quiz</h3><div class="list" id="quizList"></div></div>
+    <div><h3>Uczniowie (<span id="count2">0</span>)</h3><div class="students" id="students"><span class="muted">Nikt jeszcze nie dołączył</span></div></div>
+    <div class="small muted" id="modeNote"></div>
+  </aside>
+</div>
+
+<!-- okno zaproszenia -->
+<div class="overlay" id="inviteOv" hidden>
+  <div class="box">
+    <div class="invite">
+      <div class="qr" id="qr"></div>
+      <div>
+        <h2 style="font-size:26px">Dołącz do lekcji</h2>
+        <p class="muted" style="margin:4px 0 10px">Zeskanuj kod aparatem telefonu albo wejdź na stronę i wpisz kod:</p>
+        <div class="bigcode" id="bigCode"></div>
+        <p class="small" style="word-break:break-all;margin:8px 0 14px"><a id="joinLink" target="_blank"></a></p>
+        <div class="row"><button class="btn" id="copyLink">📋 Kopiuj link</button><button class="btn primary" id="closeInvite">← Wróć do prezentacji</button></div>
+      </div>
+    </div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+    <b>Wyślij zaproszenie e-mailem</b>
+    <p class="small muted" style="margin:2px 0 6px">Wpisz adresy uczniów (oddzielone przecinkiem lub w osobnych liniach). Otworzy się Twoja poczta z gotową wiadomością.</p>
+    <textarea id="emails" placeholder="jan.kowalski@szkola.pl, anna.nowak@szkola.pl"></textarea>
+    <div class="row" style="margin-top:8px">
+      <a class="btn accent" id="mailto">✉️ Program pocztowy</a>
+      <a class="btn" id="gmail" target="_blank">Gmail</a>
+      <a class="btn" id="outlook" target="_blank">Outlook</a>
+      <span class="small muted" id="mailInfo"></span>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { backend, DEMO, esc, toast, resolveUrl, uid, linkUcznia } from "./wspolne.js";
+import { ScenaLekcji } from "./silnik-sceny.js";
+import { widok3D } from "./widok3d.js";
+
+const $ = s => document.querySelector(s);
+const ICON = { slajd: "📄", obraz: "🖼", wideo: "🎬", model: "🧊" };
+const LIT = "ABCDE";
+const params = new URLSearchParams(location.search);
+const KOD = (params.get("l") || "").toUpperCase();
+const b = await backend();
+
+// nauczyciel musi być zalogowany i być właścicielem lekcji (w trybie demo – zawsze)
+let lesson = null;
+if (!DEMO) {
+  const u = await b.auth.user();
+  if (!u) { document.body.innerHTML = `<div class="wrap"><div class="card" style="max-width:520px;margin:60px auto">Zaloguj się najpierw w <a href="nauczyciel.html">panelu nauczyciela</a>.</div></div>`; throw 0; }
+  try { lesson = params.get("id") ? await b.lessons.get(params.get("id")) : null; } catch {}
+}
+lesson ||= await b.lessons.byCode(KOD);
+if (!lesson) { document.body.innerHTML = `<div class="wrap"><div class="card" style="max-width:520px;margin:60px auto">Nie znaleziono lekcji o kodzie <b>${esc(KOD)}</b>.</div></div>`; throw 0; }
+document.title = `${lesson.tytul} · Lekcja AR`;
+const plan = lesson.plan || { sceny: [] }, mats = lesson.materialy || [];
+const byId = Object.fromEntries(mats.map(m => [m.id, m]));
+$("#code").textContent = $("#bigCode").textContent = lesson.kod;
+$("#modeNote").innerHTML = DEMO ? "Tryb demo: „uczniowie” mogą dołączać tylko w kartach tej samej przeglądarki." : "";
+
+/* ------------------------------------------------------------------ stan lekcji (nadawany do uczniów) */
+const S = { scena: 0, fokus: null, wideo: null, quiz: null, mowi: false, wersja: lesson.zmieniono || "" };
+const answers = {};            // klucz "scena-nr" -> Map(uid -> wybor)
+const students = new Map();    // uid -> { imie, reka }
+
+const lekcja = new ScenaLekcji({ wycisz: false });
+const view = widok3D($("#v3d"), lekcja, { onClick: id => ustawFokus(S.fokus === id ? null : id) });
+lekcja.dodajPrzewodnika("../modele/przewodnik.glb").catch(() => {});
+
+const ch = b.channel(lesson.kod, {
+  onMessage(ev, p) {
+    if (ev === "hej") nadaj();
+    if (ev === "odpowiedz") { (answers[p.klucz] ||= new Map()).set(p.uid, p.wybor); renderQuiz(); }
+    if (ev === "reakcja") reakcja(p);
+  },
+  onPresence(list) {
+    const seen = new Set();
+    for (const m of list) if (m.rola === "uczen") { seen.add(m.uid); if (!students.has(m.uid)) students.set(m.uid, { imie: m.imie }); }
+    for (const k of [...students.keys()]) if (!seen.has(k)) students.delete(k);
+    renderStudents();
+  },
+  onReady() { nadaj(); },
+  onError(s) { toast("Problem z połączeniem na żywo: " + s, 5000); },
+}, { uid: "n-" + uid().slice(0, 8), rola: "nauczyciel", imie: "Nauczyciel" });
+
+function nadaj() {
+  const v = S.wideo && lekcja.videos.get(S.wideo.id);
+  if (v) S.wideo = { id: S.wideo.id, gra: !v.paused, t: v.currentTime };
+  ch.send("stan", { ...S });
+}
+setInterval(nadaj, 4000);
+
+/* ------------------------------------------------------------------ sceny i elementy */
+async function idzDo(i) {
+  if (i < 0 || i >= plan.sceny.length) return;
+  for (const v of lekcja.videos.values()) v.pause();
+  Object.assign(S, { scena: i, fokus: null, wideo: null, quiz: null });
+  window.speechSynthesis?.cancel(); S.mowi = false; lekcja.przewodnikMowi(false);
+  $("#quizbox").hidden = true;
+  renderPanel(); nadaj();
+  await lekcja.pokaz(plan, mats, i);
+  view.lecDo(null); lekcja.przewodnikMacha();
+  const s = plan.sceny[i];
+  $("#sceneName").textContent = `${i + 1}/${plan.sceny.length} · ${s.tytul}`;
+  pokazNarracje(s.narracja);
+}
+function ustawFokus(id) {
+  S.fokus = id; lekcja.ustawFokus(id); view.lecDo(id);
+  const m = id && byId[id];
+  if (m?.typ === "wideo") { S.wideo = { id, gra: false, t: lekcja.videos.get(id)?.currentTime || 0 }; }
+  if (id) lekcja.przewodnikWskazuje();
+  renderItems(); nadaj();
+}
+function wideo(id, akcja) {
+  const v = lekcja.videos.get(id); if (!v) return toast("Film jeszcze się ładuje…");
+  if (akcja === "play") v.play().catch(() => { v.muted = true; v.play(); });
+  if (akcja === "pause") v.pause();
+  if (akcja === "restart") { v.currentTime = 0; v.play().catch(() => {}); }
+  S.wideo = { id, gra: !v.paused, t: v.currentTime }; if (akcja !== "pause") S.wideo.gra = true;
+  setTimeout(() => { renderItems(); nadaj(); }, 100);
+}
+
+function renderPanel() {
+  $("#scenes").innerHTML = plan.sceny.map((s, i) => `<button class="it ${i === S.scena ? "on" : ""}" data-sc="${i}"><span class="n">${i + 1}</span><span class="t">${esc(s.tytul)}</span><span class="small muted">${s.elementy.length}</span></button>`).join("")
+    || `<div class="muted small">Ta lekcja nie ma jeszcze scen. Ułóż je w panelu nauczyciela.</div>`;
+  renderItems(); renderQuiz();
+}
+function renderItems() {
+  const s = plan.sceny[S.scena]; if (!s) return ($("#items").innerHTML = "");
+  $("#items").innerHTML = s.elementy.map(id => {
+    const m = byId[id]; if (!m) return "";
+    const vid = m.typ === "wideo" ? (() => { const v = lekcja.videos.get(id); const gra = v && !v.paused;
+      return `<span class="row" style="gap:4px"><span class="btn sm" data-vid="${id}" data-a="${gra ? "pause" : "play"}">${gra ? "⏸" : "▶"}</span><span class="btn sm" data-vid="${id}" data-a="restart">⟲</span></span>`; })() : "";
+    return `<div class="it ${S.fokus === id ? "on" : ""}" data-f="${id}"><i data-thumb="${id}">${m.typ === "slajd" || m.typ === "obraz" ? "" : ICON[m.typ]}</i><span class="t">${esc(m.nazwa)}</span>${vid}</div>`;
+  }).join("");
+  document.querySelectorAll("[data-thumb]").forEach(async el => { const m = byId[el.dataset.thumb]; if (m.typ === "slajd" || m.typ === "obraz") el.style.backgroundImage = `url("${await resolveUrl(m.url)}")`; });
+}
+$("#scenes").onclick = e => { const x = e.target.closest("[data-sc]"); if (x) idzDo(+x.dataset.sc); };
+$("#items").onclick = e => {
+  const v = e.target.closest("[data-vid]"); if (v) return wideo(v.dataset.vid, v.dataset.a);
+  const f = e.target.closest("[data-f]"); if (f) ustawFokus(S.fokus === f.dataset.f ? null : f.dataset.f);
+};
+$("#prev").onclick = () => idzDo(S.scena - 1);
+$("#next").onclick = () => idzDo(S.scena + 1);
+
+/* ------------------------------------------------------------------ narracja (Bartek) */
+let napisy = true;
+function pokazNarracje(t) { $("#narr").textContent = t || ""; $("#narr").hidden = !napisy || !t; }
+$("#narrToggle").onclick = () => { napisy = !napisy; $("#narrToggle").textContent = "Napisy: " + (napisy ? "wł." : "wył."); pokazNarracje(plan.sceny[S.scena]?.narracja); };
+$("#speak").onclick = () => {
+  const synth = window.speechSynthesis, t = plan.sceny[S.scena]?.narracja;
+  if (!synth || !t) return toast("Brak tekstu przewodnika w tej scenie");
+  if (S.mowi) { synth.cancel(); return; }
+  const u = new SpeechSynthesisUtterance(t); u.lang = "pl-PL";
+  const v = synth.getVoices().find(x => /^pl/i.test(x.lang)); if (v) u.voice = v;
+  u.onstart = () => { S.mowi = true; lekcja.przewodnikMowi(true); $("#speak").textContent = "■ Zatrzymaj"; nadaj(); };
+  u.onend = u.onerror = () => { S.mowi = false; lekcja.przewodnikMowi(false); $("#speak").textContent = "🔊 Przeczytaj tekst sceny"; nadaj(); };
+  synth.speak(u);
+};
+
+/* ------------------------------------------------------------------ quiz */
+function renderQuiz() {
+  const s = plan.sceny[S.scena], q = s?.quiz || [];
+  $("#quizPanel").hidden = !q.length;
+  $("#quizList").innerHTML = q.map((x, k) => {
+    const n = answers[`${S.scena}-${k}`]?.size || 0, on = S.quiz?.nr === k;
+    return `<div class="it ${on ? "on" : ""}" data-q="${k}"><span class="n">?</span><span class="t">${esc(x.pytanie)}</span><span class="small muted">${n} odp.</span></div>`;
+  }).join("");
+  if (S.quiz) quizNaEkranie();
+}
+$("#quizList").onclick = e => {
+  const x = e.target.closest("[data-q]"); if (!x) return;
+  const k = +x.dataset.q;
+  S.quiz = S.quiz?.nr === k ? null : { scena: S.scena, nr: k, pokaz: false };
+  $("#quizbox").hidden = !S.quiz; renderQuiz(); nadaj();
+};
+function quizNaEkranie() {
+  const q = plan.sceny[S.quiz.scena]?.quiz?.[S.quiz.nr]; if (!q) return;
+  const a = answers[`${S.quiz.scena}-${S.quiz.nr}`] || new Map();
+  const cnt = q.odpowiedzi.map((_, j) => [...a.values()].filter(v => v === j).length), tot = a.size || 1;
+  $("#quizbox").hidden = false;
+  $("#quizbox").innerHTML = `<div class="row" style="justify-content:space-between"><span class="badge">Pytanie · odpowiedzi: ${a.size}/${students.size}</span>
+      <span class="row"><button class="btn sm gold" id="qShow">${S.quiz.pokaz ? "Ukryj odpowiedź" : "✔ Pokaż poprawną"}</button><button class="btn sm" id="qClose">Zamknij</button></span></div>
+    <h2 style="margin-top:10px">${esc(q.pytanie)}</h2>
+    ${q.odpowiedzi.map((o, j) => `<div class="ans ${S.quiz.pokaz && j === q.poprawna ? "ok" : ""}"><span class="L">${LIT[j]}</span>
+      <div class="bar"><div style="width:${cnt[j] / tot * 100}%"></div><span>${esc(o)}${S.quiz.pokaz && j === q.poprawna ? " ✔" : ""}</span></div><b>${cnt[j]}</b></div>`).join("")}`;
+  $("#qShow").onclick = () => { S.quiz.pokaz = !S.quiz.pokaz; quizNaEkranie(); nadaj(); };
+  $("#qClose").onclick = () => { S.quiz = null; $("#quizbox").hidden = true; renderQuiz(); nadaj(); };
+}
+
+/* ------------------------------------------------------------------ uczniowie i reakcje */
+function renderStudents() {
+  $("#count").textContent = $("#count2").textContent = students.size;
+  $("#students").innerHTML = students.size ? [...students.values()].map(s => `<span class="${s.reka ? "hand" : ""}">${s.reka ? "✋ " : ""}${esc(s.imie)}</span>`).join("") : `<span class="muted">Nikt jeszcze nie dołączył</span>`;
+  if (S.quiz) quizNaEkranie();
+}
+function reakcja(p) {
+  const s = students.get(p.uid); if (s) { s.reka = p.e === "✋" ? !s.reka : s.reka; renderStudents(); }
+  if (p.e === "✋") toast(`✋ ${p.imie} ma pytanie`, 4000);
+  const el = document.createElement("div"); el.className = "float"; el.textContent = p.e;
+  el.style.left = 20 + Math.random() * 60 + "%"; el.style.bottom = "60px"; $("#stage").appendChild(el); setTimeout(() => el.remove(), 2700);
+}
+
+/* ------------------------------------------------------------------ zaproszenie */
+const link = linkUcznia(lesson.kod);
+$("#joinLink").href = $("#joinLink").textContent = link;
+function qr() {
+  if (!window.qrcode) return ($("#qr").innerHTML = `<div class="bigcode">${lesson.kod}</div>`);
+  const q = qrcode(0, "M"); q.addData(link); q.make(); $("#qr").innerHTML = q.createSvgTag({ cellSize: 8, margin: 2, scalable: true });
+}
+const inviteOpen = on => { $("#inviteOv").hidden = !on; if (on) { qr(); mailLinks(); } };
+$("#inviteBtn").onclick = () => inviteOpen(true);
+$("#closeInvite").onclick = () => inviteOpen(false);
+$("#inviteOv").onclick = e => { if (e.target.id === "inviteOv") inviteOpen(false); };
+$("#copyLink").onclick = async () => { try { await navigator.clipboard.writeText(link); toast("Skopiowano link"); } catch { toast(link, 6000); } };
+const EKEY = "lekcjeAR-maile-" + lesson.kod;
+try { $("#emails").value = localStorage.getItem(EKEY) || ""; } catch {}
+function mailLinks() {
+  const list = $("#emails").value.split(/[\s,;]+/).map(x => x.trim()).filter(x => /.+@.+\..+/.test(x));
+  try { localStorage.setItem(EKEY, $("#emails").value); } catch {}
+  const subj = `Zaproszenie na lekcję: ${lesson.tytul}`;
+  const body = `Dzień dobry!\n\nZapraszam na lekcję w rozszerzonej rzeczywistości „${lesson.tytul}”.\n\nOtwórz na telefonie link:\n${link}\n\nalbo wejdź na stronę i wpisz kod lekcji: ${lesson.kod}\n\nDo zobaczenia na lekcji!`;
+  const e = encodeURIComponent, bcc = list.join(",");
+  $("#mailto").href = `mailto:?bcc=${e(bcc)}&subject=${e(subj)}&body=${e(body)}`;
+  $("#gmail").href = `https://mail.google.com/mail/?view=cm&fs=1&bcc=${e(bcc)}&su=${e(subj)}&body=${e(body)}`;
+  $("#outlook").href = `https://outlook.office.com/mail/deeplink/compose?bcc=${e(bcc)}&subject=${e(subj)}&body=${e(body)}`;
+  $("#mailInfo").textContent = list.length ? `Adresów: ${list.length} (w polu UDW, uczniowie nie widzą swoich adresów)` : "";
+}
+$("#emails").oninput = mailLinks;
+
+/* ------------------------------------------------------------------ klawiatura i pełny ekran */
+$("#fullBtn").onclick = () => $("#app").classList.toggle("full");
+addEventListener("keydown", e => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "ArrowRight" || e.key === "PageDown") idzDo(S.scena + 1);
+  if (e.key === "ArrowLeft" || e.key === "PageUp") idzDo(S.scena - 1);
+  if (e.key === "Escape") { if (!$("#inviteOv").hidden) inviteOpen(false); else ustawFokus(null); }
+  if (e.key.toLowerCase() === "z") inviteOpen($("#inviteOv").hidden);
+  if (e.key.toLowerCase() === "f") $("#app").classList.toggle("full");
+});
+
+/* ------------------------------------------------------------------ GESTY (MediaPipe, kamera laptopa) */
+let gesty = null, kursorId = null, kursorT = 0;
+const stage = $("#stage");
+function akcjaQuizLubCzytaj() {
+  if (S.quiz) { S.quiz.pokaz = !S.quiz.pokaz; quizNaEkranie(); nadaj(); }
+  else $("#speak").click();
+}
+function filmStartStop() {
+  const id = S.wideo?.id || plan.sceny[S.scena]?.elementy.find(x => byId[x]?.typ === "wideo");
+  if (!id) return toast("W tej scenie nie ma filmu");
+  const v = lekcja.videos.get(id); wideo(id, v && !v.paused ? "pause" : "play");
+}
+const zrob = {
+  nastepna: () => idzDo(S.scena + 1), poprzednia: () => idzDo(S.scena - 1),
+  odznacz: () => ustawFokus(null), quizOdp: akcjaQuizLubCzytaj, film: filmStartStop,
+  zapros: () => inviteOpen($("#inviteOv").hidden),
+};
+async function wlaczGesty(on) {
+  if (!on) { gesty?.stop(); gesty = null; $("#cursor").hidden = true; $("#gestBtn").classList.remove("live"); $("#gestPanel").hidden = true; return; }
+  $("#gestBtn").textContent = "⏳ Gesty"; 
+  try {
+    const { uruchomGesty } = await import("../gesty.js");
+    gesty = await uruchomGesty({ facing: "user", miejscePodgladu: "lewy-dol", symulacja: window.__symulacjaGestow || null,
+      onZdarzenie(typ, d) {
+        if (typ === "machniecie") (d.kierunek === "lewo" ? zrob.nastepna : zrob.poprzednia)(), toast(d.kierunek === "lewo" ? "👋 Następna scena" : "👋 Poprzednia scena", 1200);
+        if (typ === "szczypniecie") { view.obroc(-d.dx * 6, d.dy * 4); if (Math.abs(d.skala - 1) > 0.01) view.przybliz(Math.pow(1 / d.skala, 1.5)); }
+        if (typ === "gest") {
+          if (d.nazwa === "Open_Palm") { zrob.odznacz(); toast("✋ Bez wyróżnienia", 1200); }
+          if (d.nazwa === "Thumb_Up") zrob.quizOdp();
+          if (d.nazwa === "Closed_Fist") zrob.film();
+          if (d.nazwa === "Victory") zrob.zapros();
+        }
+      },
+      onRamka(st) {
+        const c = $("#cursor");
+        if (!st.wskaz) { c.hidden = true; kursorId = null; return; }
+        // zakres ruchu dłoni przed kamerą jest mniejszy niż cały obraz – rozciągamy go na cały ekran
+        const nx = Math.min(1, Math.max(0, (st.wskaz.x - 0.15) / 0.7)), ny = Math.min(1, Math.max(0, (st.wskaz.y - 0.12) / 0.6));
+        const r = stage.getBoundingClientRect();
+        c.hidden = false; c.style.left = nx * r.width + "px"; c.style.top = ny * r.height + "px";
+        const id = view.pick(nx, ny);
+        if (id !== kursorId) { kursorId = id; kursorT = performance.now(); }
+        const p = id && id !== S.fokus ? Math.min(1, (performance.now() - kursorT) / 1100) : 0;
+        c.style.setProperty("--p", p);
+        if (p >= 1) { ustawFokus(id); kursorT = performance.now() + 1e9; }
+      },
+    });
+    $("#gestBtn").textContent = "✋ Gesty"; $("#gestBtn").classList.add("live"); $("#gestPanel").hidden = false;
+    toast("Gesty włączone: pokaż dłoń do kamery", 2500);
+  } catch (e) {
+    console.error(e); $("#gestBtn").textContent = "✋ Gesty"; gesty = null;
+    toast(/Permission|NotAllowed/i.test(e.name + e.message) ? "Brak dostępu do kamery" : "Nie udało się włączyć gestów: " + e.message, 5000);
+  }
+}
+$("#gestBtn").onclick = () => wlaczGesty(!gesty);
+
+/* ------------------------------------------------------------------ GŁOS (komendy po polsku) */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const LICZBY = { jeden: 1, jedna: 1, pierwsza: 1, pierwszy: 1, dwa: 2, druga: 2, drugi: 2, trzy: 3, trzecia: 3, trzeci: 3, cztery: 4, czwarta: 4, czwarty: 4,
+  piec: 5, piata: 5, piaty: 5, szesc: 6, szosta: 6, siedem: 7, siodma: 7, osiem: 8, osma: 8, dziewiec: 9, dziesiec: 10 };
+const norm = t => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ł/g, "l").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+const liczba = t => { const m = t.match(/\b(\d+)\b/); if (m) return +m[1]; for (const w of t.split(" ")) if (LICZBY[w]) return LICZBY[w]; return null; };
+function komenda(raw) {
+  const t = norm(raw);
+  const has = (...w) => w.some(x => t.includes(x));
+  if (has("pelny ekran")) { $("#app").classList.toggle("full"); return "pełny ekran"; }
+  if (has("zamknij", "wroc do prezentacji")) { inviteOpen(false); if (S.quiz) { S.quiz = null; $("#quizbox").hidden = true; renderQuiz(); nadaj(); } return "zamknij"; }
+  if (has("zapros", "pokaz kod")) { inviteOpen(true); return "zaproszenie"; }
+  if (has("odpowiedz", "poprawn")) { if (S.quiz) { S.quiz.pokaz = true; quizNaEkranie(); nadaj(); } return "odpowiedź"; }
+  if (has("quiz", "pytanie")) { const q = plan.sceny[S.scena]?.quiz; if (q?.length) { S.quiz = { scena: S.scena, nr: 0, pokaz: false }; renderQuiz(); nadaj(); } else toast("Brak quizu w tej scenie"); return "quiz"; }
+  if (has("film", "wideo", "filmik")) { const id = plan.sceny[S.scena]?.elementy.find(x => byId[x]?.typ === "wideo"); if (id) wideo(id, has("stop", "pauz", "zatrzymaj") ? "pause" : has("od poczatku", "jeszcze raz") ? "restart" : "play"); return "film"; }
+  if (has("przeczytaj", "czytaj", "opowiedz", "bartek")) { $("#speak").click(); return "Bartek czyta"; }
+  if (has("odznacz", "wyczysc", "bez wyroznienia", "schowaj strzalke")) { ustawFokus(null); return "odznacz"; }
+  if (has("scena", "scene", "sceny") && liczba(t)) { idzDo(liczba(t) - 1); return "scena " + liczba(t); }
+  if (has("dalej", "nastepn", "kolejn")) { idzDo(S.scena + 1); return "dalej"; }
+  if (has("wstecz", "poprzedni", "cofnij")) { idzDo(S.scena - 1); return "wstecz"; }
+  if (has("pokaz", "zobacz", "wyroznij", "spojrzcie")) {
+    const s = plan.sceny[S.scena]; if (!s) return null;
+    const els = s.elementy.map(id => byId[id]).filter(Boolean);
+    const typ = has("model") ? "model" : has("film", "wideo") ? "wideo" : has("zdjec", "obraz") ? "obraz" : has("slajd") ? "slajd" : null;
+    const n = liczba(t);
+    let m = null;
+    if (typ) { const of = els.filter(e => e.typ === typ); m = of[(n || 1) - 1] || of[0]; }
+    if (!m) { const words = t.replace(/^(pokaz|zobacz|wyroznij|spojrzcie)( na)? /, "").split(" ").filter(w => w.length > 2);
+      m = els.find(e => words.some(w => norm(e.nazwa + " " + (e.tytulSlajdu || "")).includes(w))); }
+    if (!m && n) m = els[n - 1];
+    if (m) { ustawFokus(m.id); return "pokaż: " + m.nazwa; }
+  }
+  return null;
+}
+let rozpoznawanie = null;
+function wlaczGlos(on) {
+  if (!SR) return toast("Ta przeglądarka nie obsługuje komend głosowych (użyj Chrome lub Edge)", 4000);
+  if (!on) { const r = rozpoznawanie; rozpoznawanie = null; r?.stop(); $("#voiceBtn").classList.remove("live"); $("#voicePanel").hidden = true; $("#heard").hidden = true; return; }
+  const r = new SR(); r.lang = "pl-PL"; r.continuous = true; r.interimResults = false;
+  r.onresult = e => {
+    const txt = e.results[e.results.length - 1][0].transcript;
+    const ok = komenda(txt);
+    $("#heard").hidden = false; $("#heard").textContent = (ok ? "✅ " : "🎙 ") + txt + (ok ? " → " + ok : "");
+    clearTimeout(window._hh); window._hh = setTimeout(() => $("#heard").hidden = true, 3500);
+  };
+  r.onend = () => { if (rozpoznawanie === r) try { r.start(); } catch {} };   // przeglądarka czasem przerywa – wznawiamy
+  r.onerror = e => { if (e.error === "not-allowed") { toast("Brak dostępu do mikrofonu", 4000); wlaczGlos(false); } };
+  rozpoznawanie = r; r.start();
+  $("#voiceBtn").classList.add("live"); $("#voicePanel").hidden = false; toast("🎙 Słucham: powiedz np. „dalej” albo „pokaż model”", 3000);
+}
+$("#voiceBtn").onclick = () => wlaczGlos(!rozpoznawanie);
+addEventListener("keydown", e => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key.toLowerCase() === "g") wlaczGesty(!gesty);
+  if (e.key.toLowerCase() === "v") wlaczGlos(!rozpoznawanie);
+});
+window.__komenda = komenda; window.__view = view; window.__lekcja = lekcja;
+
+renderPanel();
+if (plan.sceny.length) idzDo(0); else $("#sceneName").textContent = lesson.tytul;
+window.__S = S;   // (do testów)
+</script>
+</body>
+</html>

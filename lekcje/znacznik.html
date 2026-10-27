@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Znacznik lekcji do wydruku · Lekcja AR</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<link rel="stylesheet" href="styl.css">
+<style>
+  .sheet { background: #fff; max-width: 760px; margin: 0 auto; padding: 26px; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+  .sheet img { width: 100%; display: block; }
+  .foot { display: flex; gap: 18px; align-items: center; border-top: 3px solid #111; margin-top: 14px; padding-top: 14px; }
+  .foot svg { width: 120px; height: 120px; flex: none; }
+  .foot .code { font-size: 34px; color: var(--accent); }
+  @media print { body { background: #fff; } .no-print { display: none; } .wrap { padding: 0; } .sheet { box-shadow: none; padding: 6mm; max-width: none; } @page { size: A4; margin: 8mm; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-print" style="max-width:760px;margin:0 auto 16px">
+    <h1 style="font-size:24px">Znacznik lekcji</h1>
+    <p class="muted">Wydrukuj w kolorze na A4 albo A3, najlepiej na matowym papierze. Połóż na biurku albo przypnij do tablicy.
+      Wszyscy uczniowie celują w ten sam znacznik, dlatego każdy widzi wspólną scenę ze swojego miejsca.
+      Znacznik jest ten sam dla każdej lekcji, więc wystarczy wydrukować go raz.</p>
+    <div class="row"><button class="btn primary" onclick="print()">🖨 Drukuj</button><a class="btn" href="znacznik-lekcji.jpg" download>⬇ Pobierz obraz</a></div>
+  </div>
+  <div class="sheet">
+    <img src="znacznik-lekcji.jpg" alt="Znacznik lekcji AR">
+    <div class="foot" id="foot" hidden>
+      <div id="qr"></div>
+      <div><div class="muted small">Dołącz do lekcji: zeskanuj kod QR albo wpisz kod</div><div class="code" id="code"></div><div class="small" id="url"></div></div>
+    </div>
+  </div>
+</div>
+<script>
+  const kod = new URLSearchParams(location.search).get("l");
+  if (kod) {
+    const url = new URL(`uczen.html?l=${encodeURIComponent(kod)}`, location.href).href;
+    document.getElementById("foot").hidden = false;
+    document.getElementById("code").textContent = kod;
+    document.getElementById("url").textContent = url;
+    if (window.qrcode) { const q = qrcode(0, "M"); q.addData(url); q.make(); document.getElementById("qr").innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); }
+  }
+</script>
+</body>
+</html>

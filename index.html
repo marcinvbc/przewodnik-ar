@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#1f2a2e">
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 <script src="atrakcje.js"></script>
+<script src="lekcje/konfiguracja.js"></script>
 <style>
   :root {
     --ink: #1f2a2e; --paper: #f6f1e7; --card: #fffdf8; --muted: #6b6f66;
@@ -50,6 +51,10 @@
     background: var(--accent); color: #fff; box-shadow: 0 8px 22px rgba(0,0,0,.22); display: flex; gap: 8px; align-items: center; }
   .no-ar { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); font-size: 13px;
     background: rgba(255,255,255,.9); padding: 8px 14px; border-radius: 99px; color: var(--muted); white-space: nowrap; }
+  .hand-btn { position: absolute; right: 12px; top: 12px; border: 0; border-radius: 99px; padding: 8px 12px; font: 600 13px system-ui, sans-serif;
+    background: rgba(255,255,255,.92); color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,.15); cursor: pointer; }
+  .hand-btn.on { background: #2f6b3a; color: #fff; }
+  .hand-help { position: absolute; left: 12px; right: 12px; top: 54px; background: rgba(31,42,46,.85); color: #fff; font-size: 12px; border-radius: 12px; padding: 7px 10px; text-align: center; }
   .hotspot { border: 0; background: #fff; color: var(--ink); border-radius: 99px; padding: 5px 10px 5px 8px;
     font: 600 12px system-ui, sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.25); display: flex; align-items: center; gap: 6px; }
   .hotspot::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
@@ -158,6 +163,8 @@ function renderHome() {
         </a>`).join("")}
     </div>
     <p class="foot">Odwiedzone: ${seen.filter(id => ATRAKCJE.some(a => a.id === id)).length} / ${ATRAKCJE.length} · <a href="qr.html">Kody QR do wydruku</a> · <a href="plakaty.html">Plakaty AR do wydruku</a> · <a href="kreator.html">Kreator znaczników AR</a></p>
+    <a href="lekcje/nauczyciel.html" style="display:flex;gap:12px;align-items:center;text-decoration:none;background:var(--ink);color:#fff;border-radius:16px;padding:14px 16px;margin-top:14px">
+      <span style="font-size:28px">🧑‍🏫</span><span><b>Lekcja AR dla nauczycieli</b><br><small style="opacity:.8">Wgraj slajdy, filmy i modele 3D: AI ułoży sceny, a uczniowie oglądają je na telefonach</small></span></a>
   </div>`;
 }
 
@@ -196,6 +203,8 @@ function renderAttraction(a) {
         Zobacz w AR
       </button>
     </model-viewer>
+    <button class="hand-btn" id="handBtn" title="Obracaj model ruchem dłoni przed kamerą">🤏 Steruj dłonią</button>
+    <div class="hand-help" id="handHelp" hidden>🤏 chwyć i przesuń: obrót · przybliż dłoń: zoom · ✋ dłoń: reset · 👍 Bartek opowiada · 👋 machnij: kolejna atrakcja</div>
     <div class="no-ar" id="noar" hidden>AR działa na telefonie · tu możesz obracać model palcem/myszką</div>
   </div>
   <div class="wrap info">
@@ -217,6 +226,11 @@ function renderAttraction(a) {
         <div class="controls">
           <button class="primary" id="play">▶ Opowiedz</button>
           <button id="stop" hidden>■ Stop</button>
+          <button id="ask" hidden>💬 Zapytaj Bartka</button>
+        </div>
+        <div id="askBox" hidden style="margin-top:10px">
+          <div style="display:flex;gap:6px"><input id="askIn" maxlength="300" placeholder="Zadaj pytanie o to miejsce…" style="flex:1;padding:9px 11px;border:1px solid var(--line);border-radius:10px;font:inherit">
+          <button id="askGo" class="primary" style="border:0;border-radius:99px;padding:8px 14px;font:600 14px system-ui;background:var(--ink);color:#fff">Zapytaj</button></div>
         </div>
       </div>
     </div>
@@ -237,6 +251,43 @@ function renderAttraction(a) {
   viewer.addEventListener("load", () => { if (!viewer.canActivateAR) $("#noar").hidden = false; });
 
   setupNarrator(sentences);
+  setupHand(viewer, prev, next);
+}
+
+/* ---------------- sterowanie modelem dłonią (MediaPipe + model-viewer) ---------------- */
+function setupHand(mv, prev, next) {
+  let g = null;
+  const START = "35deg 72deg auto";
+  async function on(v) {
+    if (!v) { g?.stop(); g = null; $("#handBtn").classList.remove("on"); $("#handBtn").textContent = "🤏 Steruj dłonią"; $("#handHelp").hidden = true; try { sessionStorage.removeItem("gesty"); } catch {} return; }
+    $("#handBtn").textContent = "⏳ Uruchamiam kamerę…";
+    try {
+      const { uruchomGesty } = await import("./gesty.js");
+      g = await uruchomGesty({ facing: "user", miejscePodgladu: "prawy-dol", symulacja: window.__symulacjaGestow || null,
+        onZdarzenie(typ, d) {
+          if (typ === "szczypniecieStart") mv.autoRotate = false;
+          if (typ === "szczypniecie") {
+            const o = mv.getCameraOrbit();
+            const phi = Math.min(Math.PI * 0.95, Math.max(0.15, o.phi - d.dy * 3));
+            const r = o.radius * (Math.abs(d.skala - 1) > 0.01 ? Math.pow(1 / d.skala, 1.6) : 1);
+            mv.cameraOrbit = `${o.theta - d.dx * 6}rad ${phi}rad ${r}m`;
+          }
+          if (typ === "gest" && d.nazwa === "Open_Palm") { mv.cameraOrbit = START; mv.fieldOfView = "auto"; }
+          if (typ === "gest" && d.nazwa === "Thumb_Up") $("#play")?.click();
+          if (typ === "machniecie") { try { sessionStorage.setItem("gesty", "1"); } catch {} location.href = `?a=${encodeURIComponent((d.kierunek === "lewo" ? next : prev).id)}`; }
+        },
+      });
+      $("#handBtn").classList.add("on"); $("#handBtn").textContent = "🤏 Wyłącz dłoń"; $("#handHelp").hidden = false;
+      try { sessionStorage.setItem("gesty", "1"); } catch {}
+    } catch (e) {
+      console.error(e); g = null; $("#handBtn").textContent = "🤏 Steruj dłonią";
+      alertMsg(/Permission|NotAllowed/i.test(e.name + e.message) ? "Brak dostępu do kamery: zezwól w ustawieniach przeglądarki." : "Sterowanie dłonią niedostępne: " + e.message);
+    }
+  }
+  function alertMsg(t) { $("#handHelp").hidden = false; $("#handHelp").textContent = t; setTimeout(() => $("#handHelp").hidden = !g, 4000); }
+  $("#handBtn").onclick = () => on(!g);
+  try { if (sessionStorage.getItem("gesty") === "1") on(true); } catch {}   // po machnięciu do kolejnej atrakcji gesty zostają włączone
+  window.__gestyAtrakcji = () => g;
 }
 
 /* ---------------- awatar 3D ---------------- */
@@ -262,9 +313,37 @@ function makeAvatar() {
   };
 }
 
+/* ---------------- Zapytaj Bartka (Claude przez Supabase – patrz lekcje/LEKCJE-INSTRUKCJA.md) ---------------- */
+function setupAsk(guide) {
+  const C = window.LEKCJE_CONFIG || {};
+  if (!(C.supabaseUrl && C.supabaseKey && C.aiWlaczone !== false)) return;
+  const a = ATRAKCJE.find(x => x.id === new URLSearchParams(location.search).get("a"));
+  $("#ask").hidden = false;
+  $("#ask").onclick = () => { $("#askBox").hidden = !$("#askBox").hidden; $("#askIn").focus(); };
+  $("#askIn").onkeydown = e => { if (e.key === "Enter") $("#askGo").click(); };
+  $("#askGo").onclick = async () => {
+    const q = $("#askIn").value.trim(); if (!q) return;
+    $("#bubble").textContent = "Hmm, chwileczkę…";
+    try {
+      const { backend } = await import("./lekcje/wspolne.js");
+      const b = await backend();
+      const odp = await b.ai.ask(q, { tytul: `${a.nazwa} (${a.miejsce})`, tekst: a.opis + "\n" + (a.ciekawostki || []).join("\n") });
+      $("#bubble").textContent = odp;
+      const synth = window.speechSynthesis;
+      if (synth) {
+        const u = new SpeechSynthesisUtterance(odp); u.lang = "pl-PL";
+        const v = synth.getVoices().find(x => /^pl/i.test(x.lang)); if (v) u.voice = v;
+        u.onstart = () => guide.start(); u.onend = u.onerror = () => guide.stop();
+        synth.cancel(); synth.speak(u);
+      }
+    } catch (e) { $("#bubble").textContent = "Nie udało się zapytać: " + e.message; }
+  };
+}
+
 /* ---------------- awatar-lektor (Web Speech API) ---------------- */
 function setupNarrator(sentences) {
   const guide = makeAvatar();
+  setupAsk(guide);
   const avatar = { classList: { add() {}, remove() {} } };   // ruch ust obsługuje teraz awatar (3D lub SVG)
   const bubble = $("#bubble"), play = $("#play"), stop = $("#stop");
   const synth = window.speechSynthesis;
