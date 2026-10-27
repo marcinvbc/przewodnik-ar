@@ -73,6 +73,41 @@ function shadowDisc() {
   return m;
 }
 
+/* ---------- awatar-przewodnik ---------- */
+async function loadGuide(url, height, offsetX) {
+  const g = await new GLTFLoader().loadAsync(url);
+  const root = new THREE.Group(), av = g.scene;
+  const b = new THREE.Box3().setFromObject(av), d = b.getSize(new THREE.Vector3());
+  const k = height / d.y;
+  av.scale.setScalar(k);
+  av.position.set(-(b.min.x + d.x / 2) * k, -b.min.y * k, -(b.min.z + d.z / 2) * k);
+  root.add(av);
+  root.position.set(Math.max(0.42, offsetX + d.x * k / 2), 0, 0.05);
+  root.rotation.y = -0.45;                      // zwrócony trochę w stronę zabytku
+  const sh = shadowDisc(); sh.scale.setScalar(d.x * k * 1.6); sh.position.y = 0.003; root.add(sh);
+
+  const mixer = new THREE.AnimationMixer(av);
+  const acts = Object.fromEntries(g.animations.map(c => [c.name, mixer.clipAction(c)]));
+  const fallback = acts.Spoczynek || Object.values(acts)[0];
+  let current = null, talking = false;
+  function to(name, once = false) {
+    const a = acts[name] || fallback; if (!a) return;
+    if (a === current && !once) return;
+    a.reset(); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = once;
+    a.play();
+    if (current && current !== a) current.crossFadeTo(a, 0.3, false);
+    current = a;
+  }
+  mixer.addEventListener("finished", () => to(talking ? "Mowi" : "Spoczynek"));
+  to("Spoczynek");
+  return {
+    root, mixer,
+    wave: () => to("Macha", true),
+    point: () => to("Wskazuje", true),
+    talk(on) { talking = on; if (on) to("Wskazuje", true); else to("Spoczynek"); },   // najpierw wskaże zabytek, potem mówi
+  };
+}
+
 /**
  * Uruchamia AR.
  *  container    – element na obraz z kamery
@@ -80,8 +115,11 @@ function shadowDisc() {
  *  modelUrl     – adres modelu .glb
  *  orientation  – "sciana" (plakat na ścianie, model stoi przed nim) | "stol" (obrazek leży, model wyrasta w górę)
  *  size         – wysokość modelu względem szerokości plakatu (domyślnie 0.9)
+ *  avatarUrl    – (opcjonalnie) awatar-przewodnik .glb z animacjami Spoczynek / Macha / Mowi / Wskazuje
+ *  avatarSize   – wysokość awatara względem szerokości plakatu (domyślnie 0.55)
  */
-export async function startPosterAR({ container, mindUrl, modelUrl, orientation = "sciana", size = 0.9, onFound, onLost }) {
+export async function startPosterAR({ container, mindUrl, modelUrl, orientation = "sciana", size = 0.9,
+                                      avatarUrl = null, avatarSize = 0.55, onFound, onLost }) {
   const mindar = new MindARThree({
     container, imageTargetSrc: mindUrl,
     uiLoading: "no", uiScanning: "no", uiError: "yes",
@@ -113,6 +151,10 @@ export async function startPosterAR({ container, mindUrl, modelUrl, orientation 
   const mixer = new THREE.AnimationMixer(model);
   gltf.animations.forEach(clip => mixer.clipAction(clip).play());
 
+  // awatar-przewodnik stoi obok modelu (po prawej stronie, lekko zwrócony w stronę zabytku)
+  const guide = avatarUrl ? await loadGuide(avatarUrl, avatarSize, Math.max(dim.x, dim.z) * s / 2 + 0.12) : null;
+  if (guide) pop.add(guide.root);
+
   function setOrientation(o) {
     orientation = o;
     if (o === "stol") {          // obrazek leży poziomo – model „wyrasta” z niego
@@ -126,14 +168,14 @@ export async function startPosterAR({ container, mindUrl, modelUrl, orientation 
   setOrientation(orientation);
 
   let popT = 1;
-  anchor.onTargetFound = () => { popT = 0; onFound && onFound(); };
+  anchor.onTargetFound = () => { popT = 0; guide?.wave(); onFound && onFound(); };
   anchor.onTargetLost = () => { onLost && onLost(); };
 
   await mindar.start();
   const clock = new THREE.Clock();
   renderer.setAnimationLoop(() => {
     const dt = clock.getDelta();
-    mixer.update(dt);
+    mixer.update(dt); guide?.mixer.update(dt);
     if (popT < 1) {
       popT = Math.min(1, popT + dt * 2.2);
       const k = 1.70158, t = popT - 1;                 // easeOutBack
@@ -143,6 +185,7 @@ export async function startPosterAR({ container, mindUrl, modelUrl, orientation 
   });
 
   return {
+    guide,   // null albo { wave(), point(), talk(true/false) }
     setOrientation, get orientation() { return orientation; },
     stop() { renderer.setAnimationLoop(null); try { mindar.stop(); } catch {} },
   };

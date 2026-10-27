@@ -65,7 +65,12 @@
   .poster-cta small { display: block; opacity: .75; font-size: 13px; }
   .poster-cta i { margin-left: auto; font-style: normal; font-size: 26px; opacity: .7; }
   .guide { display: flex; gap: 14px; align-items: flex-end; margin: 6px 0 20px; }
-  .guide svg { width: 92px; height: 92px; flex: none; }
+  .avatar-box { position: relative; width: 112px; height: 150px; flex: none; cursor: pointer; }
+  .avatar-box model-viewer { width: 100%; height: 100%; opacity: 0; transition: opacity .4s; --poster-color: transparent; }
+  .avatar-box model-viewer.ready { opacity: 1; }
+  .avatar-box svg { position: absolute; left: 10px; bottom: 0; width: 92px; height: 92px; }
+  .avatar-box .name { position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); font-size: 11px; font-weight: 700;
+    background: var(--ink); color: #fff; border-radius: 99px; padding: 1px 8px; white-space: nowrap; }
   .bubble { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 16px 16px 16px 4px;
     padding: 12px 14px; font-size: 15px; min-height: 56px; flex: 1; }
   .controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
@@ -201,9 +206,14 @@ function renderAttraction(a) {
       <img src="${esc(a.znacznik)}" alt=""><span><b>AR na plakacie</b><small>Wyceluj telefonem w plakat, a model z niego wyskoczy</small></span><i>›</i></a>` : ""}
 
     <div class="guide">
-      ${AVATAR}
+      <div class="avatar-box" title="Kliknij, żeby pomachać">
+        <model-viewer id="av3d" src="${esc(guideModel(a))}" alt="Awatar przewodnika" camera-orbit="-14deg 84deg auto"
+          disable-zoom disable-pan interaction-prompt="none" shadow-intensity="0.7" environment-image="neutral" exposure="1.1"></model-viewer>
+        ${AVATAR}
+        <span class="name">${esc((window.PRZEWODNIK && PRZEWODNIK.imie) || "Przewodnik")}</span>
+      </div>
       <div style="flex:1">
-        <div class="bubble" id="bubble">Cześć! Jestem Twoim przewodnikiem. Kliknij „Opowiedz”, a przeczytam Ci historię tego miejsca.</div>
+        <div class="bubble" id="bubble">${window.PRZEWODNIK?.imie ? `Cześć! Jestem ${esc(PRZEWODNIK.imie)}, Twój przewodnik.` : "Cześć! Jestem Twoim przewodnikiem."} Kliknij „Opowiedz”, a przeczytam Ci historię tego miejsca.</div>
         <div class="controls">
           <button class="primary" id="play">▶ Opowiedz</button>
           <button id="stop" hidden>■ Stop</button>
@@ -229,9 +239,34 @@ function renderAttraction(a) {
   setupNarrator(sentences);
 }
 
+/* ---------------- awatar 3D ---------------- */
+function guideModel(a) { return a.przewodnik || (window.PRZEWODNIK && PRZEWODNIK.model) || "modele/przewodnik.glb"; }
+
+function makeAvatar() {
+  const mv = $("#av3d"), svg = $("#avatar");
+  let ok = false, talking = false;
+  const anims = () => mv.availableAnimations || [];
+  const pick = n => anims().includes(n) ? n : (anims().includes("Spoczynek") ? "Spoczynek" : anims()[0]);
+  const loop = n => { if (!ok || !anims().length) return; mv.animationName = pick(n); mv.play(); };
+  const once = (n, then) => {
+    if (!ok || !anims().includes(n)) return loop(then || (talking ? "Mowi" : "Spoczynek"));
+    mv.animationName = n; mv.play({ repetitions: 1 });
+    mv.addEventListener("finished", () => loop(talking ? "Mowi" : (then || "Spoczynek")), { once: true });
+  };
+  mv.addEventListener("load", () => { ok = true; mv.classList.add("ready"); svg.style.display = "none"; once("Macha"); });
+  mv.addEventListener("error", () => { mv.style.display = "none"; });
+  mv.parentElement.addEventListener("click", () => once("Macha"));
+  return {
+    start() { talking = true; svg.classList.add("speaking"); once("Wskazuje", "Mowi"); },   // najpierw wskaże zabytek
+    stop() { talking = false; svg.classList.remove("speaking"); loop("Spoczynek"); },
+  };
+}
+
 /* ---------------- awatar-lektor (Web Speech API) ---------------- */
 function setupNarrator(sentences) {
-  const avatar = $("#avatar"), bubble = $("#bubble"), play = $("#play"), stop = $("#stop");
+  const guide = makeAvatar();
+  const avatar = { classList: { add() {}, remove() {} } };   // ruch ust obsługuje teraz awatar (3D lub SVG)
+  const bubble = $("#bubble"), play = $("#play"), stop = $("#stop");
   const synth = window.speechSynthesis;
   if (!synth) { play.textContent = "Lektor niedostępny w tej przeglądarce"; play.disabled = true; return; }
 
@@ -253,12 +288,12 @@ function setupNarrator(sentences) {
     synth.speak(u);
   }
   function finish(done) {
-    running = false; avatar.classList.remove("speaking"); mark(-1);
+    running = false; guide.stop(); mark(-1);
     play.hidden = false; stop.hidden = true; play.textContent = "▶ Opowiedz jeszcze raz";
     if (done) bubble.textContent = "To wszystko! Kliknij „Zobacz w AR” i obejrzyj model ze wszystkich stron.";
     idx = 0;
   }
-  play.onclick = () => { synth.cancel(); running = true; idx = 0; play.hidden = true; stop.hidden = false; speakNext(); };
+  play.onclick = () => { synth.cancel(); running = true; idx = 0; play.hidden = true; stop.hidden = false; guide.start(); speakNext(); };
   stop.onclick = () => { synth.cancel(); finish(false); };
   window.addEventListener("pagehide", () => synth.cancel());
 }

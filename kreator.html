@@ -90,6 +90,7 @@
       <input type="file" id="modelFile" accept=".glb,.gltf,model/gltf-binary">
       <div><b style="color:var(--ink)">📦 …albo wgraj własny plik .glb</b><br><small id="modelName">nie wybrano</small></div>
     </label>
+    <label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" id="withGuide" checked> Pokaż obok awatara-przewodnika</label>
     <label for="orient">Jak będzie umieszczony obrazek?</label>
     <select id="orient">
       <option value="sciana">Wisi na ścianie / tablicy (model stoi przed plakatem)</option>
@@ -192,7 +193,7 @@ $("#modelFile").onchange = e => {
   $("#modelName").textContent = `${f.name} (${(f.size / 1048576).toFixed(1)} MB)` + (f.size > 15e6 ? " — duży plik, na telefonie może się długo ładować" : "");
   $("#modelPick").value = "__own"; refresh();
 };
-$("#orient").onchange = refresh;
+$("#orient").onchange = refresh; $("#withGuide").onchange = refresh;
 const modelSrc = () => $("#modelPick").value === "__own" ? state.modelUrl : $("#modelPick").value;
 
 /* ---------- KROK 3: test ---------- */
@@ -203,6 +204,7 @@ $("#testBtn").onclick = async () => {
   try {
     ar = await startPosterAR({
       container: $("#testAr"), mindUrl: URL.createObjectURL(new Blob([state.mind])), modelUrl: modelSrc(), orientation: $("#orient").value,
+      avatarUrl: $("#withGuide").checked ? (window.PRZEWODNIK?.model || "modele/przewodnik.glb") : null,
       onFound: () => $("#testHint").textContent = "Mam go! 🎉 Obchodź obrazek dookoła",
       onLost: () => $("#testHint").textContent = "Skieruj aparat na obrazek",
     });
@@ -246,7 +248,7 @@ function refresh() {
     kolor: "#2a6f97",
     znacznik: ${js("znaczniki/" + n.img)},
     znacznikMind: ${js("znaczniki/" + n.mind)},
-    orientacja: ${js(orient)},
+    orientacja: ${js(orient)},${$("#withGuide").checked ? "" : "\n    bezPrzewodnika: true,"}
     opis: ${js(opis.replace(/\r/g, ""))},
     ciekawostki: [],
     punkty: [],

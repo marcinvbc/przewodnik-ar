@@ -73,6 +73,48 @@ a model wyskakuje prosto z niego i trzyma się go, gdy chodzisz dookoła. Dział
 
 Dobry znacznik ma dużo szczegółów, ostre krawędzie i napisy. Słabe są gradienty, jednolite tło, powtarzalne wzory i błyszczący papier.
 
+## Awatar-przewodnik 3D
+
+Postać „Bartek” (`modele/przewodnik.glb`) ma 4 animacje: **Spoczynek** (oddycha, mruga), **Macha**, **Mowi** (usta + gesty), **Wskazuje**.
+
+- **Strona atrakcji:** macha na powitanie (kliknięty macha znowu). Po „Opowiedz” wskazuje zabytek i mówi razem z lektorem.
+- **AR na plakacie:** stoi obok modelu, macha, gdy telefon znajdzie plakat, i mówi przy lektorze.
+- Ustawienia są w `atrakcje.js` → `window.PRZEWODNIK` (imię i model). Atrakcja może mieć własnego przewodnika
+  (`przewodnik: "modele/inna-postac.glb"`) albo żadnego w AR (`bezPrzewodnika: true`).
+
+**Własna postać:** wystarczy dowolny `.glb` z animacjami nazwanymi `Spoczynek`, `Macha`, `Mowi`, `Wskazuje`.
+Brakujące nazwy zastąpi pierwsza dostępna animacja.
+1. Postać: Ready Player Me, VRoid Studio (eksport VRM → Blender) albo własna z Blendera.
+2. Animacje: **Mixamo** (mixamo.com, za darmo) → wgraj postać → wybierz np. *Idle*, *Waving*, *Talking*, *Pointing* → pobierz FBX.
+3. Blender: zaimportuj FBX, w *Action Editor* nazwij akcje jak wyżej → *Export glTF 2.0 (.glb)* z zaznaczonymi animacjami.
+4. Wrzuć plik do `modele/` i podmień `model` w `window.PRZEWODNIK`.
+
+Postać jest generowana skryptem `tools/build_avatar.py`, w którym można zmienić kolory, proporcje i ruchy.
+
+## Modele 3D w wysokiej jakości
+
+Modele zabytków (wersja HQ) mają tekstury z mapami normalnych (kamień, dachówki, deski, tynk, trawa, woda, płótno)
+i dużo detali: blanki, machikuły, okiennice, pochodnie, beczki, domek latarnika, łódkę, kozioł wiatraka, schody, worki z mąką.
+
+| Model | Trójkąty | Rozmiar | Animacja |
+|---|---|---|---|
+| baszta.glb | ~13 700 | 1,2 MB | – |
+| latarnia.glb | ~14 700 | 0,9 MB | Swiatlo (snop światła) |
+| wiatrak.glb | ~7 600 | 0,8 MB | Smigla |
+
+Generator: `tools/hq/modele_hq.py` (geometria), `tools/hq/tekstury.py` (tekstury), `tools/hq/siatki.py` (eksport GLB),
+`tools/hq/podglad.py` (podgląd bez przeglądarki). Uruchom: `cd tools/hq && python3 modele_hq.py ../../modele`.
+(Stary skrypt `tools/build_models.py` tworzy uproszczone wersje i nadpisałby modele HQ.)
+
+### Zasady, żeby model dobrze działał na telefonie
+- **Do 50–100 tys. trójkątów** na model (te tutaj mają 8–15 tys.).
+- **Tekstury 512–2048 px**, w formacie JPG (PNG tylko, gdy potrzebna przezroczystość). Plik `.glb` najlepiej **poniżej 5–10 MB**.
+- Skala w metrach, podstawa modelu na wysokości 0 (model stoi na podłodze w AR).
+- Duży model (np. skan z Polycam) zmniejszysz za darmo w przeglądarce na **gltf.report** (zakładka Script →
+  `simplify`, `textureCompress`) albo poleceniem `npx @gltf-transform/cli optimize wejscie.glb wyjscie.glb --texture-compress webp`.
+- Skąd wziąć gotowe modele dobrej jakości: **Sketchfab** (filtr *Downloadable*, licencja CC BY, pobierz jako glTF/GLB),
+  **Poly Haven** (CC0), skan własnego obiektu: **Polycam / Scaniverse / KIRI Engine** → eksport GLB.
+
 ## Pomysły na rozbudowę (ścieżka nauki AR)
 
 | Etap | Co dodać | Technologia |
@@ -80,7 +122,7 @@ Dobry znacznik ma dużo szczegółów, ostre krawędzie i napisy. Słabe są gra
 | ✅ 1 | Animowane modele (np. kręcące się śmigła wiatraka) | animacje w Blenderze, `animation-name` / `autoplay` w model-viewer |
 | ✅ 2 | Model „przyklejony” do plakatu lub tablicy zamiast podłogi | **MindAR** (image tracking, WebAR) |
 | 3 | Atrakcje pokazujące się według GPS, bez kodów QR | **AR.js** (location-based) |
-| 4 | Awatar 3D, który stoi obok modelu i macha | model postaci z animacjami (np. Mixamo → Blender → GLB) |
+| ✅ 4 | Awatar 3D, który stoi obok modelu i macha | model postaci z animacjami (np. Mixamo → Blender → GLB) |
 | 5 | Pełna aplikacja z mapą, trwałym śledzeniem i treściami offline | **Unity + AR Foundation** (ARCore/ARKit) |
 | 6 | Treści zakotwiczone w konkretnych miejscach na świecie | Google **Geospatial API** (ARCore); 8th Wall jest od 2026 r. open source (8thwall.org), ale hosting Nianticu zamknięto |
 

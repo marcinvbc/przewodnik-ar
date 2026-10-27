@@ -20,7 +20,20 @@
  *                 przygotuje znacznik sam przy pierwszym użyciu (kilkanaście sekund) i zapamięta go
  *  orientacja   – "sciana" (plakat wisi, model stoi przed nim) albo "stol" (obrazek leży, model wyrasta w górę)
  *  wielkoscNaPlakacie – (opcjonalnie) wysokość modelu względem szerokości plakatu, domyślnie 0.9
+ *  bezPrzewodnika – (opcjonalnie) true = w AR na plakacie nie pokazuj awatara obok modelu
  */
+/*
+ * AWATAR-PRZEWODNIK 3D – wspólny dla wszystkich atrakcji.
+ * Własną postać (np. z Mixamo lub Ready Player Me, wyeksportowaną do .glb) podmienisz tutaj.
+ * Aplikacja szuka animacji o nazwach: Spoczynek, Macha, Mowi, Wskazuje
+ * (jeśli których brakuje, użyje pierwszej dostępnej).
+ * Pojedyncza atrakcja może mieć własnego przewodnika: pole  przewodnik: "modele/inna-postac.glb"
+ */
+window.PRZEWODNIK = {
+  imie: "Bartek",
+  model: "modele/przewodnik.glb",
+};
+
 window.ATRAKCJE = [
   {
     id: "baszta",
@@ -41,9 +54,10 @@ window.ATRAKCJE = [
       "Drzwi umieszczano wysoko lub bardzo wąsko, żeby trudno było je sforsować.",
     ],
     punkty: [
-      { etykieta: "Krenelaż", pozycja: "0 0.77 0.22", normal: "0 0 1" },
-      { etykieta: "Strzelnica", pozycja: "0 0.38 0.2", normal: "0 0 1" },
-      { etykieta: "Brama", pozycja: "0 0.12 0.22", normal: "0 0 1" },
+      { etykieta: "Krenelaż (blanki)", pozycja: "0 0.87 0.26", normal: "0 0 1" },
+      { etykieta: "Okno z okiennicami", pozycja: "-0.12 0.5 0.2", normal: "-0.52 0 0.85" },
+      { etykieta: "Chorągiew", pozycja: "0.14 0.6 0.19", normal: "0.6 0 0.8" },
+      { etykieta: "Brama", pozycja: "0 0.2 0.27", normal: "0 0 1" },
     ],
   },
   {
@@ -65,10 +79,10 @@ window.ATRAKCJE = [
       "Taki kształt, zwężający się ku górze, lepiej opiera się wiatrom.",
     ],
     punkty: [
-      { etykieta: "Laterna ze światłem", pozycja: "0 0.85 0.07", normal: "0 0 1" },
-      { etykieta: "Galeria", pozycja: "0 0.78 0.13", normal: "0 0 1" },
-      { etykieta: "Snop światła", pozycja: "0.35 0.845 0", normal: "1 0 0" },
-      { etykieta: "Pasy dzienne", pozycja: "0 0.45 0.13", normal: "0 0 1" },
+      { etykieta: "Laterna ze światłem", pozycja: "0 0.99 0.085", normal: "0 0 1" },
+      { etykieta: "Galeria", pozycja: "0 0.93 0.17", normal: "0 0 1" },
+      { etykieta: "Pasy dzienne", pozycja: "0 0.5 0.125", normal: "0 0 1" },
+      { etykieta: "Domek latarnika", pozycja: "-0.25 0.25 -0.05", normal: "-0.8 0 0.6" },
     ],
   },
   {
@@ -90,9 +104,10 @@ window.ATRAKCJE = [
       "W Polsce zachowało się kilkaset drewnianych wiatraków, głównie w skansenach.",
     ],
     punkty: [
-      { etykieta: "Śmigła", pozycja: "0.18 0.74 0.26", normal: "0 0 1" },
-      { etykieta: "Wał (piasta)", pozycja: "0 0.56 0.29", normal: "0 0 1" },
-      { etykieta: "Drzwi młynarza", pozycja: "0 0.11 0.19", normal: "0 0 1" },
+      { etykieta: "Śmigła", pozycja: "0.17 0.9 0.33", normal: "0 0 1" },
+      { etykieta: "Wał (piasta)", pozycja: "0 0.73 0.36", normal: "0 0 1" },
+      { etykieta: "Kozioł – obrotowa podstawa", pozycja: "0.16 0.15 0.16", normal: "0.7 0 0.7" },
+      { etykieta: "Schody i dyszel", pozycja: "0 0.3 -0.33", normal: "0 0 -1" },
     ],
   },
 ];

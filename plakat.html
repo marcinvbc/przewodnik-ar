@@ -77,7 +77,7 @@
 </div>
 <div class="ui bottom" id="bottom" hidden>
   <div class="bubble" id="bubble" hidden></div>
-  <div class="hint" id="hint"><img id="hintImg" alt=""><span>Skieruj aparat na plakat, tak żeby był cały w kadrze.</span></div>
+  <div class="hint" id="hint"><img id="hintImg" alt=""><span>Skieruj aparat na plakat, tak żeby był cały w kadrze. Przewodnik już czeka!</span></div>
   <div class="btns">
     <button class="primary" id="talk">▶ Opowiedz</button>
     <button id="orient">⬆ Obrazek leży na stole</button>
@@ -112,6 +112,7 @@ $("#go").onclick = async () => {
     ar = await startPosterAR({
       container: $("#ar"), mindUrl, modelUrl: a.model,
       orientation: a.orientacja || "sciana", size: a.wielkoscNaPlakacie || 0.9,
+      avatarUrl: a.bezPrzewodnika ? null : (a.przewodnik || window.PRZEWODNIK?.model || null),
       onFound: () => $("#hint").classList.add("hide"),
       onLost: () => $("#hint").classList.remove("hide"),
     });
@@ -136,16 +137,16 @@ $("#orient").onclick = () => { ar.setOrientation(ar.orientation === "stol" ? "sc
 let speaking = false;
 $("#talk").onclick = () => {
   const synth = window.speechSynthesis; if (!synth) return;
-  if (speaking) { synth.cancel(); speaking = false; $("#talk").textContent = "▶ Opowiedz"; $("#bubble").hidden = true; return; }
+  if (speaking) { synth.cancel(); speaking = false; ar?.guide?.talk(false); $("#talk").textContent = "▶ Opowiedz"; $("#bubble").hidden = true; return; }
   const sentences = a.opis.replace(/\n+/g, " ").match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [a.opis];
   const voice = synth.getVoices().find(v => /^pl/i.test(v.lang));
-  speaking = true; $("#talk").textContent = "■ Stop"; $("#bubble").hidden = false;
+  speaking = true; ar?.guide?.talk(true); $("#talk").textContent = "■ Stop"; $("#bubble").hidden = false;
   let i = 0;
   const next = () => {
-    if (!speaking || i >= sentences.length) { speaking = false; $("#talk").textContent = "▶ Opowiedz"; $("#bubble").hidden = true; return; }
+    if (!speaking || i >= sentences.length) { speaking = false; ar?.guide?.talk(false); $("#talk").textContent = "▶ Opowiedz"; $("#bubble").hidden = true; return; }
     const u = new SpeechSynthesisUtterance(sentences[i].trim()); u.lang = "pl-PL"; if (voice) u.voice = voice;
     $("#bubble").textContent = sentences[i].trim();
-    u.onend = () => { i++; next(); }; u.onerror = () => { speaking = false; };
+    u.onend = () => { i++; next(); }; u.onerror = () => { speaking = false; ar?.guide?.talk(false); };
     synth.speak(u);
   };
   next();

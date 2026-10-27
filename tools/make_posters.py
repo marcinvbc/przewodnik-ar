@@ -1,24 +1,13 @@
-import sys, math, random, json
+import sys, os, math, random
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
-sys.argv=[sys.argv[0]]
-exec(open('preview2.py').read().split('imgs=[]')[0])  # funkcje load/qrot
+from PIL import Image, ImageDraw, ImageFont
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'hq'))
+from podglad import load, render as hq_render
 
-def render(path, t, W, bg=None, ay=35, ax=-18):
-    tris = load(path, t)
-    im = Image.new('RGBA', (W, W), (0, 0, 0, 0)); dr = ImageDraw.Draw(im, 'RGBA')
-    ay, ax = math.radians(ay), math.radians(ax)
-    Ry=np.array([[math.cos(ay),0,math.sin(ay)],[0,1,0],[-math.sin(ay),0,math.cos(ay)]])
-    Rx=np.array([[1,0,0],[0,math.cos(ax),-math.sin(ax)],[0,math.sin(ax),math.cos(ax)]]); R=Rx@Ry
-    L=np.array([0.4,0.8,0.5]); L/=np.linalg.norm(L); items=[]
-    for tr,c,a in tris:
-        tt=tr@R.T; n=np.cross(tt[1]-tt[0],tt[2]-tt[0]); nn=np.linalg.norm(n)
-        if nn<1e-9: continue
-        s=0.4+0.6*abs(np.dot(n/nn,L)); items.append((tt[:,2].mean(),tt,tuple(int(255*min(1,x*s)) for x in c)+(int(255*a),)))
-    items.sort(key=lambda x:x[0])
-    sc = W*0.78
-    for _,tt,c in items: dr.polygon([(W/2+x*sc, W*0.88-y*sc) for x,y,z in tt], fill=c, outline=c)
-    return im
+def render(path, t, W):
+    """Render modelu HQ z przezroczystym tłem (do medalionu na plakacie)."""
+    anim = {'latarnia': 'Swiatlo', 'wiatrak': 'Smigla'}.get(os.path.basename(path)[:-4])
+    return hq_render(load(path, anim, t), W=W, yaw=22, pitch=16, fit=0.6, transparent=True, center=(0, 0.6, 0))
 
 FB = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'
 FS = '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf'
