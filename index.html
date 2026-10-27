@@ -142,7 +142,7 @@ function renderHome() {
     <div class="list">
       ${ATRAKCJE.map(a => `
         <a class="item" href="?a=${encodeURIComponent(a.id)}" style="--accent:${a.kolor}">
-          ${mv(a, 'auto-rotate rotation-per-second="20deg" interaction-prompt="none" disable-zoom disable-pan')}
+          ${mv(a, 'autoplay auto-rotate rotation-per-second="20deg" interaction-prompt="none" disable-zoom disable-pan')}
           <div><h3>${esc(a.nazwa)}</h3><small>${esc(a.miejsce)}</small></div>
           <span class="stamp ${seen.includes(a.id) ? "ok" : ""}">${seen.includes(a.id) ? "✓ odwiedzone" : "do odkrycia"}</span>
         </a>`).join("")}
@@ -175,7 +175,7 @@ function renderAttraction(a) {
   <div class="stage">
     <model-viewer id="mv" src="${esc(a.model)}" ${a.modelIOS ? `ios-src="${esc(a.modelIOS)}"` : ""}
       alt="Model 3D: ${esc(a.nazwa)}" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
-      camera-controls touch-action="pan-y" auto-rotate auto-rotate-delay="2500" shadow-intensity="1.1"
+      camera-controls touch-action="pan-y" autoplay auto-rotate auto-rotate-delay="2500" shadow-intensity="1.1"
       environment-image="neutral" exposure="1.05" camera-orbit="35deg 72deg auto">
       ${(a.punkty || []).map((p, k) => `
         <button class="hotspot" slot="hotspot-${k}" data-position="${esc(p.pozycja)}" data-normal="${esc(p.normal || "0 1 0")}"

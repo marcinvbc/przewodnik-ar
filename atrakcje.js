@@ -56,6 +56,7 @@ window.ATRAKCJE = [
     punkty: [
       { etykieta: "Laterna ze światłem", pozycja: "0 0.85 0.07", normal: "0 0 1" },
       { etykieta: "Galeria", pozycja: "0 0.78 0.13", normal: "0 0 1" },
+      { etykieta: "Snop światła", pozycja: "0.35 0.845 0", normal: "1 0 0" },
       { etykieta: "Pasy dzienne", pozycja: "0 0.45 0.13", normal: "0 0 1" },
     ],
   },
@@ -76,8 +77,8 @@ window.ATRAKCJE = [
       "W Polsce zachowało się kilkaset drewnianych wiatraków, głównie w skansenach.",
     ],
     punkty: [
-      { etykieta: "Śmigła", pozycja: "0.18 0.74 0.21", normal: "0 0 1" },
-      { etykieta: "Wał (piasta)", pozycja: "0 0.56 0.26", normal: "0 0 1" },
+      { etykieta: "Śmigła", pozycja: "0.18 0.74 0.26", normal: "0 0 1" },
+      { etykieta: "Wał (piasta)", pozycja: "0 0.56 0.29", normal: "0 0 1" },
       { etykieta: "Drzwi młynarza", pozycja: "0 0.11 0.19", normal: "0 0 1" },
     ],
   },

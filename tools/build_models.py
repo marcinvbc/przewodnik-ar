@@ -68,41 +68,76 @@ def part(tris, ref=None):
     REF[0] = (p.min(axis=0) + p.max(axis=0)) / 2
     return fix_winding(tris)
 
-def write_glb(path, parts):
-    """parts: lista (tris Nx3x3, rgba, roughness, metallic)"""
-    groups = {}
-    for tris, color, rough, metal in parts:
-        key = (tuple(color), rough, metal)
-        groups.setdefault(key, []).append(tris)
-    bin_chunks, accessors, views, meshes_prims, materials = [], [], [], [], []
-    offset = 0
+def quat_axis(axis, ang):
+    a = np.array(axis, float); a /= np.linalg.norm(a)
+    return [*(a * math.sin(ang / 2)).tolist(), math.cos(ang / 2)]
+
+def write_glb(path, parts, nodes=None):
+    """parts: lista (tris, rgba, roughness, metallic[, emissive_rgb]) -> jeden statyczny węzeł.
+    nodes: lista słowników {name, parts, translation, spin: (oś, sekundy na obrót)} -> węzły (opcjonalnie animowane)."""
+    if nodes is None:
+        nodes = [{"name": "model", "parts": parts}]
+    bin_chunks, accessors, views, materials, meshes, gl_nodes = [], [], [], [], [], []
+    mat_index = {}
+    st = {"offset": 0}
     allpos = []
-    for mi, (key, lst) in enumerate(groups.items()):
-        tris = np.concatenate(lst).astype(np.float32)
-        pos = tris.reshape(-1, 3)
-        nrm = np.cross(tris[:,1]-tris[:,0], tris[:,2]-tris[:,0])
-        nrm /= (np.linalg.norm(nrm, axis=1, keepdims=True) + 1e-12)
-        nrm = np.repeat(nrm, 3, axis=0).astype(np.float32)
-        allpos.append(pos)
-        for arr, typ in ((pos, 'POSITION'), (nrm, 'NORMAL')):
-            b = arr.tobytes()
-            views.append({"buffer": 0, "byteOffset": offset, "byteLength": len(b), "target": 34962})
-            acc = {"bufferView": len(views)-1, "componentType": 5126, "count": len(arr), "type": "VEC3"}
-            if typ == 'POSITION':
-                acc["min"] = pos.min(axis=0).tolist(); acc["max"] = pos.max(axis=0).tolist()
-            accessors.append(acc)
-            bin_chunks.append(b); offset += len(b)
-        color, rough, metal = key
-        materials.append({"pbrMetallicRoughness": {"baseColorFactor": list(color), "roughnessFactor": rough, "metallicFactor": metal}, "doubleSided": True})
-        prim = {"attributes": {"POSITION": len(accessors)-2, "NORMAL": len(accessors)-1}, "material": mi}
-        if color[3] < 1: materials[-1]["alphaMode"] = "BLEND"
-        meshes_prims.append(prim)
+
+    def add_data(arr, target=None, minmax=False, typ="VEC3"):
+        b = arr.astype(np.float32).tobytes()
+        v = {"buffer": 0, "byteOffset": st["offset"], "byteLength": len(b)}
+        if target: v["target"] = target
+        views.append(v)
+        acc = {"bufferView": len(views) - 1, "componentType": 5126, "count": len(arr), "type": typ}
+        if minmax:
+            acc["min"] = arr.min(axis=0).tolist() if arr.ndim > 1 else [float(arr.min())]
+            acc["max"] = arr.max(axis=0).tolist() if arr.ndim > 1 else [float(arr.max())]
+        accessors.append(acc); bin_chunks.append(b); st["offset"] += len(b)
+        return len(accessors) - 1
+
+    animations_channels, animations_samplers = [], []
+    for nd in nodes:
+        groups = {}
+        for p in nd["parts"]:
+            tris, color, rough, metal = p[:4]
+            em = tuple(p[4]) if len(p) > 4 else None
+            groups.setdefault((tuple(color), rough, metal, em), []).append(tris)
+        prims = []
+        for key, lst in groups.items():
+            if key not in mat_index:
+                color, rough, metal, em = key
+                m = {"pbrMetallicRoughness": {"baseColorFactor": list(color), "roughnessFactor": rough, "metallicFactor": metal}, "doubleSided": True}
+                if color[3] < 1: m["alphaMode"] = "BLEND"
+                if em: m["emissiveFactor"] = list(em)
+                mat_index[key] = len(materials); materials.append(m)
+            tris = np.concatenate(lst)
+            pos = tris.reshape(-1, 3)
+            nrm = np.cross(tris[:, 1] - tris[:, 0], tris[:, 2] - tris[:, 0])
+            nrm /= (np.linalg.norm(nrm, axis=1, keepdims=True) + 1e-12)
+            nrm = np.repeat(nrm, 3, axis=0)
+            allpos.append(pos + np.array(nd.get("translation", [0, 0, 0])))
+            pa = add_data(pos, 34962, True); na = add_data(nrm, 34962)
+            prims.append({"attributes": {"POSITION": pa, "NORMAL": na}, "material": mat_index[key]})
+        meshes.append({"primitives": prims})
+        gn = {"name": nd["name"], "mesh": len(meshes) - 1}
+        if "translation" in nd: gn["translation"] = list(map(float, nd["translation"]))
+        gl_nodes.append(gn)
+        if "spin" in nd:
+            axis, secs = nd["spin"]
+            steps = 8  # 8 kluczy na obrót -> płynna interpolacja kwaternionów
+            times = np.array([secs * i / steps for i in range(steps + 1)], dtype=np.float32)
+            quats = np.array([quat_axis(axis, 2 * math.pi * i / steps) for i in range(steps + 1)], dtype=np.float32)
+            ti = add_data(times, minmax=True, typ="SCALAR"); qi = add_data(quats, typ="VEC4")
+            animations_samplers.append({"input": ti, "output": qi, "interpolation": "LINEAR"})
+            animations_channels.append({"sampler": len(animations_samplers) - 1, "target": {"node": len(gl_nodes) - 1, "path": "rotation"}})
+
     gltf = {
         "asset": {"version": "2.0", "generator": "przewodnik-ar"},
-        "scene": 0, "scenes": [{"nodes": [0]}], "nodes": [{"mesh": 0}],
-        "meshes": [{"primitives": meshes_prims}], "materials": materials,
-        "accessors": accessors, "bufferViews": views, "buffers": [{"byteLength": offset}],
+        "scene": 0, "scenes": [{"nodes": list(range(len(gl_nodes)))}], "nodes": gl_nodes,
+        "meshes": meshes, "materials": materials,
+        "accessors": accessors, "bufferViews": views, "buffers": [{"byteLength": st["offset"]}],
     }
+    if animations_channels:
+        gltf["animations"] = [{"name": "Ruch", "channels": animations_channels, "samplers": animations_samplers}]
     js = json.dumps(gltf, separators=(',', ':')).encode()
     js += b' ' * ((4 - len(js) % 4) % 4)
     binb = b''.join(bin_chunks); binb += b'\0' * ((4 - len(binb) % 4) % 4)
@@ -112,7 +147,8 @@ def write_glb(path, parts):
         f.write(struct.pack('<II', len(js), 0x4E4F534A)); f.write(js)
         f.write(struct.pack('<II', len(binb), 0x004E4942)); f.write(binb)
     p = np.concatenate(allpos)
-    print(path, 'bbox', p.min(axis=0).round(3), p.max(axis=0).round(3), 'tris', len(p)//3)
+    print(path, 'bbox', p.min(axis=0).round(3), p.max(axis=0).round(3), 'tris', len(p) // 3,
+          'animacja' if animations_channels else '')
 
 def rgba(h, a=1.0):
     h = h.lstrip('#'); c = [int(h[i:i+2], 16)/255 for i in (0, 2, 4)]
@@ -163,12 +199,18 @@ def latarnia():
     for i in range(16):
         a = 2*math.pi*i/16
         P.append((part(frustum(0.004, 0.004, 0.05, 6, y0=y+0.02), (0, y+0.05, 0)) + np.array([0.125*math.cos(a), 0, 0.125*math.sin(a)]), black, 0.5, 0.3))
-    P.append((part(frustum(0.06, 0.06, 0.09, 16, y0=y+0.02), (0, y+0.065, 0)), glass, 0.2, 0))
+    P.append((part(frustum(0.06, 0.06, 0.09, 16, y0=y+0.02), (0, y+0.065, 0)), glass, 0.2, 0, (1.0, 0.75, 0.2)))
     P.append((part(frustum(0.07, 0.07, 0.01, 16, y0=y+0.11), (0, y+0.115, 0)), black, 0.5, 0.3))
     dome = sphere(0.07, 16, half=True) + np.array([0, y+0.12, 0])
     P.append((part(dome, (0, y+0.12, 0)), red, 0.6, 0))
     P.append((part(frustum(0.005, 0.0, 0.05, 8, y0=y+0.19), (0, y+0.21, 0)), black, 0.5, 0.3))
-    return P
+    beam_col = rgba('#fff2b0', 0.28)
+    B = []
+    for ang in (-math.pi/2, math.pi/2):
+        cone = frustum(0.02, 0.09, 0.55, 16, y0=0.0, caps=False)
+        B.append((rot_z(cone, ang), beam_col, 1.0, 0, (1.0, 0.9, 0.5)))
+    return [{"name": "latarnia", "parts": P},
+            {"name": "snop_swiatla", "parts": B, "translation": [0, y + 0.065, 0], "spin": ((0, 1, 0), 5.0)}]
 
 def wiatrak():
     P = []
@@ -177,20 +219,22 @@ def wiatrak():
     P.append((part(frustum(0.2, 0.15, 0.5, 8, y0=0.04), (0, 0.3, 0)), wood, 0.85, 0))
     P.append((part(frustum(0.17, 0.0, 0.2, 8, y0=0.54), (0, 0.6, 0)), roof, 0.8, 0))
     P.append((part(box(0.08, 0.13, 0.03, (0, 0.105, 0.17)), (0, 0.105, 0.1)), wood2, 0.8, 0))
-    # oś i śmigła
-    hub_z = 0.2; hub_y = 0.56
-    P.append((part(box(0.05, 0.05, 0.12, (0, hub_y, hub_z - 0.04)), (0, hub_y, hub_z - 0.04)), wood2, 0.8, 0))
+    # oś i śmigła -> osobny węzeł obracany wokół osi Z (piasta w punkcie 0,0,0 węzła)
+    hub_z = 0.25; hub_y = 0.56
+    P.append((part(box(0.05, 0.05, 0.13, (0, hub_y, hub_z - 0.065))), wood2, 0.8, 0))
+    R = []
+    R.append((part(box(0.055, 0.055, 0.04, (0, 0, 0))), wood2, 0.8, 0))
     for k in range(4):
         ang = math.pi/4 + k*math.pi/2
         arm = box(0.02, 0.42, 0.015, (0, 0.23, 0))
         blade = box(0.09, 0.3, 0.008, (0.055, 0.28, 0.0))
         for t, col in ((arm, wood2), (blade, sail)):
-            tt = rot_z(t, ang) + np.array([0, hub_y, hub_z])
-            P.append((part(tt, tt.reshape(-1, 3).mean(axis=0) - np.array([0, 0, 0.5])), col, 0.85, 0))
-    return P
+            R.append((part(rot_z(t, ang)), col, 0.85, 0))
+    return [{"name": "budynek", "parts": P},
+            {"name": "smigla", "parts": R, "translation": [0, hub_y, hub_z], "spin": ((0, 0, -1), 6.0)}]
 
 if __name__ == '__main__':
     out = sys.argv[1]
     write_glb(f'{out}/baszta.glb', baszta())
-    write_glb(f'{out}/latarnia.glb', latarnia())
-    write_glb(f'{out}/wiatrak.glb', wiatrak())
+    write_glb(f'{out}/latarnia.glb', None, latarnia())
+    write_glb(f'{out}/wiatrak.glb', None, wiatrak())
