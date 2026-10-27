@@ -13,6 +13,13 @@
  *  opis      – tekst, który czyta awatar (akapity rozdzielaj \n\n)
  *  ciekawostki – krótkie fakty pod opisem
  *  punkty    – etykiety przyczepione do modelu 3D (pozycja w metrach x y z, normal = kierunek)
+ *
+ *  AR NA PLAKACIE (MindAR) – opcjonalnie, najłatwiej przygotować w kreator.html:
+ *  znacznik     – obrazek-plakat, w który celuje się telefonem (np. "znaczniki/baszta.jpg")
+ *  znacznikMind – (opcjonalnie) skompilowany plik .mind – przyspiesza start; bez niego telefon
+ *                 przygotuje znacznik sam przy pierwszym użyciu (kilkanaście sekund) i zapamięta go
+ *  orientacja   – "sciana" (plakat wisi, model stoi przed nim) albo "stol" (obrazek leży, model wyrasta w górę)
+ *  wielkoscNaPlakacie – (opcjonalnie) wysokość modelu względem szerokości plakatu, domyślnie 0.9
  */
 window.ATRAKCJE = [
   {
@@ -20,6 +27,8 @@ window.ATRAKCJE = [
     nazwa: "Baszta Rycerska",
     miejsce: "Mury miejskie, wejście od strony rynku",
     model: "modele/baszta.glb",
+    znacznik: "znaczniki/baszta.jpg",   // plakat AR (MindAR)
+    orientacja: "sciana",
     kolor: "#a8402c",
     opis:
       "Witaj przy Baszcie Rycerskiej! Ta okrągła wieża była kiedyś częścią murów obronnych, które otaczały całe miasto.\n\n" +
@@ -42,6 +51,8 @@ window.ATRAKCJE = [
     nazwa: "Latarnia Morska",
     miejsce: "Cypel przy porcie rybackim",
     model: "modele/latarnia.glb",
+    znacznik: "znaczniki/latarnia.jpg",   // plakat AR (MindAR)
+    orientacja: "sciana",
     kolor: "#c8312f",
     opis:
       "Oto Latarnia Morska, strażniczka wybrzeża. Przez ponad sto lat jej światło prowadziło statki bezpiecznie do portu.\n\n" +
@@ -65,6 +76,8 @@ window.ATRAKCJE = [
     nazwa: "Wiatrak Koźlak",
     miejsce: "Skansen, wzgórze za kościołem",
     model: "modele/wiatrak.glb",
+    znacznik: "znaczniki/wiatrak.jpg",   // plakat AR (MindAR)
+    orientacja: "sciana",
     kolor: "#a9744a",
     opis:
       "Poznaj Wiatrak Koźlak, drewniany młyn napędzany siłą wiatru.\n\n" +

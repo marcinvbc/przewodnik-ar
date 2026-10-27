@@ -59,6 +59,11 @@
   .info h1 { font-size: clamp(26px, 5.5vw, 36px); margin: 18px 0 2px; letter-spacing: -.4px; }
   .info .where { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
 
+  .poster-cta { display: flex; align-items: center; gap: 12px; text-decoration: none; background: var(--ink); color: #fff;
+    border-radius: 16px; padding: 10px 14px 10px 10px; margin: 0 0 18px; }
+  .poster-cta img { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; }
+  .poster-cta small { display: block; opacity: .75; font-size: 13px; }
+  .poster-cta i { margin-left: auto; font-style: normal; font-size: 26px; opacity: .7; }
   .guide { display: flex; gap: 14px; align-items: flex-end; margin: 6px 0 20px; }
   .guide svg { width: 92px; height: 92px; flex: none; }
   .bubble { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 16px 16px 16px 4px;
@@ -147,7 +152,7 @@ function renderHome() {
           <span class="stamp ${seen.includes(a.id) ? "ok" : ""}">${seen.includes(a.id) ? "✓ odwiedzone" : "do odkrycia"}</span>
         </a>`).join("")}
     </div>
-    <p class="foot">Odwiedzone: ${seen.filter(id => ATRAKCJE.some(a => a.id === id)).length} / ${ATRAKCJE.length} · <a href="qr.html">Kody QR do wydruku</a></p>
+    <p class="foot">Odwiedzone: ${seen.filter(id => ATRAKCJE.some(a => a.id === id)).length} / ${ATRAKCJE.length} · <a href="qr.html">Kody QR do wydruku</a> · <a href="plakaty.html">Plakaty AR do wydruku</a> · <a href="kreator.html">Kreator znaczników AR</a></p>
   </div>`;
 }
 
@@ -191,6 +196,9 @@ function renderAttraction(a) {
   <div class="wrap info">
     <h1>${esc(a.nazwa)}</h1>
     <div class="where">📍 ${esc(a.miejsce)}</div>
+
+    ${a.znacznik ? `<a class="poster-cta" href="plakat.html?a=${encodeURIComponent(a.id)}">
+      <img src="${esc(a.znacznik)}" alt=""><span><b>AR na plakacie</b><small>Wyceluj telefonem w plakat, a model z niego wyskoczy</small></span><i>›</i></a>` : ""}
 
     <div class="guide">
       ${AVATAR}

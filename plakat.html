@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>AR na plakacie · Przewodnik AR</title>
+<meta name="theme-color" content="#111111">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+  "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js",
+  "mindar-image": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"
+} }
+</script>
+<script src="atrakcje.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; background: #111; color: #fff; overflow: hidden;
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  #ar { position: fixed; inset: 0; }
+  #ar video, #ar canvas { object-fit: cover; }
+  .ui { position: fixed; left: 0; right: 0; z-index: 10; pointer-events: none; }
+  .ui > * { pointer-events: auto; }
+  .top { top: 0; display: flex; align-items: center; gap: 10px; padding: max(12px, env(safe-area-inset-top)) 14px 12px;
+    background: linear-gradient(rgba(0,0,0,.55), transparent); }
+  .top a { color: #fff; text-decoration: none; width: 38px; height: 38px; display: grid; place-items: center;
+    background: rgba(0,0,0,.45); border-radius: 50%; font-size: 20px; }
+  .top b { font-size: 17px; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+  .bottom { bottom: 0; padding: 12px 14px max(16px, env(safe-area-inset-bottom)); display: grid; gap: 10px;
+    background: linear-gradient(transparent, rgba(0,0,0,.6)); }
+  .hint { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,.95); color: #111;
+    border-radius: 16px; padding: 10px 12px; font-size: 15px; transition: opacity .3s, transform .3s; }
+  .hint img { width: 54px; height: 54px; border-radius: 8px; object-fit: cover; animation: pulse 1.6s infinite; }
+  .hint.hide { opacity: 0; transform: translateY(10px); pointer-events: none; }
+  @keyframes pulse { 50% { transform: scale(.9); opacity: .7; } }
+  .btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .btns button, .btns a { border: 0; border-radius: 99px; padding: 11px 16px; font: 600 15px system-ui, sans-serif;
+    background: rgba(255,255,255,.92); color: #111; text-decoration: none; }
+  .btns .primary { background: var(--accent, #a8402c); color: #fff; }
+  .bubble { background: rgba(0,0,0,.65); border-radius: 14px; padding: 10px 14px; font-size: 15px; }
+
+  /* ekran startowy */
+  #start { position: fixed; inset: 0; z-index: 20; background: #f6f1e7; color: #1f2a2e; overflow: auto;
+    display: grid; place-items: center; padding: 24px; }
+  #start .card { max-width: 420px; width: 100%; text-align: center; }
+  #start img { width: 70%; max-width: 260px; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+  #start h1 { margin: 18px 0 6px; font-size: 26px; }
+  #start p { color: #555; margin: 0 0 18px; }
+  #start button { border: 0; border-radius: 99px; padding: 15px 26px; font: 700 17px system-ui, sans-serif;
+    background: var(--accent, #a8402c); color: #fff; width: 100%; }
+  #start .prog { height: 8px; background: #e3dccd; border-radius: 99px; overflow: hidden; margin-top: 14px; display: none; }
+  #start .prog div { height: 100%; width: 0; background: var(--accent, #a8402c); transition: width .2s; }
+  #start .status { font-size: 14px; color: #6b6f66; margin-top: 10px; min-height: 20px; }
+  #start .err { color: #b00020; }
+  #start small a { color: #6b6f66; }
+</style>
+</head>
+<body>
+<div id="ar"></div>
+
+<div id="start">
+  <div class="card">
+    <img id="poster" alt="Plakat-znacznik">
+    <h1 id="title">AR na plakacie</h1>
+    <p>Skieruj aparat na ten obrazek, a model 3D wyskoczy prosto z plakatu.</p>
+    <button id="go">📷 Uruchom kamerę</button>
+    <div class="prog" id="prog"><div></div></div>
+    <div class="status" id="status"></div>
+    <p><small><a id="info" href="./">← strona atrakcji</a></small></p>
+  </div>
+</div>
+
+<div class="ui top" id="top" hidden>
+  <a href="./" id="close" aria-label="Zamknij">×</a><b id="title2"></b>
+</div>
+<div class="ui bottom" id="bottom" hidden>
+  <div class="bubble" id="bubble" hidden></div>
+  <div class="hint" id="hint"><img id="hintImg" alt=""><span>Skieruj aparat na plakat, tak żeby był cały w kadrze.</span></div>
+  <div class="btns">
+    <button class="primary" id="talk">▶ Opowiedz</button>
+    <button id="orient">⬆ Obrazek leży na stole</button>
+  </div>
+</div>
+
+<script type="module">
+import { getMindUrl, startPosterAR } from "./ar-plakat.js";
+
+const $ = s => document.querySelector(s);
+const id = new URLSearchParams(location.search).get("a");
+const a = (window.ATRAKCJE || []).find(x => x.id === id && x.znacznik);
+if (!a) { $("#status").innerHTML = `<span class="err">Ta atrakcja nie ma plakatu-znacznika.</span>`; $("#go").disabled = true; }
+else {
+  document.title = `${a.nazwa} · AR na plakacie`;
+  document.documentElement.style.setProperty("--accent", a.kolor || "#a8402c");
+  $("#poster").src = $("#hintImg").src = a.znacznik;
+  $("#title").textContent = a.nazwa; $("#title2").textContent = a.nazwa;
+  $("#info").href = $("#close").href = `index.html?a=${encodeURIComponent(a.id)}`;
+}
+
+let ar = null;
+$("#go").onclick = async () => {
+  const btn = $("#go"); btn.disabled = true;
+  try {
+    $("#prog").style.display = "block";
+    $("#status").textContent = a.znacznikMind ? "Wczytuję znacznik…" : "Przygotowuję znacznik (pierwszy raz trwa kilkanaście sekund)…";
+    const mindUrl = await getMindUrl({ mind: a.znacznikMind, image: a.znacznik },
+      p => { $("#prog div").style.width = p + "%"; });
+    $("#prog div").style.width = "100%";
+    $("#status").textContent = "Uruchamiam kamerę i model 3D…";
+    ar = await startPosterAR({
+      container: $("#ar"), mindUrl, modelUrl: a.model,
+      orientation: a.orientacja || "sciana", size: a.wielkoscNaPlakacie || 0.9,
+      onFound: () => $("#hint").classList.add("hide"),
+      onLost: () => $("#hint").classList.remove("hide"),
+    });
+    $("#start").hidden = true; $("#top").hidden = false; $("#bottom").hidden = false;
+    updateOrientBtn();
+  } catch (e) {
+    console.error(e);
+    const msg = /Permission|NotAllowed/i.test(e?.name + e?.message)
+      ? "Brak dostępu do kamery. Zezwól na kamerę w ustawieniach przeglądarki i odśwież stronę."
+      : "Coś poszło nie tak: " + (e?.message || e);
+    $("#status").innerHTML = `<span class="err">${msg}</span>`;
+    btn.disabled = false;
+  }
+};
+
+function updateOrientBtn() {
+  $("#orient").textContent = ar.orientation === "stol" ? "🖼 Plakat wisi na ścianie" : "⬆ Obrazek leży na stole";
+}
+$("#orient").onclick = () => { ar.setOrientation(ar.orientation === "stol" ? "sciana" : "stol"); updateOrientBtn(); };
+
+/* lektor – czyta opis zdanie po zdaniu w dymku */
+let speaking = false;
+$("#talk").onclick = () => {
+  const synth = window.speechSynthesis; if (!synth) return;
+  if (speaking) { synth.cancel(); speaking = false; $("#talk").textContent = "▶ Opowiedz"; $("#bubble").hidden = true; return; }
+  const sentences = a.opis.replace(/\n+/g, " ").match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [a.opis];
+  const voice = synth.getVoices().find(v => /^pl/i.test(v.lang));
+  speaking = true; $("#talk").textContent = "■ Stop"; $("#bubble").hidden = false;
+  let i = 0;
+  const next = () => {
+    if (!speaking || i >= sentences.length) { speaking = false; $("#talk").textContent = "▶ Opowiedz"; $("#bubble").hidden = true; return; }
+    const u = new SpeechSynthesisUtterance(sentences[i].trim()); u.lang = "pl-PL"; if (voice) u.voice = voice;
+    $("#bubble").textContent = sentences[i].trim();
+    u.onend = () => { i++; next(); }; u.onerror = () => { speaking = false; };
+    synth.speak(u);
+  };
+  next();
+};
+window.addEventListener("pagehide", () => { window.speechSynthesis?.cancel(); ar?.stop(); });
+</script>
+</body>
+</html>

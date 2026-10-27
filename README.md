@@ -7,6 +7,11 @@ przewodnik-ar/
 ├── index.html     ← aplikacja (lista atrakcji + strona atrakcji ?a=<id>)
 ├── atrakcje.js    ← TU edytujesz treści: nazwy, opisy, ciekawostki, etykiety na modelu
 ├── qr.html        ← generator kodów QR do wydruku
+├── plakat.html    ← AR na plakacie (MindAR): kamera + model wyskakujący z obrazka
+├── plakaty.html   ← plakaty-znaczniki z kodem QR do wydruku
+├── kreator.html   ← kreator: własne zdjęcie → znacznik AR → test → gotowy kod
+├── ar-plakat.js   ← silnik AR na plakacie (MindAR + three.js), wspólny dla plakat/kreator
+├── znaczniki/     ← obrazki-znaczniki (.jpg) i opcjonalnie skompilowane pliki .mind
 └── modele/        ← modele 3D w formacie .glb
 ```
 
@@ -48,15 +53,35 @@ Lokalny podgląd na komputerze (bez AR): `python3 -m http.server` w tym folderze
 
 **Etykiety na modelu (`punkty`)**: pozycję w metrach najłatwiej znaleźć w edytorze https://modelviewer.dev/editor/ (klikasz w model i odczytujesz współrzędne hotspota).
 
+## AR na plakacie (MindAR)
+
+Drugi tryb AR: zamiast stawiać model na podłodze, celujesz telefonem w **obrazek** (plakat, tablicę, ulotkę),
+a model wyskakuje prosto z niego i trzyma się go, gdy chodzisz dookoła. Działa tak samo na Androidzie i iPhonie.
+
+- Wejście: przycisk **„AR na plakacie”** na stronie atrakcji albo kod QR z **plakaty.html**.
+- Przy pierwszym uruchomieniu telefon sam „uczy się” obrazka (kilkanaście sekund) i zapamiętuje wynik.
+  Żeby start był natychmiastowy, wygeneruj plik `.mind` w kreatorze i dopisz `znacznikMind`.
+- `orientacja: "sciana"`: plakat wisi, model stoi przed nim. `"stol"`: obrazek leży, model wyrasta w górę.
+  Można to też przełączyć przyciskiem w trakcie oglądania.
+
+### Własny plakat: kreator.html
+
+1. Wybierz zdjęcie lub grafikę. Kreator pokaże punkty charakterystyczne i oceni, czy obrazek nadaje się na znacznik.
+2. Wybierz model 3D (istniejący albo własny .glb).
+3. **Testuj AR teraz**: od razu, bez wrzucania czegokolwiek na GitHub.
+4. Pobierz pliki (obrazek, .mind, ewentualnie model) i skopiuj gotowy kod do `atrakcje.js`.
+
+Dobry znacznik ma dużo szczegółów, ostre krawędzie i napisy. Słabe są gradienty, jednolite tło, powtarzalne wzory i błyszczący papier.
+
 ## Pomysły na rozbudowę (ścieżka nauki AR)
 
 | Etap | Co dodać | Technologia |
 |---|---|---|
-| 1 | Animowane modele (np. kręcące się śmigła wiatraka) | animacje w Blenderze, `animation-name` / `autoplay` w model-viewer |
-| 2 | Model „przyklejony” do plakatu lub tablicy zamiast podłogi | **MindAR** (image tracking, WebAR) |
+| ✅ 1 | Animowane modele (np. kręcące się śmigła wiatraka) | animacje w Blenderze, `animation-name` / `autoplay` w model-viewer |
+| ✅ 2 | Model „przyklejony” do plakatu lub tablicy zamiast podłogi | **MindAR** (image tracking, WebAR) |
 | 3 | Atrakcje pokazujące się według GPS, bez kodów QR | **AR.js** (location-based) |
 | 4 | Awatar 3D, który stoi obok modelu i macha | model postaci z animacjami (np. Mixamo → Blender → GLB) |
 | 5 | Pełna aplikacja z mapą, trwałym śledzeniem i treściami offline | **Unity + AR Foundation** (ARCore/ARKit) |
-| 6 | Treści zakotwiczone w konkretnych miejscach na świecie | Google **Geospatial API**, Niantic **8th Wall / Lightship** |
+| 6 | Treści zakotwiczone w konkretnych miejscach na świecie | Google **Geospatial API** (ARCore); 8th Wall jest od 2026 r. open source (8thwall.org), ale hosting Nianticu zamknięto |
 
 Plik `tools/build_models.py` pokazuje, jak wygenerować prosty model GLB z kodu.

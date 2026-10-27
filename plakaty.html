@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plakaty AR do wydruku · Przewodnik AR</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="atrakcje.js"></script>
+<style>
+  body { margin: 0; background: #f6f1e7; color: #1f2a2e; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 18px 60px; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 24px; }
+  .bar button, .bar a { padding: 10px 16px; border: 0; border-radius: 10px; background: #1f2a2e; color: #fff; font: 600 15px system-ui, sans-serif; text-decoration: none; }
+  .hint { color: #6b6f66; font-size: 15px; }
+  .sheet { background: #fff; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,.08); padding: 28px; margin-bottom: 24px;
+    display: grid; gap: 18px; break-after: page; }
+  .sheet .poster { width: 100%; display: block; }
+  .sheet .foot { display: flex; align-items: center; gap: 18px; border-top: 3px solid #111; padding-top: 16px; }
+  .sheet .foot svg { width: 120px; height: 120px; flex: none; }
+  .sheet .foot h2 { margin: 0 0 4px; font-size: 22px; }
+  .sheet .foot ol { margin: 0; padding-left: 20px; font-size: 15px; }
+  @media print {
+    body { background: #fff; } .wrap { padding: 0; max-width: none; } .no-print { display: none; }
+    .sheet { box-shadow: none; padding: 10mm; margin: 0; }
+    @page { size: A4; margin: 8mm; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-print">
+    <a href="./" style="text-decoration:none;color:#6b6f66;font-size:14px">← Przewodnik AR</a>
+    <h1 style="margin:6px 0">Plakaty AR do wydruku</h1>
+    <p class="hint">Każdy plakat to jednocześnie <b>znacznik AR</b> (obrazek u góry) i <b>kod QR</b>, który otwiera tryb AR.
+      Drukuj w kolorze na A4 albo większym formacie, najlepiej na matowym papierze (połysk odbija światło i utrudnia rozpoznawanie).
+      Do testów wystarczy otworzyć plakat na ekranie komputera i wycelować w niego telefonem.</p>
+    <div class="bar"><button onclick="print()">🖨 Drukuj wszystkie</button><a href="kreator.html">➕ Zrób własny plakat</a></div>
+  </div>
+  <div id="sheets"></div>
+</div>
+<script>
+const base = location.href.replace(/plakaty\.html.*$/, "");
+document.getElementById("sheets").innerHTML = ATRAKCJE.filter(a => a.znacznik).map(a => {
+  const url = `${base}plakat.html?a=${encodeURIComponent(a.id)}`;
+  let qr = "";
+  if (window.qrcode) { const q = qrcode(0, "M"); q.addData(url); q.make(); qr = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); }
+  return `<section class="sheet">
+    <img class="poster" src="${a.znacznik}" alt="${a.nazwa}">
+    <div class="foot">${qr}
+      <div><h2>${a.nazwa} w AR</h2>
+        <ol><li>Zeskanuj kod QR aparatem telefonu.</li><li>Kliknij „Uruchom kamerę”.</li><li>Wyceluj telefon w obrazek powyżej.</li></ol></div>
+    </div></section>`;
+}).join("");
+</script>
+</body>
+</html>

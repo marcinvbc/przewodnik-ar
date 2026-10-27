@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kreator znaczników AR · Przewodnik AR</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+  "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js",
+  "mindar-image": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"
+} }
+</script>
+<script src="atrakcje.js"></script>
+<style>
+  :root { --ink: #1f2a2e; --paper: #f6f1e7; --card: #fffdf8; --muted: #6b6f66; --line: #e3dccd; --accent: #a8402c; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 20px 18px 80px; }
+  a { color: inherit; }
+  h1 { margin: 6px 0 4px; font-size: clamp(26px, 5vw, 34px); letter-spacing: -.4px; }
+  .lead { color: var(--muted); margin: 0 0 22px; }
+  .step { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px; margin-bottom: 16px; }
+  .step h2 { margin: 0 0 4px; font-size: 19px; display: flex; gap: 10px; align-items: center; }
+  .step h2 span { width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-size: 14px; flex: none; }
+  .step > p { margin: 0 0 12px; color: var(--muted); font-size: 15px; }
+  .step.locked { opacity: .5; pointer-events: none; }
+  label { display: block; font-weight: 600; font-size: 14px; margin: 12px 0 4px; }
+  input[type=text], textarea, select { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; background: #fff; }
+  textarea { min-height: 110px; resize: vertical; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: #fff; color: var(--ink);
+    border-radius: 99px; padding: 10px 16px; font: 600 15px system-ui, sans-serif; cursor: pointer; text-decoration: none; }
+  .btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .btn.accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .drop { display: grid; place-items: center; text-align: center; border: 2px dashed var(--line); border-radius: 14px; padding: 22px; cursor: pointer; color: var(--muted); }
+  .drop input { display: none; }
+  .previews { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .previews figure { margin: 0; }
+  .previews img, .previews canvas { width: 100%; border-radius: 10px; display: block; background: #eee; }
+  .previews figcaption { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .prog { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 12px; }
+  .prog div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  .score { margin-top: 10px; padding: 10px 12px; border-radius: 10px; font-size: 14px; }
+  .score.good { background: #eef6ef; color: #2f6b3a; } .score.mid { background: #fff6e0; color: #7a5a00; } .score.bad { background: #fdecea; color: #9b1c1c; }
+  pre { background: #1f2a2e; color: #e8f0ea; padding: 14px; border-radius: 12px; overflow: auto; font-size: 13px; line-height: 1.45; white-space: pre-wrap; }
+  .tips { font-size: 14px; color: var(--muted); padding-left: 18px; margin: 8px 0 0; }
+  .files li { margin-bottom: 4px; } .files code { background: #f0ebe0; padding: 1px 6px; border-radius: 5px; }
+  /* tryb testowy AR */
+  #test { position: fixed; inset: 0; z-index: 50; background: #000; }
+  #testAr { position: absolute; inset: 0; }
+  #testUi { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px; display: flex; gap: 8px; justify-content: center; z-index: 5;
+    background: linear-gradient(transparent, rgba(0,0,0,.6)); }
+  #testHint { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 5; background: rgba(255,255,255,.95);
+    padding: 8px 14px; border-radius: 99px; font-size: 14px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a href="./" style="text-decoration:none;color:var(--muted);font-size:14px">← Przewodnik AR</a>
+  <h1>Kreator znaczników AR</h1>
+  <p class="lead">Zamień dowolne zdjęcie lub grafikę w plakat AR: celujesz telefonem w obrazek, a z niego wyskakuje model 3D.
+    Wszystko dzieje się w Twojej przeglądarce, nic nie jest nigdzie wysyłane.</p>
+
+  <!-- KROK 1 -->
+  <section class="step" id="s1">
+    <h2><span>1</span>Wybierz obrazek-znacznik</h2>
+    <p>Najlepiej działa obraz z dużą ilością szczegółów i kontrastu: zdjęcie zabytku, ilustracja, plakat z napisami.
+      Słabo działają gładkie gradienty, jednolite tło i powtarzalne wzory (np. kratka).</p>
+    <label class="drop" id="drop">
+      <input type="file" id="imgFile" accept="image/*">
+      <div><b style="color:var(--ink)">📁 Kliknij i wybierz obrazek</b><br><small>JPG lub PNG, najlepiej 600–1500 px szerokości</small></div>
+    </label>
+    <div class="previews" id="imgPrev" hidden>
+      <figure><img id="imgShow" alt=""><figcaption>Twój obrazek</figcaption></figure>
+      <figure><canvas id="pts"></canvas><figcaption>Punkty charakterystyczne (zielone): po nich telefon rozpoznaje obraz</figcaption></figure>
+    </div>
+    <div class="prog" id="prog1" hidden><div></div></div>
+    <div id="score"></div>
+  </section>
+
+  <!-- KROK 2 -->
+  <section class="step locked" id="s2">
+    <h2><span>2</span>Wybierz model 3D</h2>
+    <p>Model w formacie <b>.glb</b>: własny (Blender, skan z Polycam, Sketchfab) albo jeden z istniejących.</p>
+    <select id="modelPick"></select>
+    <label class="drop" id="modelDrop" style="margin-top:10px">
+      <input type="file" id="modelFile" accept=".glb,.gltf,model/gltf-binary">
+      <div><b style="color:var(--ink)">📦 …albo wgraj własny plik .glb</b><br><small id="modelName">nie wybrano</small></div>
+    </label>
+    <label for="orient">Jak będzie umieszczony obrazek?</label>
+    <select id="orient">
+      <option value="sciana">Wisi na ścianie / tablicy (model stoi przed plakatem)</option>
+      <option value="stol">Leży na stole / ziemi (model wyrasta w górę)</option>
+    </select>
+  </section>
+
+  <!-- KROK 3 -->
+  <section class="step locked" id="s3">
+    <h2><span>3</span>Przetestuj od razu</h2>
+    <p>Otwórz tę stronę na telefonie albo wyświetl obrazek na ekranie komputera i wyceluj w niego telefonem.</p>
+    <button class="btn accent" id="testBtn">📷 Testuj AR teraz</button>
+  </section>
+
+  <!-- KROK 4 -->
+  <section class="step locked" id="s4">
+    <h2><span>4</span>Dodaj do przewodnika</h2>
+    <p>Wybierz, czy to nowa atrakcja, czy plakat do już istniejącej. Kreator przygotuje pliki i gotowy kod.</p>
+    <label for="mode">Gdzie dodać?</label>
+    <select id="mode"></select>
+    <div id="newFields">
+      <label for="fNazwa">Nazwa atrakcji</label><input type="text" id="fNazwa" placeholder="np. Ratusz Miejski">
+      <label for="fId">Identyfikator do adresu (bez spacji i polskich znaków)</label><input type="text" id="fId" placeholder="ratusz">
+      <label for="fMiejsce">Gdzie się znajduje</label><input type="text" id="fMiejsce" placeholder="Rynek 1">
+      <label for="fOpis">Opis (czyta go awatar; akapity oddziel pustą linią)</label><textarea id="fOpis" placeholder="Witaj przy…"></textarea>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="dlImg">⬇ Obrazek</button>
+      <button class="btn primary" id="dlMind">⬇ Plik .mind</button>
+      <button class="btn primary" id="dlModel" hidden>⬇ Model .glb</button>
+    </div>
+    <h3 style="margin:18px 0 6px;font-size:16px">Co wrzucić na GitHub</h3>
+    <ul class="files" id="files"></ul>
+    <h3 style="margin:18px 0 6px;font-size:16px" id="codeTitle">Kod do pliku atrakcje.js</h3>
+    <pre id="code"></pre>
+    <div class="row"><button class="btn" id="copy">📋 Kopiuj kod</button></div>
+    <ul class="tips" id="howto"></ul>
+  </section>
+</div>
+
+<div id="test" hidden>
+  <div id="testAr"></div>
+  <div id="testHint">Skieruj aparat na obrazek</div>
+  <div id="testUi">
+    <button class="btn" id="testOrient">Zmień ustawienie</button>
+    <button class="btn primary" id="testClose">✕ Zamknij</button>
+  </div>
+</div>
+
+<script type="module">
+import { compileImage, startPosterAR } from "./ar-plakat.js";
+const $ = s => document.querySelector(s);
+const state = { imgFile: null, imgUrl: null, mind: null, modelFile: null, modelUrl: null };
+const slug = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ł/g, "l")
+  .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 30);
+const unlock = (...ids) => ids.forEach(i => $(i).classList.remove("locked"));
+
+/* ---------- KROK 1: obrazek + kompilacja ---------- */
+$("#imgFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  state.imgFile = f; state.imgUrl = URL.createObjectURL(f);
+  $("#imgShow").src = state.imgUrl; $("#imgPrev").hidden = false;
+  $("#prog1").hidden = false; $("#score").innerHTML = `<div class="score mid">Analizuję obrazek… (kilka–kilkanaście sekund)</div>`;
+  try {
+    const { buffer, data } = await compileImage(f, p => $("#prog1 div").style.width = p + "%");
+    state.mind = buffer;
+    drawPoints(data);
+    unlock("#s2", "#s3", "#s4"); refresh();
+  } catch (err) {
+    console.error(err);
+    $("#score").innerHTML = `<div class="score bad">Nie udało się przetworzyć obrazka: ${err.message || err}</div>`;
+  }
+};
+
+function drawPoints(data) {
+  const img = data.trackingImageList[0], pts = data.trackingData[0].points;
+  const cv = $("#pts"); cv.width = img.width; cv.height = img.height;
+  const ctx = cv.getContext("2d"), id = ctx.createImageData(img.width, img.height);
+  for (let i = 0; i < img.data.length; i++) { const v = img.data[i]; id.data.set([v, v, v, 255], i * 4); }
+  ctx.putImageData(id, 0, 0);
+  ctx.fillStyle = "#00e05a";
+  pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(2, img.width / 160), 0, 7); ctx.fill(); });
+
+  // ocena: liczba punktów rozpoznawania + jak równo pokrywają obraz (siatka 4x4)
+  const kp = data.matchingData.reduce((n, m) => n + m.maximaPoints.length + m.minimaPoints.length, 0);
+  const cells = new Set(pts.map(p => `${Math.floor(p.x / img.width * 4)},${Math.floor(p.y / img.height * 4)}`)).size;
+  let cls = "good", txt = "Świetny znacznik: dużo szczegółów w całym obrazie.";
+  if (pts.length < 40 || cells < 7) { cls = "bad"; txt = "Słaby znacznik: za mało szczegółów. Dodaj napisy, wzory lub wybierz bardziej „bogate” zdjęcie."; }
+  else if (pts.length < 100 || cells < 11) { cls = "mid"; txt = "Może działać, ale rozpoznawanie bywa niestabilne. Szczegóły są tylko w części obrazu."; }
+  $("#score").innerHTML = `<div class="score ${cls}"><b>${txt}</b><br>Punkty śledzenia: ${pts.length} · punkty rozpoznawania: ${kp} · pokrycie obrazu: ${cells}/16</div>`;
+}
+
+/* ---------- KROK 2: model ---------- */
+const models = [...new Map((window.ATRAKCJE || []).map(a => [a.model, a.nazwa])).entries()];
+$("#modelPick").innerHTML = models.map(([m, n]) => `<option value="${m}">${n} (${m})</option>`).join("") + `<option value="__own">Własny plik .glb (wgraj poniżej)</option>`;
+$("#modelPick").onchange = refresh;
+$("#modelFile").onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  state.modelFile = f; state.modelUrl = URL.createObjectURL(f);
+  $("#modelName").textContent = `${f.name} (${(f.size / 1048576).toFixed(1)} MB)` + (f.size > 15e6 ? " — duży plik, na telefonie może się długo ładować" : "");
+  $("#modelPick").value = "__own"; refresh();
+};
+$("#orient").onchange = refresh;
+const modelSrc = () => $("#modelPick").value === "__own" ? state.modelUrl : $("#modelPick").value;
+
+/* ---------- KROK 3: test ---------- */
+let ar = null;
+$("#testBtn").onclick = async () => {
+  if (!modelSrc()) { alertBox("Wybierz model albo wgraj plik .glb"); return; }
+  $("#test").hidden = false; $("#testHint").textContent = "Uruchamiam kamerę…";
+  try {
+    ar = await startPosterAR({
+      container: $("#testAr"), mindUrl: URL.createObjectURL(new Blob([state.mind])), modelUrl: modelSrc(), orientation: $("#orient").value,
+      onFound: () => $("#testHint").textContent = "Mam go! 🎉 Obchodź obrazek dookoła",
+      onLost: () => $("#testHint").textContent = "Skieruj aparat na obrazek",
+    });
+    $("#testHint").textContent = "Skieruj aparat na obrazek";
+  } catch (e) { console.error(e); $("#testHint").textContent = "Błąd: " + (e.message || e); }
+};
+$("#testOrient").onclick = () => ar && ar.setOrientation(ar.orientation === "stol" ? "sciana" : "stol");
+$("#testClose").onclick = () => { ar?.stop(); ar = null; $("#testAr").innerHTML = ""; $("#test").hidden = true; };
+function alertBox(t) { $("#score").insertAdjacentHTML("beforeend", `<div class="score bad">${t}</div>`); }
+
+/* ---------- KROK 4: pliki i kod ---------- */
+$("#mode").innerHTML = `<option value="__new">➕ Nowa atrakcja</option>` +
+  (window.ATRAKCJE || []).map(a => `<option value="${a.id}">Plakat do: ${a.nazwa}</option>`).join("");
+["#mode", "#fNazwa", "#fMiejsce", "#fOpis"].forEach(s => $(s).addEventListener("input", refresh));
+$("#fNazwa").addEventListener("input", () => { if (!$("#fId").dataset.touched) $("#fId").value = slug($("#fNazwa").value); refresh(); });
+$("#fId").addEventListener("input", () => { $("#fId").dataset.touched = 1; refresh(); });
+
+const ext = () => (state.imgFile?.name.match(/\.(jpe?g|png|webp)$/i)?.[1] || "jpg").toLowerCase().replace("jpeg", "jpg");
+function names() {
+  const isNew = $("#mode").value === "__new";
+  const id = isNew ? (slug($("#fId").value) || "moja-atrakcja") : $("#mode").value;
+  const own = $("#modelPick").value === "__own";
+  return { isNew, id, img: `${id}-znacznik.${ext()}`, mind: `${id}.mind`, glb: own ? `${id}.glb` : null };
+}
+const js = s => JSON.stringify(s);
+function refresh() {
+  if (!state.mind) return;
+  const n = names();
+  $("#newFields").hidden = !n.isNew;
+  $("#dlModel").hidden = !n.glb;
+  const model = n.glb ? `modele/${n.glb}` : $("#modelPick").value;
+  const orient = $("#orient").value;
+  let code;
+  if (n.isNew) {
+    const opis = $("#fOpis").value.trim() || "Tu wpisz opis atrakcji.";
+    code = `  {
+    id: ${js(n.id)},
+    nazwa: ${js($("#fNazwa").value.trim() || "Moja atrakcja")},
+    miejsce: ${js($("#fMiejsce").value.trim() || "")},
+    model: ${js(model)},
+    kolor: "#2a6f97",
+    znacznik: ${js("znaczniki/" + n.img)},
+    znacznikMind: ${js("znaczniki/" + n.mind)},
+    orientacja: ${js(orient)},
+    opis: ${js(opis.replace(/\r/g, ""))},
+    ciekawostki: [],
+    punkty: [],
+  },`;
+    $("#codeTitle").textContent = "Kod do pliku atrakcje.js";
+    $("#howto").innerHTML = `<li>Otwórz <b>atrakcje.js</b> na GitHubie → ikona ołówka (Edit).</li>
+      <li>Wklej kod tuż przed ostatnią linijką <code>];</code> (po przecinku za poprzednią atrakcją).</li>
+      <li><b>Commit changes</b>. Po minucie atrakcja będzie na liście, a jej plakat w <b>plakaty.html</b>.</li>`;
+  } else {
+    code = `    znacznik: ${js("znaczniki/" + n.img)},
+    znacznikMind: ${js("znaczniki/" + n.mind)},
+    orientacja: ${js(orient)},` + (n.glb ? `\n    model: ${js(model)},   // ← zamień istniejącą linijkę model:` : "");
+    $("#codeTitle").textContent = "Linijki do dopisania w atrakcji „" + (ATRAKCJE.find(a => a.id === n.id)?.nazwa) + "”";
+    $("#howto").innerHTML = `<li>Otwórz <b>atrakcje.js</b> na GitHubie → ikona ołówka (Edit).</li>
+      <li>Znajdź atrakcję z <code>id: "${n.id}"</code> i podmień w niej linijki <code>znacznik</code>, <code>znacznikMind</code> i <code>orientacja</code> na powyższe (albo dopisz je, jeśli ich nie ma).</li>
+      <li><b>Commit changes</b>.</li>`;
+  }
+  $("#code").textContent = code;
+  $("#files").innerHTML = `<li>do folderu <code>znaczniki/</code>: <code>${n.img}</code> i <code>${n.mind}</code></li>` +
+    (n.glb ? `<li>do folderu <code>modele/</code>: <code>${n.glb}</code></li>` : "") +
+    `<li>Na GitHubie: wejdź w folder → <b>Add file → Upload files</b> → przeciągnij pliki pobrane przyciskami wyżej.</li>`;
+}
+function download(blob, name) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+$("#dlImg").onclick = () => download(state.imgFile, names().img);
+$("#dlMind").onclick = () => download(new Blob([state.mind]), names().mind);
+$("#dlModel").onclick = () => state.modelFile && download(state.modelFile, names().glb);
+$("#copy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("#code").textContent); $("#copy").textContent = "✓ Skopiowano"; }
+  catch { $("#copy").textContent = "Zaznacz kod i skopiuj ręcznie"; }
+  setTimeout(() => $("#copy").textContent = "📋 Kopiuj kod", 2000);
+};
+</script>
+</body>
+</html>
