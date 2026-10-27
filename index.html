@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Przewodnik AR</title>
+<meta name="theme-color" content="#1f2a2e">
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<script src="atrakcje.js"></script>
+<style>
+  :root {
+    --ink: #1f2a2e; --paper: #f6f1e7; --card: #fffdf8; --muted: #6b6f66;
+    --accent: #a8402c; --line: #e3dccd;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink);
+    font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: inherit; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 18px 60px; }
+  header.top { display: flex; align-items: center; gap: 10px; padding: 16px 18px;
+    max-width: 760px; margin: 0 auto; }
+  header.top .logo { width: 34px; height: 34px; border-radius: 9px; background: var(--ink);
+    color: var(--paper); display: grid; place-items: center; font-weight: 800; font-size: 13px; letter-spacing: .5px; }
+  header.top b { font-size: 17px; }
+  header.top a.back { margin-left: auto; text-decoration: none; font-size: 14px; color: var(--muted); }
+
+  /* ---------- strona główna ---------- */
+  .hero h1 { font-size: clamp(28px, 6vw, 40px); line-height: 1.1; margin: 18px 0 8px; letter-spacing: -.5px; }
+  .hero p { color: var(--muted); margin: 0 0 22px; max-width: 52ch; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 28px; }
+  .steps div { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; font-size: 14px; }
+  .steps b { display: block; font-size: 22px; color: var(--accent); }
+  .list { display: grid; gap: 12px; }
+  .item { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 16px; padding: 12px; text-decoration: none; transition: transform .15s; }
+  .item:active { transform: scale(.98); }
+  .item model-viewer { width: 84px; height: 84px; border-radius: 12px; background: #eef0ee; flex: none; --poster-color: transparent; }
+  .item h3 { margin: 0; font-size: 17px; }
+  .item small { color: var(--muted); }
+  .item .stamp { margin-left: auto; font-size: 12px; padding: 4px 9px; border-radius: 99px; border: 1px dashed var(--line); color: var(--muted); white-space: nowrap; }
+  .item .stamp.ok { border-style: solid; border-color: #3f7d4a; color: #3f7d4a; background: #eef6ef; }
+  .foot { margin-top: 26px; font-size: 14px; color: var(--muted); }
+
+  /* ---------- strona atrakcji ---------- */
+  .stage { position: relative; height: min(62vh, 520px); background:
+      radial-gradient(ellipse at 50% 85%, #dfe7e3 0%, #eef1ee 45%, var(--paper) 100%); }
+  .stage model-viewer { width: 100%; height: 100%; --poster-color: transparent; }
+  .ar-btn { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
+    border: 0; border-radius: 99px; padding: 14px 24px; font: 700 16px system-ui, sans-serif;
+    background: var(--accent); color: #fff; box-shadow: 0 8px 22px rgba(0,0,0,.22); display: flex; gap: 8px; align-items: center; }
+  .no-ar { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); font-size: 13px;
+    background: rgba(255,255,255,.9); padding: 8px 14px; border-radius: 99px; color: var(--muted); white-space: nowrap; }
+  .hotspot { border: 0; background: #fff; color: var(--ink); border-radius: 99px; padding: 5px 10px 5px 8px;
+    font: 600 12px system-ui, sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.25); display: flex; align-items: center; gap: 6px; }
+  .hotspot::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+  .hotspot:not([data-visible]) { opacity: .25; }
+  .loadbar { position: absolute; top: 0; left: 0; height: 3px; background: var(--accent); width: 0; transition: width .2s; }
+
+  .info h1 { font-size: clamp(26px, 5.5vw, 36px); margin: 18px 0 2px; letter-spacing: -.4px; }
+  .info .where { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+
+  .guide { display: flex; gap: 14px; align-items: flex-end; margin: 6px 0 20px; }
+  .guide svg { width: 92px; height: 92px; flex: none; }
+  .bubble { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 16px 16px 16px 4px;
+    padding: 12px 14px; font-size: 15px; min-height: 56px; flex: 1; }
+  .controls { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .controls button { border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 8px 14px; font: 600 14px system-ui, sans-serif; color: var(--ink); }
+  .controls button.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .desc p { margin: 0 0 14px; }
+  .desc span.now { background: color-mix(in srgb, var(--accent) 18%, transparent); border-radius: 4px; }
+  .facts { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin: 18px 0; }
+  .facts h2 { font-size: 15px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); }
+  .facts ul { margin: 0; padding-left: 20px; }
+  .facts li { margin-bottom: 6px; }
+  .nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; }
+  .nav a { flex: 1; text-decoration: none; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; font-size: 14px; }
+  .nav a small { display: block; color: var(--muted); }
+  .nav a:last-child { text-align: right; }
+
+  /* awatar */
+  #avatar .mouth { transform-origin: 50px 66px; transform: scaleY(.25); transition: transform .08s; }
+  #avatar.speaking .mouth { animation: talk .22s infinite alternate; }
+  @keyframes talk { from { transform: scaleY(.2); } to { transform: scaleY(1); } }
+  #avatar .eyes { animation: blink 4.5s infinite; transform-origin: 50px 52px; }
+  @keyframes blink { 0%, 95%, 100% { transform: scaleY(1); } 97% { transform: scaleY(.1); } }
+  #avatar.speaking { animation: bob 1.2s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-3px) rotate(-2deg); } }
+  @media (max-width: 480px) { .steps { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">AR</div><b>Przewodnik AR</b>
+  <a class="back" id="back" href="./" hidden>← Wszystkie atrakcje</a>
+</header>
+<main id="app"></main>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const store = {
+  get() { try { return JSON.parse(localStorage.getItem("odwiedzone") || "[]"); } catch { return []; } },
+  add(id) { try { const v = new Set(store.get()); v.add(id); localStorage.setItem("odwiedzone", JSON.stringify([...v])); } catch {} },
+};
+
+const AVATAR = `
+<svg id="avatar" viewBox="0 0 100 100" aria-label="Awatar przewodnika">
+  <ellipse cx="50" cy="96" rx="26" ry="3" fill="#000" opacity=".1"/>
+  <path d="M22 98 C22 78 34 72 50 72 C66 72 78 78 78 98 Z" fill="var(--accent)"/>
+  <path d="M44 72 L50 82 L56 72 Z" fill="#fff"/>
+  <circle cx="50" cy="54" r="22" fill="#f2c9a5"/>
+  <circle cx="29" cy="56" r="4" fill="#ebb894"/><circle cx="71" cy="56" r="4" fill="#ebb894"/>
+  <path d="M26 44 C26 26 74 26 74 44 L74 40 C74 40 50 34 26 40 Z" fill="#3a2c24"/>
+  <path d="M24 40 C30 22 70 22 76 40 C64 35 36 35 24 40 Z" fill="var(--ink)"/>
+  <rect x="22" y="38" width="56" height="6" rx="3" fill="var(--ink)"/>
+  <circle cx="50" cy="31" r="4" fill="#e8c547"/>
+  <g class="eyes"><circle cx="41" cy="53" r="2.8" fill="#222"/><circle cx="59" cy="53" r="2.8" fill="#222"/></g>
+  <circle cx="36" cy="61" r="3.5" fill="#f08a80" opacity=".35"/><circle cx="64" cy="61" r="3.5" fill="#f08a80" opacity=".35"/>
+  <ellipse class="mouth" cx="50" cy="66" rx="6" ry="4" fill="#7a2d22"/>
+</svg>`;
+
+function mv(a, extra = "") {
+  return `<model-viewer src="${esc(a.model)}" ${a.modelIOS ? `ios-src="${esc(a.modelIOS)}"` : ""}
+    alt="Model 3D: ${esc(a.nazwa)}" shadow-intensity="1" exposure="1.05" environment-image="neutral" ${extra}></model-viewer>`;
+}
+
+/* ---------------- strona główna ---------------- */
+function renderHome() {
+  const seen = store.get();
+  $("#app").innerHTML = `
+  <div class="wrap">
+    <section class="hero">
+      <h1>Zobacz zabytki<br>w rozszerzonej rzeczywistości</h1>
+      <p>Przy każdej atrakcji znajdziesz kod QR. Zeskanuj go aparatem telefonu, a model 3D pojawi się obok Ciebie, a przewodnik opowie jego historię.</p>
+    </section>
+    <div class="steps">
+      <div><b>1</b>Zeskanuj kod QR przy atrakcji</div>
+      <div><b>2</b>Kliknij „Zobacz w AR” i wskaż podłogę</div>
+      <div><b>3</b>Posłuchaj przewodnika i zbierz pieczątki</div>
+    </div>
+    <div class="list">
+      ${ATRAKCJE.map(a => `
+        <a class="item" href="?a=${encodeURIComponent(a.id)}" style="--accent:${a.kolor}">
+          ${mv(a, 'auto-rotate rotation-per-second="20deg" interaction-prompt="none" disable-zoom disable-pan')}
+          <div><h3>${esc(a.nazwa)}</h3><small>${esc(a.miejsce)}</small></div>
+          <span class="stamp ${seen.includes(a.id) ? "ok" : ""}">${seen.includes(a.id) ? "✓ odwiedzone" : "do odkrycia"}</span>
+        </a>`).join("")}
+    </div>
+    <p class="foot">Odwiedzone: ${seen.filter(id => ATRAKCJE.some(a => a.id === id)).length} / ${ATRAKCJE.length} · <a href="qr.html">Kody QR do wydruku</a></p>
+  </div>`;
+}
+
+/* ---------------- strona atrakcji ---------------- */
+function renderAttraction(a) {
+  document.title = `${a.nazwa} · Przewodnik AR`;
+  document.documentElement.style.setProperty("--accent", a.kolor || "#a8402c");
+  $("#back").hidden = false;
+  store.add(a.id);
+
+  // opis podzielony na zdania, żeby podświetlać to, co aktualnie czyta awatar
+  let n = 0;
+  const sentences = [];
+  const paragraphs = a.opis.split(/\n\n+/).map(p =>
+    "<p>" + (p.match(/[^.!?]+[.!?]+["”]?\s*|[^.!?]+$/g) || [p]).map(s => {
+      sentences.push(s.trim());
+      return `<span data-s="${n++}">${esc(s)}</span>`;
+    }).join("") + "</p>").join("");
+
+  const i = ATRAKCJE.indexOf(a);
+  const prev = ATRAKCJE[(i - 1 + ATRAKCJE.length) % ATRAKCJE.length];
+  const next = ATRAKCJE[(i + 1) % ATRAKCJE.length];
+
+  $("#app").innerHTML = `
+  <div class="stage">
+    <model-viewer id="mv" src="${esc(a.model)}" ${a.modelIOS ? `ios-src="${esc(a.modelIOS)}"` : ""}
+      alt="Model 3D: ${esc(a.nazwa)}" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
+      camera-controls touch-action="pan-y" auto-rotate auto-rotate-delay="2500" shadow-intensity="1.1"
+      environment-image="neutral" exposure="1.05" camera-orbit="35deg 72deg auto">
+      ${(a.punkty || []).map((p, k) => `
+        <button class="hotspot" slot="hotspot-${k}" data-position="${esc(p.pozycja)}" data-normal="${esc(p.normal || "0 1 0")}"
+          data-visibility-attribute="visible">${esc(p.etykieta)}</button>`).join("")}
+      <div class="loadbar" slot="progress-bar"></div>
+      <button class="ar-btn" slot="ar-button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
+        Zobacz w AR
+      </button>
+    </model-viewer>
+    <div class="no-ar" id="noar" hidden>AR działa na telefonie · tu możesz obracać model palcem/myszką</div>
+  </div>
+  <div class="wrap info">
+    <h1>${esc(a.nazwa)}</h1>
+    <div class="where">📍 ${esc(a.miejsce)}</div>
+
+    <div class="guide">
+      ${AVATAR}
+      <div style="flex:1">
+        <div class="bubble" id="bubble">Cześć! Jestem Twoim przewodnikiem. Kliknij „Opowiedz”, a przeczytam Ci historię tego miejsca.</div>
+        <div class="controls">
+          <button class="primary" id="play">▶ Opowiedz</button>
+          <button id="stop" hidden>■ Stop</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="desc">${paragraphs}</div>
+
+    ${a.ciekawostki?.length ? `<div class="facts"><h2>Ciekawostki</h2><ul>${a.ciekawostki.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>` : ""}
+
+    <div class="nav">
+      <a href="?a=${encodeURIComponent(prev.id)}"><small>← poprzednia</small>${esc(prev.nazwa)}</a>
+      <a href="?a=${encodeURIComponent(next.id)}"><small>następna →</small>${esc(next.nazwa)}</a>
+    </div>
+  </div>`;
+
+  const viewer = $("#mv");
+  viewer.addEventListener("progress", e => { $(".loadbar").style.width = (e.detail.totalProgress * 100) + "%";
+    if (e.detail.totalProgress === 1) setTimeout(() => $(".loadbar").style.opacity = 0, 300); });
+  viewer.addEventListener("load", () => { if (!viewer.canActivateAR) $("#noar").hidden = false; });
+
+  setupNarrator(sentences);
+}
+
+/* ---------------- awatar-lektor (Web Speech API) ---------------- */
+function setupNarrator(sentences) {
+  const avatar = $("#avatar"), bubble = $("#bubble"), play = $("#play"), stop = $("#stop");
+  const synth = window.speechSynthesis;
+  if (!synth) { play.textContent = "Lektor niedostępny w tej przeglądarce"; play.disabled = true; return; }
+
+  let voice = null, idx = 0, running = false;
+  const pickVoice = () => { const v = synth.getVoices(); voice = v.find(x => /^pl/i.test(x.lang)) || null; };
+  pickVoice(); synth.onvoiceschanged = pickVoice;
+
+  const mark = k => document.querySelectorAll(".desc span").forEach(s => s.classList.toggle("now", +s.dataset.s === k));
+
+  function speakNext() {
+    if (!running || idx >= sentences.length) return finish(idx >= sentences.length);
+    const text = sentences[idx];
+    bubble.textContent = text; mark(idx);
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "pl-PL"; if (voice) u.voice = voice; u.rate = 1; u.pitch = 1.05;
+    u.onstart = () => avatar.classList.add("speaking");
+    u.onend = () => { avatar.classList.remove("speaking"); idx++; setTimeout(speakNext, 250); };
+    u.onerror = () => { avatar.classList.remove("speaking"); finish(false); };
+    synth.speak(u);
+  }
+  function finish(done) {
+    running = false; avatar.classList.remove("speaking"); mark(-1);
+    play.hidden = false; stop.hidden = true; play.textContent = "▶ Opowiedz jeszcze raz";
+    if (done) bubble.textContent = "To wszystko! Kliknij „Zobacz w AR” i obejrzyj model ze wszystkich stron.";
+    idx = 0;
+  }
+  play.onclick = () => { synth.cancel(); running = true; idx = 0; play.hidden = true; stop.hidden = false; speakNext(); };
+  stop.onclick = () => { synth.cancel(); finish(false); };
+  window.addEventListener("pagehide", () => synth.cancel());
+}
+
+/* ---------------- router ---------------- */
+const id = new URLSearchParams(location.search).get("a");
+const found = id && ATRAKCJE.find(a => a.id === id);
+if (found) renderAttraction(found); else renderHome();
+</script>
+</body>
+</html>

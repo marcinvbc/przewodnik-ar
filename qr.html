@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kody QR · Przewodnik AR</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="atrakcje.js"></script>
+<style>
+  body { margin: 0; background: #f6f1e7; color: #1f2a2e; font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 18px 60px; }
+  h1 { margin: 0 0 6px; }
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 14px 0 24px; }
+  .bar input { flex: 1; min-width: 260px; padding: 10px 12px; border: 1px solid #d9d1bf; border-radius: 10px; font: inherit; }
+  .bar button { padding: 10px 16px; border: 0; border-radius: 10px; background: #1f2a2e; color: #fff; font: 600 15px system-ui, sans-serif; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+  .card { background: #fff; border: 2px solid #1f2a2e; border-radius: 18px; padding: 18px; text-align: center; break-inside: avoid; }
+  .card .tag { font-size: 12px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--c); }
+  .card h2 { margin: 4px 0 10px; font-size: 20px; }
+  .card svg { width: 190px; height: 190px; }
+  .card p { font-size: 13px; margin: 8px 0 0; color: #555; }
+  .card code { font-size: 10px; color: #999; word-break: break-all; }
+  .hint { color: #6b6f66; font-size: 14px; }
+  @media print { .bar, .hint, h1 + p { display: none; } body { background: #fff; } .grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kody QR do wydruku</h1>
+  <p class="hint">Każdy kod prowadzi prosto do strony atrakcji. Wpisz adres, pod którym opublikowałeś przewodnik (np. GitHub Pages), a potem wydrukuj tę stronę i powieś kody przy atrakcjach.</p>
+  <div class="bar">
+    <input id="base" placeholder="https://twoj-login.github.io/przewodnik-ar/">
+    <button onclick="draw()">Generuj</button>
+    <button onclick="print()">🖨 Drukuj</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+const base = document.getElementById("base");
+base.value = location.href.replace(/qr\.html.*$/, "");
+function draw() {
+  let b = base.value.trim(); if (b && !b.endsWith("/")) b += "/";
+  document.getElementById("grid").innerHTML = ATRAKCJE.map(a => {
+    const url = `${b}index.html?a=${encodeURIComponent(a.id)}`;
+    let svg = "<p>Brak biblioteki QR (brak internetu?)</p>";
+    if (window.qrcode) { const q = qrcode(0, "M"); q.addData(url); q.make(); svg = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); }
+    return `<div class="card" style="--c:${a.kolor}">
+      <div class="tag">Zeskanuj · Zobacz w AR</div><h2>${a.nazwa}</h2>${svg}
+      <p>Skieruj aparat telefonu na kod</p><code>${url}</code></div>`;
+  }).join("");
+}
+draw();
+</script>
+</body>
+</html>
