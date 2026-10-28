@@ -1,7 +1,7 @@
 /* Widok 3D sceny lekcji (projektor nauczyciela, podgląd w panelu, tryb „3D” ucznia). */
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { swiatla } from "./silnik-sceny.js";
+import { swiatla, otoczenie } from "./silnik-sceny.js";
 
 export function widok3D(container, lekcja, { onClick, tlo = 0xe9edf0, autoKamera = true } = {}) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -14,8 +14,9 @@ export function widok3D(container, lekcja, { onClick, tlo = 0xe9edf0, autoKamera
   scene.background = new THREE.Color(tlo);
   scene.fog = new THREE.Fog(tlo, 6, 14);
   swiatla(scene);
-  const ground = new THREE.Mesh(new THREE.CircleGeometry(12, 64), new THREE.MeshStandardMaterial({ color: new THREE.Color(tlo).multiplyScalar(0.93), roughness: 1 }));
-  ground.rotation.x = -Math.PI / 2; ground.position.y = -0.002; scene.add(ground);
+  otoczenie(renderer, scene);
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(12, 64), new THREE.MeshStandardMaterial({ color: new THREE.Color(tlo).multiplyScalar(0.93), roughness: 1, envMapIntensity: 0.4 }));
+  ground.rotation.x = -Math.PI / 2; ground.position.y = -0.002; ground.receiveShadow = true; scene.add(ground);
   scene.add(lekcja.root);
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.02, 50);

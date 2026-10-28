@@ -1,0 +1,308 @@
+{
+ "tytul": "Mikołaj Kopernik – astronom z Torunia (lekcja pokazowa)",
+ "opis": "Lekcja pokazowa: slajdy, film, dwa animowane modele 3D, quiz.",
+ "materialy": [
+  {
+   "id": "slajd1",
+   "typ": "slajd",
+   "nazwa": "Slajd 1: Mikołaj Kopernik",
+   "url": "pokazowa/slajdy/slajd-1.jpg",
+   "w": 1600,
+   "h": 900,
+   "strona": 1,
+   "zrodlo": "kopernik-slajdy.pdf",
+   "tekst": "Mikołaj Kopernik Astronom z Torunia, który „poruszył Ziemię” Lekcja w rozszerzonej rzeczywistości · historia i astronomia Mikołaj Kopernik · 1/8",
+   "tytulSlajdu": "Mikołaj Kopernik"
+  },
+  {
+   "id": "slajd2",
+   "typ": "slajd",
+   "nazwa": "Slajd 2: Kim był Mikołaj Kopernik?",
+   "url": "pokazowa/slajdy/slajd-2.jpg",
+   "w": 1600,
+   "h": 900,
+   "strona": 2,
+   "zrodlo": "kopernik-slajdy.pdf",
+   "tekst": "Kim był Mikołaj Kopernik? 1473–1543 · człowiek renesansu Urodził się 19 lutego 1473 r. w Toruniu, w rodzinie kupieckiej. Studiował sztuki wyzwolone w Krakowie, prawo w Bolonii i medycynę w Padwie. Doktorat z prawa kanonicznego uzyskał w Ferrarze. Był członkiem warmińskiej kapituły katedralnej; większość życia spędził we Fromborku. Astronom, matematyk, lekarz, prawnik i ekonomista. Zmarł w 1543 r. we Fromborku. Mikołaj Kopernik · 2/8",
+   "tytulSlajdu": "Kim był Mikołaj Kopernik?"
+  },
+  {
+   "id": "slajd3",
+   "typ": "slajd",
+   "nazwa": "Slajd 3: Świat przed Kopernikiem",
+   "url": "pokazowa/slajdy/slajd-3.jpg",
+   "w": 1600,
+   "h": 900,
+   "strona": 3,
+   "zrodlo": "kopernik-slajdy.pdf",
+   "tekst": "Świat przed Kopernikiem Model geocentryczny – Ziemia w środku Ziemia stoi nieruchomo w środku świata. Słońce, Księżyc i planety krążą wokół Ziemi. Żeby wyjaśnić dziwny ruch planet, dodawano „koła na kołach”, czyli epicykle. Model opisał Ptolemeusz ok. II w. n.e.; obowiązywał przez około 1400 lat. Mikołaj Kopernik · 3/8",
+   "tytulSlajdu": "Świat przed Kopernikiem"
+  },
+  {
+   "id": "slajd4",
+   "typ": "slajd",
+   "nazwa": "Slajd 4: Rewolucja Kopernika",
+   "url": "pokazowa/slajdy/slajd-4.jpg",
+   "w": 1600,
+   "h": 900,
+   "strona": 4,
+   "zrodlo": "kopernik-slajdy.pdf",
+   "tekst": "Rewolucja Kopernika Model heliocentryczny – Słońce w środku W środku jest Słońce, a Ziemia jest jedną z planet. Ziemia obiega Słońce w ciągu roku. Ziemia obraca się wokół własnej osi raz na dobę – stąd wschody i zachody Słońca. Pozorne „cofanie się” planet to skutek ruchu samej Ziemi. Mikołaj Kopernik · 4/8",
+   "tytulSlajdu": "Rewolucja Kopernika"
+  },
+  {
+   "id": "slajd5",
+   "typ": "slajd",
+   "nazwa": "Slajd 5: „O obrotach sfer niebieskich”",
+   "url": "pokazowa/slajdy/slajd-5.jpg",
+   "w": 1600,
+   "h": 900,
+   "strona": 5,
+   "zrodlo": "kopernik-slajdy.pdf",
+   "tekst": "„O obrotach sfer niebieskich” De revolutionibus orbium coelestium Najważniejsze dzieło Kopernika. Pierwsze wydanie ukazało się w Norymberdze w 1543 r. – w roku śmierci autora. DE Zmieniło sposób myślenia o budowie Wszechświata. REVOLUTIONIBUS ORBIUM COELESTIUM Na pracach Kopernika oparli się później m.in. Kepler, Heweliusz i Newton. Norymberga · 1543 Mikołaj Kopernik · 5/8",
+   "tytulSlajdu": "„O obrotach sfer niebieskich”"
+  },
+  {
+   "id": "slajd6",
+   "typ": "slajd",
+   "nazwa": "Slajd 6: Pomnik Kopernika w Toruniu",
+   "url": "pokazowa/slajdy/slajd-6.jpg",
+   "w": 1600,
+   "h": 900,
+   "strona": 6,
+   "zrodlo": "kopernik-slajdy.pdf",
+   "tekst": "Pomnik Kopernika w Toruniu Rynek Staromiejski, przy ratuszu Stoi w południowo-wschodnim narożniku Rynku Staromiejskiego. Odsłonięto go 25 października 1853 r. Autorzy: berlińscy rzeźbiarze Christian Friedrich Tieck i Johann Heinrich Strack. Pomnik odlano z brązu w Berlinie, w odlewni Heinricha Fischera. W 2023 r. wpisano go do rejestru zabytków. NICOLAUS COPERNICUS schemat: cokół i sfera armilarna Mikołaj Kopernik · 6/8",
+   "tytulSlajdu": "Pomnik Kopernika w Toruniu"
+  },
+  {
+   "id": "slajd7",
+   "typ": "slajd",
+   "nazwa": "Slajd 7: Co trzyma Kopernik na pomniku?",
+   "url": "pokazowa/slajdy/slajd-7.jpg",
+   "w": 1600,
+   "h": 900,
+   "strona": 7,
+   "zrodlo": "kopernik-slajdy.pdf",
+   "tekst": "Co trzyma Kopernik na pomniku? Sferę armilarną – model nieba W lewej ręce trzyma sferę armilarną – przyrząd pokazujący ruch nieba; prawą wskazuje niebo. Na cokole widnieje złocony łaciński napis: „Mikołaj Kopernik Torunianin. Ruszył Ziemię, wstrzymał Słońce i Niebo”. Autorem napisu był toruński profesor Rudolf Brohm. Torunianie często umawiają się „pod Kopernikiem”. Mikołaj Kopernik · 7/8",
+   "tytulSlajdu": "Co trzyma Kopernik na pomniku?"
+  },
+  {
+   "id": "slajd8",
+   "typ": "slajd",
+   "nazwa": "Slajd 8: Podsumowanie",
+   "url": "pokazowa/slajdy/slajd-8.jpg",
+   "w": 1600,
+   "h": 900,
+   "strona": 8,
+   "zrodlo": "kopernik-slajdy.pdf",
+   "tekst": "Podsumowanie Co zapamiętamy? Kopernik urodził się w Toruniu w 1473 r. Umieścił Słońce w środku układu planet (heliocentryzm). Ziemia krąży wokół Słońca i obraca się wokół własnej osi. Jego pomnik z 1853 r. stoi na toruńskim Rynku Staromiejskim. Pytanie do dyskusji: Dlaczego ludziom tak trudno było uwierzyć, że to Ziemia się porusza? Mikołaj Kopernik · 8/8",
+   "tytulSlajdu": "Podsumowanie"
+  },
+  {
+   "id": "geo",
+   "typ": "obraz",
+   "nazwa": "Schemat: model geocentryczny",
+   "url": "pokazowa/model-geocentryczny.jpg",
+   "w": 1200,
+   "h": 900,
+   "tekst": "Model geocentryczny: Ziemia w środku, wokół niej Księżyc, Merkury, Wenus, Słońce, Mars, Jowisz i Saturn. Mars porusza się po epicyklu."
+  },
+  {
+   "id": "helio",
+   "typ": "obraz",
+   "nazwa": "Schemat: model heliocentryczny",
+   "url": "pokazowa/model-heliocentryczny.jpg",
+   "w": 1200,
+   "h": 900,
+   "tekst": "Model heliocentryczny Kopernika: Słońce w środku, wokół niego Merkury, Wenus, Ziemia z Księżycem, Mars, Jowisz i Saturn."
+  },
+  {
+   "id": "os",
+   "typ": "obraz",
+   "nazwa": "Oś czasu: Kopernik i Toruń",
+   "url": "pokazowa/os-czasu.jpg",
+   "w": 1600,
+   "h": 700,
+   "tekst": "1473 narodziny w Toruniu; ok. 1491 studia w Krakowie; 1496 studia w Bolonii; 1503 doktorat w Ferrarze; 1543 De revolutionibus i śmierć we Fromborku; 1853 pomnik w Toruniu; 2023 550. rocznica urodzin."
+  },
+  {
+   "id": "film",
+   "typ": "wideo",
+   "nazwa": "Film: Ziemia czy Słońce w centrum?",
+   "url": "pokazowa/ziemia-czy-slonce.mp4",
+   "w": 1280,
+   "h": 720,
+   "tekst": "Animacja porównuje model geocentryczny i heliocentryczny oraz wyjaśnia pozorny ruch wsteczny Marsa: Ziemia jest bliżej Słońca i porusza się szybciej, a gdy wyprzedza Marsa, ten na tle gwiazd pozornie cofa się."
+  },
+  {
+   "id": "planetarium",
+   "typ": "model",
+   "nazwa": "Model 3D: planetarium Kopernika",
+   "url": "pokazowa/planetarium-kopernika.glb",
+   "tekst": "Mechaniczne planetarium (orrery): Słońce w środku, wokół na mosiężnych ramionach krążą Merkury, Wenus, Ziemia z Księżycem, Mars, Jowisz i Saturn. Tempo ruchu jest umowne."
+  },
+  {
+   "id": "sfera",
+   "typ": "model",
+   "nazwa": "Model 3D: sfera armilarna",
+   "url": "pokazowa/sfera-armilarna.glb",
+   "tekst": "Sfera armilarna: przyrząd astronomiczny z obręczy przedstawiających koła na niebie (równik, zwrotniki, ekliptyka ze znakami zodiaku). Taki przyrząd trzyma w lewej ręce Kopernik na toruńskim pomniku."
+  },
+  {
+   "id": "pdf",
+   "typ": "pdf",
+   "nazwa": "kopernik-slajdy.pdf",
+   "url": "pokazowa/kopernik-slajdy.pdf",
+   "strony": 8
+  }
+ ],
+ "plan": {
+  "tytul": "Mikołaj Kopernik – astronom z Torunia",
+  "sceny": [
+   {
+    "id": "s1",
+    "tytul": "Kim był Mikołaj Kopernik?",
+    "uklad": "muzeum",
+    "elementy": [
+     "slajd1",
+     "slajd2",
+     "os"
+    ],
+    "narracja": "Witajcie! Jestem Bartek i zabieram was do Torunia – miasta, w którym 19 lutego 1473 roku urodził się Mikołaj Kopernik. Studiował w Krakowie, Bolonii, Padwie i Ferrarze, a był nie tylko astronomem, ale też lekarzem, prawnikiem i ekonomistą. Spójrzcie na oś czasu: od narodzin w Toruniu aż po pomnik na rynku.",
+    "quiz": [
+     {
+      "pytanie": "W którym mieście urodził się Mikołaj Kopernik?",
+      "odpowiedzi": [
+       "W Krakowie",
+       "W Toruniu",
+       "We Fromborku",
+       "W Gdańsku"
+      ],
+      "poprawna": 1
+     }
+    ]
+   },
+   {
+    "id": "s2",
+    "tytul": "Świat przed Kopernikiem",
+    "uklad": "muzeum",
+    "elementy": [
+     "sfera",
+     "slajd3",
+     "geo"
+    ],
+    "narracja": "Przez około 1400 lat ludzie wierzyli, że Ziemia stoi nieruchomo w środku świata, a Słońce i planety krążą wokół niej. Taki model opisał Ptolemeusz. Na środku stoi sfera armilarna – przyrząd, którym astronomowie pokazywali ruch nieba wokół Ziemi. Obejdźcie ją dookoła i przyjrzyjcie się obręczom.",
+    "quiz": [
+     {
+      "pytanie": "Co było w środku świata w modelu geocentrycznym?",
+      "odpowiedzi": [
+       "Słońce",
+       "Ziemia",
+       "Księżyc",
+       "Mars"
+      ],
+      "poprawna": 1
+     }
+    ]
+   },
+   {
+    "id": "s3",
+    "tytul": "Film: Ziemia czy Słońce w centrum?",
+    "uklad": "teatr",
+    "elementy": [
+     "film",
+     "slajd4"
+    ],
+    "narracja": "Teraz krótki film. Porównajcie oba modele i obserwujcie Marsa – czasem wygląda, jakby cofał się na niebie. Zastanówcie się, dlaczego tak się dzieje.",
+    "quiz": [
+     {
+      "pytanie": "Dlaczego Mars czasem pozornie cofa się na niebie?",
+      "odpowiedzi": [
+       "Bo naprawdę zawraca na swojej orbicie",
+       "Bo Ziemia, krążąc szybciej, wyprzedza go",
+       "Bo zasłania go Księżyc"
+      ],
+      "poprawna": 1
+     }
+    ]
+   },
+   {
+    "id": "s4",
+    "tytul": "Rewolucja Kopernika",
+    "uklad": "muzeum",
+    "elementy": [
+     "planetarium",
+     "helio",
+     "slajd5"
+    ],
+    "narracja": "Kopernik umieścił w środku Słońce, a Ziemię uznał za jedną z planet. Przed wami mechaniczne planetarium: Ziemia obiega Słońce w ciągu roku, a wokół niej krąży Księżyc. Swoją teorię Kopernik opisał w dziele „O obrotach sfer niebieskich”, wydanym w Norymberdze w 1543 roku.",
+    "quiz": [
+     {
+      "pytanie": "Co jest w środku układu w modelu Kopernika?",
+      "odpowiedzi": [
+       "Ziemia",
+       "Słońce",
+       "Księżyc"
+      ],
+      "poprawna": 1
+     },
+     {
+      "pytanie": "Ile czasu Ziemia potrzebuje, żeby obiec Słońce?",
+      "odpowiedzi": [
+       "Jedną dobę",
+       "Jeden miesiąc",
+       "Jeden rok"
+      ],
+      "poprawna": 2
+     }
+    ]
+   },
+   {
+    "id": "s5",
+    "tytul": "Pomnik Kopernika w Toruniu",
+    "uklad": "muzeum",
+    "elementy": [
+     "sfera",
+     "slajd6",
+     "slajd7"
+    ],
+    "narracja": "Na toruńskim Rynku Staromiejskim od 25 października 1853 roku stoi pomnik Kopernika. W lewej ręce astronom trzyma sferę armilarną – właśnie taką jak ta przed wami – a prawą wskazuje niebo. Złoty napis na cokole głosi: Ruszył Ziemię, wstrzymał Słońce i Niebo.",
+    "quiz": [
+     {
+      "pytanie": "Co trzyma Kopernik na toruńskim pomniku?",
+      "odpowiedzi": [
+       "Lunetę",
+       "Sferę armilarną",
+       "Gęsie pióro",
+       "Globus Ziemi"
+      ],
+      "poprawna": 1
+     },
+     {
+      "pytanie": "W którym roku odsłonięto pomnik Kopernika w Toruniu?",
+      "odpowiedzi": [
+       "1473",
+       "1543",
+       "1853",
+       "1945"
+      ],
+      "poprawna": 2
+     }
+    ]
+   },
+   {
+    "id": "s6",
+    "tytul": "Podsumowanie",
+    "uklad": "orbita",
+    "elementy": [
+     "planetarium",
+     "slajd8",
+     "geo",
+     "helio"
+    ],
+    "narracja": "Brawo! Zapamiętajcie: Mikołaj Kopernik z Torunia pokazał, że to Ziemia krąży wokół Słońca. Obejdźcie scenę i porównajcie oba modele. Na koniec pytanie do dyskusji: dlaczego ludziom tak trudno było w to uwierzyć?",
+    "quiz": []
+   }
+  ]
+ }
+}

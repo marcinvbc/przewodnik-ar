@@ -137,7 +137,7 @@ const AVATAR = `
 
 function mv(a, extra = "") {
   return `<model-viewer src="${esc(a.model)}" ${a.modelIOS ? `ios-src="${esc(a.modelIOS)}"` : ""}
-    alt="Model 3D: ${esc(a.nazwa)}" shadow-intensity="1" exposure="1.05" environment-image="neutral" ${extra}></model-viewer>`;
+    alt="Model 3D: ${esc(a.nazwa)}" shadow-intensity="1" shadow-softness="0.8" exposure="1" environment-image="modele/otoczenie.jpg" tone-mapping="aces" ${extra}></model-viewer>`;
 }
 
 /* ---------------- strona główna ---------------- */
@@ -192,8 +192,8 @@ function renderAttraction(a) {
   <div class="stage">
     <model-viewer id="mv" src="${esc(a.model)}" ${a.modelIOS ? `ios-src="${esc(a.modelIOS)}"` : ""}
       alt="Model 3D: ${esc(a.nazwa)}" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
-      camera-controls touch-action="pan-y" autoplay auto-rotate auto-rotate-delay="2500" shadow-intensity="1.1"
-      environment-image="neutral" exposure="1.05" camera-orbit="35deg 72deg auto">
+      camera-controls touch-action="pan-y" autoplay auto-rotate auto-rotate-delay="2500" shadow-intensity="1.1" shadow-softness="0.75"
+      environment-image="modele/otoczenie.jpg" tone-mapping="aces" exposure="1" camera-orbit="35deg 72deg auto">
       ${(a.punkty || []).map((p, k) => `
         <button class="hotspot" slot="hotspot-${k}" data-position="${esc(p.pozycja)}" data-normal="${esc(p.normal || "0 1 0")}"
           data-visibility-attribute="visible">${esc(p.etykieta)}</button>`).join("")}

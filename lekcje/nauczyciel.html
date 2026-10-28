@@ -84,6 +84,13 @@
     <b>Tryb demo:</b> wszystko zapisuje się tylko w tej przeglądarce. „Uczniów” możesz symulować w kolejnych kartach tej samej przeglądarki.
     Żeby uczniowie dołączali z własnych telefonów i żeby działał Claude, połącz Supabase (instrukcja w <code>LEKCJE-INSTRUKCJA.md</code>).
   </div>
+  <div class="card" style="margin-top:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:#1f2a2e;color:#fff;border-color:#1f2a2e">
+    <span style="font-size:34px">🔭</span>
+    <div style="flex:1;min-width:240px"><b style="font-size:16px">Lekcja pokazowa: Mikołaj Kopernik – astronom z Torunia</b><br>
+      <span class="small" style="opacity:.8">8 slajdów, film o ruchu planet, dwa animowane modele 3D (planetarium i sfera armilarna), teksty Bartka i quiz.</span></div>
+    <button class="btn gold" id="demoLesson">Wczytaj gotową lekcję</button>
+    <a class="btn" href="pokazowa/pliki.html" target="_blank" style="background:transparent;color:#fff;border-color:#55636a">📂 Pliki do pokazu wgrywania</a>
+  </div>
   <div class="lessons" id="lessons"></div>
 </main>
 
@@ -205,6 +212,17 @@ $("#lessons").onclick = async e => {
   const o = e.target.closest("[data-open]"), d = e.target.closest("[data-del]");
   if (o) openLesson(o.dataset.open);
   if (d && confirm("Usunąć lekcję razem z plikami?")) { await b.lessons.remove(d.dataset.del); listLessons(); }
+};
+$("#demoLesson").onclick = async () => {
+  $("#demoLesson").disabled = true; $("#demoLesson").textContent = "Wczytuję…";
+  try {
+    const def = await (await fetch("pokazowa/lekcja.json", { cache: "no-store" })).json();
+    const abs = u => new URL(u, location.href).href;     // pliki leżą na tej samej stronie (GitHub Pages)
+    const l = await b.lessons.create(def.tytul);
+    await b.lessons.update(l.id, { tytul: def.tytul, materialy: def.materialy.map(m => ({ ...m, url: abs(m.url) })), plan: def.plan });
+    toast("🔭 Lekcja pokazowa gotowa"); openLesson(l.id);
+  } catch (e) { toast("Nie udało się wczytać lekcji: " + e.message, 5000); }
+  $("#demoLesson").disabled = false; $("#demoLesson").textContent = "Wczytaj gotową lekcję";
 };
 $("#create").onclick = async () => {
   const t = $("#newTitle").value.trim() || "Nowa lekcja";

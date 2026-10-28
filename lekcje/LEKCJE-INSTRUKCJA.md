@@ -13,6 +13,10 @@ scenę ze swojego miejsca w klasie.
 
 ---
 
+## 🔭 Lekcja pokazowa (Kopernik)
+W panelu nauczyciela kliknij **Wczytaj gotową lekcję**: „Mikołaj Kopernik – astronom z Torunia” (slajdy, film, 2 animowane modele 3D, quiz).
+Pliki do pokazania procesu wgrywania i scenariusz pokazu: `lekcje/pokazowa/pliki.html` i `lekcje/pokazowa/SCENARIUSZ-POKAZU.md`.
+
 ## Szybki start: tryb demo (bez zakładania kont)
 
 Od razu po wgraniu na GitHub Pages wejdź na `…/lekcje/nauczyciel.html`. Na górze zobaczysz **TRYB DEMO**.

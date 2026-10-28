@@ -77,6 +77,7 @@ function shadowDisc() {
 async function loadGuide(url, height, offsetX) {
   const g = await new GLTFLoader().loadAsync(url);
   const root = new THREE.Group(), av = g.scene;
+  av.traverse(o => { if (o.isMesh) o.castShadow = true; });
   const b = new THREE.Box3().setFromObject(av), d = b.getSize(new THREE.Vector3());
   const k = height / d.y;
   av.scale.setScalar(k);
@@ -127,8 +128,17 @@ export async function startPosterAR({ container, mindUrl, modelUrl, orientation 
   const { renderer, scene, camera } = mindar;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 2.2));
-  const sun = new THREE.DirectionalLight(0xffffff, 2.2); sun.position.set(0.5, 1, 1.2); scene.add(sun);
+  // realistyczne światło: mapa otoczenia (odbicia), słońce z miękkim cieniem, filmowe tony
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 0.9));
+  const sun = new THREE.DirectionalLight(0xfff2e0, 2.3); sun.position.set(0.6, 1.6, 1.0);
+  sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.normalBias = 0.01;
+  Object.assign(sun.shadow.camera, { left: -1.5, right: 1.5, top: 1.5, bottom: -1.5, near: 0.05, far: 6 }); scene.add(sun);
+  try {
+    const env = await new THREE.TextureLoader().loadAsync(new URL("modele/otoczenie.jpg", import.meta.url).href);
+    env.mapping = THREE.EquirectangularReflectionMapping; env.colorSpace = THREE.SRGBColorSpace;
+    const pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromEquirectangular(env).texture; pm.dispose();
+  } catch {}
 
   const anchor = mindar.addAnchor(0);
   const holder = new THREE.Group();   // obraca się zależnie od orientacji
@@ -138,6 +148,7 @@ export async function startPosterAR({ container, mindUrl, modelUrl, orientation 
   // model
   const gltf = await new GLTFLoader().loadAsync(modelUrl);
   const model = gltf.scene;
+  model.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   const box = new THREE.Box3().setFromObject(model);
   const dim = box.getSize(new THREE.Vector3());
   const s = size / Math.max(dim.y, dim.x * 0.8, dim.z * 0.8);
@@ -147,6 +158,8 @@ export async function startPosterAR({ container, mindUrl, modelUrl, orientation 
   pop.add(model);
   const shadow = shadowDisc(); shadow.scale.setScalar(Math.max(dim.x, dim.z) * s * 1.25); shadow.position.y = 0.002;
   pop.add(shadow);
+  const floorShadow = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), new THREE.ShadowMaterial({ opacity: 0.3 }));
+  floorShadow.rotation.x = -Math.PI / 2; floorShadow.position.y = 0.003; floorShadow.receiveShadow = true; pop.add(floorShadow);
 
   const mixer = new THREE.AnimationMixer(model);
   gltf.animations.forEach(clip => mixer.clipAction(clip).play());

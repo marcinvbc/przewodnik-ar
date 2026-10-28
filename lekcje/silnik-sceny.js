@@ -128,6 +128,7 @@ export class ScenaLekcji {
     // podłoga + tytuł
     const floor = new THREE.Mesh(new THREE.CircleGeometry(1.5, 64), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, depthWrite: false }));
     floor.rotation.x = -Math.PI / 2; floor.position.y = 0.001; this.root.add(floor);
+    this.root.add(podlogaCienia(3.2));
     const rim = new THREE.Mesh(new THREE.RingGeometry(1.47, 1.5, 96), new THREE.MeshBasicMaterial({ color: ACCENT, transparent: true, opacity: 0.6, side: THREE.DoubleSide }));
     rim.rotation.x = -Math.PI / 2; rim.position.y = 0.002; this.root.add(rim);
     const banner = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.325), new THREE.MeshBasicMaterial({ map: canvasText([s.tytul, `Scena ${nr + 1} z ${plan.sceny.length}`]), transparent: true, toneMapped: false }));
@@ -157,7 +158,7 @@ export class ScenaLekcji {
     const cy = p.wall ? 0 : bottom + h / 2 - p.pos.y;
     // rama, ekran, stojak
     const frame = new THREE.Mesh(new THREE.BoxGeometry(w + 0.04, h + 0.04, 0.025), new THREE.MeshStandardMaterial({ color: 0x222831, roughness: 0.6, metalness: 0.2 }));
-    frame.position.set(0, cy, -0.014); group.add(frame);
+    frame.position.set(0, cy, -0.014); frame.castShadow = true; group.add(frame);
     const mat = new THREE.MeshBasicMaterial({ color: 0x888888, toneMapped: false });
     const panel = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat); panel.position.set(0, cy, 0.0); group.add(panel);
     const bg = new THREE.PlaneGeometry(w, h); const uv = bg.attributes.uv;
@@ -199,7 +200,7 @@ export class ScenaLekcji {
   async _model(it, m, p, token) {
     const { group } = it;
     const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.3, 0.06, 48), new THREE.MeshStandardMaterial({ color: 0xf1ece2, roughness: 0.5 }));
-    ped.position.y = 0.03; group.add(ped);
+    ped.position.y = 0.03; ped.castShadow = ped.receiveShadow = true; group.add(ped);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.285, 0.006, 8, 64), new THREE.MeshStandardMaterial({ color: ACCENT, metalness: 0.6, roughness: 0.3 }));
     ring.rotation.x = Math.PI / 2; ring.position.y = 0.06; group.add(ring);
     const url = await resolveUrl(m.url);
@@ -212,7 +213,7 @@ export class ScenaLekcji {
     obj.scale.setScalar(s);
     const c = box.getCenter(new THREE.Vector3());
     obj.position.set(-c.x * s, 0.06 - box.min.y * s, -c.z * s);
-    obj.traverse(o => { if (o.isMesh) o.userData.shared = true; });
+    obj.traverse(o => { if (o.isMesh) { o.userData.shared = true; o.castShadow = true; o.receiveShadow = true; } });
     const spin = new THREE.Group(); spin.add(obj); group.add(spin);
     it.spin = spin; it.top = new THREE.Vector3(0, 0.06 + d.y * s + 0.12, 0);
     if (gltf.animations?.length) {
@@ -225,6 +226,7 @@ export class ScenaLekcji {
     const g = await loader.loadAsync(url);
     const av = g.scene, box = new THREE.Box3().setFromObject(av), d = box.getSize(new THREE.Vector3());
     const k = 0.62 / d.y; av.scale.setScalar(k); av.position.y = -box.min.y * k;
+    av.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     const holder = new THREE.Group(); holder.add(av); holder.position.set(x, 0, z);
     holder.rotation.y = Math.atan2(-x, 1.2 - z) * 0.6;   // zwrócony między widzów a środek sceny
     const mixer = new THREE.AnimationMixer(av);
@@ -300,9 +302,34 @@ export class ScenaLekcji {
   }
 }
 
-/** Standardowe oświetlenie sceny (dla widoku 3D i AR) */
-export function swiatla(scene) {
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7f70, 2.0));
-  const sun = new THREE.DirectionalLight(0xffffff, 2.2); sun.position.set(1.2, 2.5, 1.8); scene.add(sun);
+export const ADRES_OTOCZENIA = new URL("../modele/otoczenie.jpg", import.meta.url).href;
+
+/** Oświetlenie: światło nieba + słońce rzucające cienie (dla widoku 3D i AR) */
+export function swiatla(scene, { cien = true } = {}) {
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7f70, 0.9));
+  const sun = new THREE.DirectionalLight(0xfff2e0, 2.3); sun.position.set(1.4, 2.6, 1.9);
+  if (cien) {
+    sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.015;
+    Object.assign(sun.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: 0.1, far: 10 });
+  }
+  scene.add(sun);
   return sun;
+}
+
+/** Realistyczne odbicia i rozproszone światło z mapy otoczenia (niebo, horyzont) + filmowe mapowanie tonów. */
+export async function otoczenie(renderer, scene, url = ADRES_OTOCZENIA) {
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  try {
+    const tex = await texLoader.loadAsync(url);
+    tex.mapping = THREE.EquirectangularReflectionMapping; tex.colorSpace = THREE.SRGBColorSpace;
+    const pm = new THREE.PMREMGenerator(renderer);
+    scene.environment = pm.fromEquirectangular(tex).texture; tex.dispose(); pm.dispose();
+  } catch (e) { console.warn("Brak mapy otoczenia", e); }
+}
+
+/** Niewidoczna podłoga, na której widać tylko cień (świetnie „osadza” model w AR). */
+export function podlogaCienia(size = 4, opacity = 0.32) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.ShadowMaterial({ opacity }));
+  m.rotation.x = -Math.PI / 2; m.position.y = 0.003; m.receiveShadow = true; m.userData.shared = true; return m;
 }

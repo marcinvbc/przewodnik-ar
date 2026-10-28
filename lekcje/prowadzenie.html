@@ -26,9 +26,11 @@
   .hud .sp { flex: 1; }
   .narr { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); max-width: min(820px, 90%); background: rgba(31,42,46,.88); color: #fff;
     border-radius: 16px; padding: 12px 18px; font-size: 18px; line-height: 1.45; text-align: center; }
+  @media (max-width: 1300px) { .narr { font-size: 14px; max-width: 46%; left: 14px; transform: none; padding: 9px 12px; } }
   .panel { background: var(--card); border-left: 1px solid var(--line); overflow-y: auto; overflow-x: hidden; padding: 14px; display: grid; gap: 14px; align-content: start; }
+  .panel { grid-template-columns: minmax(0, 1fr); } .panel > * { min-width: 0; }
   .panel h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
-  .list { display: grid; gap: 6px; }
+  .list { display: grid; gap: 6px; grid-template-columns: minmax(0, 1fr); } .list > * { min-width: 0; }
   .it { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 7px 9px; cursor: pointer; font-size: 14px; text-align: left; font: inherit; width: 100%; }
   .it:hover { border-color: #cfc5b0; }
   .it.on { border-color: var(--gold); background: #fff6e4; box-shadow: 0 0 0 2px #f6e2b8; }

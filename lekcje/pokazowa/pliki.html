@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pliki lekcji pokazowej · Kopernik</title>
+<link rel="stylesheet" href="../styl.css">
+<style>
+  .files { display: grid; gap: 10px; margin-top: 14px; }
+  .f { display: flex; gap: 14px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; }
+  .f img, .f video { width: 120px; height: 68px; object-fit: cover; border-radius: 8px; background: #111; }
+  .f .e { width: 120px; height: 68px; display: grid; place-items: center; font-size: 34px; background: var(--paper); border-radius: 8px; }
+  .f div { flex: 1; } .f small { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap" style="max-width:820px">
+  <a href="../nauczyciel.html" style="text-decoration:none;color:var(--muted);font-size:14px">← Panel nauczyciela</a>
+  <h1 style="font-size:26px;margin-top:6px">Pliki lekcji pokazowej: Mikołaj Kopernik</h1>
+  <p class="muted">Pobierz pliki na komputer, a potem w panelu nauczyciela utwórz nową lekcję i <b>przeciągnij je</b> do pola „Materiały”.
+    Tak pokażesz cały proces: wgrywanie → PDF zamienia się w slajdy → <b>✨ Zaplanuj z AI</b> albo <b>⚡ Ułóż automatycznie</b>.</p>
+  <div class="files">
+    <div class="f"><img src="slajdy/slajd-1.jpg" alt=""><div><b>kopernik-slajdy.pdf</b><br><small>8 slajdów (jak prezentacja z PowerPointa zapisana do PDF)</small></div><a class="btn" href="kopernik-slajdy.pdf" download>⬇ Pobierz</a></div>
+    <div class="f"><video src="ziemia-czy-slonce.mp4#t=12" muted preload="metadata"></video><div><b>ziemia-czy-slonce.mp4</b><br><small>Film 36 s: model geocentryczny vs heliocentryczny i ruch wsteczny Marsa</small></div><a class="btn" href="ziemia-czy-slonce.mp4" download>⬇ Pobierz</a></div>
+    <div class="f"><span class="e">🪐</span><div><b>planetarium-kopernika.glb</b><br><small>Model 3D: mechaniczne planetarium, planety krążą wokół Słońca (animacja)</small></div><a class="btn" href="planetarium-kopernika.glb" download>⬇ Pobierz</a></div>
+    <div class="f"><span class="e">🌐</span><div><b>sfera-armilarna.glb</b><br><small>Model 3D: sfera armilarna, którą Kopernik trzyma na toruńskim pomniku (animacja)</small></div><a class="btn" href="sfera-armilarna.glb" download>⬇ Pobierz</a></div>
+    <div class="f"><img src="model-geocentryczny.jpg" alt=""><div><b>model-geocentryczny.jpg</b><br><small>Schemat</small></div><a class="btn" href="model-geocentryczny.jpg" download>⬇ Pobierz</a></div>
+    <div class="f"><img src="model-heliocentryczny.jpg" alt=""><div><b>model-heliocentryczny.jpg</b><br><small>Schemat</small></div><a class="btn" href="model-heliocentryczny.jpg" download>⬇ Pobierz</a></div>
+    <div class="f"><img src="os-czasu.jpg" alt=""><div><b>os-czasu.jpg</b><br><small>Oś czasu: Kopernik i Toruń</small></div><a class="btn" href="os-czasu.jpg" download>⬇ Pobierz</a></div>
+  </div>
+  <p class="small muted" style="margin-top:16px">Źródła faktów: torun.pl (pomnik i biografia Kopernika), Archiwum PAN, materiały Uniwersytetu Łódzkiego.
+    Modele, film, schematy i slajdy wygenerowano na potrzeby lekcji; ruch planet pokazano w umownej skali i tempie.</p>
+</div>
+</body>
+</html>
