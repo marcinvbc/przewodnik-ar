@@ -8,6 +8,7 @@ from PIL import Image, ImageDraw
 sys.path.insert(0, os.path.dirname(__file__))
 from siatki import *
 import tekstury as tx
+import realizm
 
 PI = math.pi
 rng = np.random.default_rng(1543)
@@ -113,11 +114,12 @@ def planetarium():
     OKRES = 48.0
     parts = []
     # drewniana podstawa toczona + mosiężne obręcze
-    parts.append((lathe([(0.37, 0.0), (0.37, 0.035), (0.35, 0.05), (0.33, 0.055), (0.33, 0.07), (0.3, 0.075)], 72, 0.12, smooth_deg=30, cap_bottom=True, cap_top=True), "drewno"))
+    parts.append((lathe([(0.37, 0.0), (0.37, 0.035), (0.35, 0.05), (0.33, 0.055), (0.33, 0.07), (0.3, 0.075)], 72, 0.12, smooth_deg=30, cap_bottom=True, maxseg=0.012), "drewno"))
+    parts.append((disk(0.3, 0.075, 72, 0.12, rings=6), "drewno"))
     parts.append((torus(0.37, 0.006, 72, 8, y=0.035), "mosiadz"))
     parts.append((torus(0.3, 0.005, 72, 8, y=0.075), "mosiadz"))
     # tarcza z pierścieniem zodiaku (płaska, z podziałką)
-    parts.append((disk(0.29, 0.077, 72, 0.3, r_in=0.2), "tarcza"))
+    parts.append((disk(0.29, 0.077, 72, 0.3, r_in=0.2, rings=4), "tarcza"))
     for k in range(72):
         a = 2 * PI * k / 72; L = 0.02 if k % 6 == 0 else 0.01
         parts.append((box(L, 0.002, 0.003, 0.1).transformed(chain(T(math.cos(a) * (0.285 - L / 2), 0.079, math.sin(a) * (0.285 - L / 2)), Ry(-a))), "mosiadz_c"))
@@ -169,7 +171,7 @@ def sfera():
     parts.append((torus(0.17, 0.005, 64, 8, y=0.03), "mosiadz"))
     parts.append((cylinder(0.012, C - R - 0.012 - 0.27, 12, 0.1, y0=0.27), "mosiadz"))
     # horyzont (szeroka obręcz z „pergaminową” podziałką) na czterech nóżkach
-    parts.append((disk(R + 0.07, C, 72, 0.3, r_in=R + 0.035), "pergamin"))
+    parts.append((disk(R + 0.07, C, 72, 0.3, r_in=R + 0.035, rings=3), "pergamin"))
     parts.append((disk(R + 0.07, C - 0.004, 72, 0.3, r_in=R + 0.035, up=False), "mosiadz_c"))
     for k in range(48):
         a = 2 * PI * k / 48; L = 0.03 if k % 4 == 0 else 0.014
@@ -216,17 +218,23 @@ def build(out):
         "pergamin": mat(tex="pergamin", rough=0.8, double=True),
         "ekliptyka": mat((0.75, 0.58, 0.3, 1), rough=0.35, metal=1.0, double=True),
         "pierscien": mat((0.85, 0.78, 0.6, 0.85), rough=0.6, double=True),
-        "slonce": mat(tex="slonce", rough=1.0, emissive=(1.0, 0.72, 0.25)),
+        "slonce": mat((1.0, 0.8, 0.55, 1), tex="slonce", rough=1.0, emissive=(1.0, 0.5, 0.1)),
         **{k: mat(tex=k, rough=0.75) for k in ("ziemia", "mars", "jowisz", "saturn", "wenus", "ksiezyc", "merkury")},
     }
     for name, fn in (("planetarium-kopernika", planetarium), ("sfera-armilarna", sfera)):
         nodes, anims = fn()
+        nodes = [{**nd, "parent": nd.get("parent")} for nd in nodes]
+        realizm.patyna(nodes, {"drewno", "mosiadz", "mosiadz_c"}, ziemia_y=-1, wys=0.01, szum=0.05)
+        realizm.wypal_ao(nodes, pomin={"slonce", "pierscien"}, sila=1.0, zasieg=0.12)
         used = sorted({k for nd in nodes for _, k in nd["parts"]})
         mats = {k: MATS[k] for k in used}
         texs = {}
-        for m in mats.values():
+        for key in list(mats):
+            m = mats[key] = dict(mats[key])
             for f in ("tex", "normal"):
                 if m.get(f): texs[m[f]] = TEX[m[f]]
+            if m.get("tex") == "drewno":
+                texs["drewno_mr"] = (realizm.mapa_chropowatosci(TEX["drewno"][0], baza=0.6, zakres=0.4), "jpeg"); m["mr"] = "drewno_mr"; m["rough"] = 1.0
         ntri = write_glb(os.path.join(out, name + ".glb"), nodes, mats, texs, anims)
         print(f"{name}: {ntri} trójkątów, {os.path.getsize(os.path.join(out, name + '.glb')) / 1e6:.2f} MB")
 

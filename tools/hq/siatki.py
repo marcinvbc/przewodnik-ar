@@ -8,16 +8,21 @@ import numpy as np
 
 # ------------------------------------------------------------------ siatka
 class Mesh:
-    def __init__(self, pos=None, nrm=None, uv=None, idx=None):
+    def __init__(self, pos=None, nrm=None, uv=None, idx=None, col=None):
         self.pos = np.zeros((0, 3)) if pos is None else np.asarray(pos, float)
         self.nrm = np.zeros((0, 3)) if nrm is None else np.asarray(nrm, float)
         self.uv = np.zeros((0, 2)) if uv is None else np.asarray(uv, float)
         self.idx = np.zeros((0, 3), int) if idx is None else np.asarray(idx, int)
+        self.col = None if col is None else np.asarray(col, float)      # kolor wierzchołków (cienie AO, zabrudzenia)
+
+    def kolory(self):
+        return self.col if self.col is not None else np.ones((len(self.pos), 3))
 
     def __add__(self, o):
         n = len(self.pos)
+        col = None if self.col is None and o.col is None else np.vstack([self.kolory(), o.kolory()])
         return Mesh(np.vstack([self.pos, o.pos]), np.vstack([self.nrm, o.nrm]),
-                    np.vstack([self.uv, o.uv]), np.vstack([self.idx, o.idx + n]))
+                    np.vstack([self.uv, o.uv]), np.vstack([self.idx, o.idx + n]), col)
 
     def transformed(self, M):
         M = np.asarray(M, float)
@@ -26,10 +31,10 @@ class Mesh:
         n = self.nrm @ N.T
         n /= np.linalg.norm(n, axis=1, keepdims=True) + 1e-12
         idx = self.idx if np.linalg.det(M[:3, :3]) > 0 else self.idx[:, ::-1]
-        return Mesh(p[:, :3], n, self.uv.copy(), idx.copy())
+        return Mesh(p[:, :3], n, self.uv.copy(), idx.copy(), None if self.col is None else self.col.copy())
 
     def moved(self, x=0, y=0, z=0): return self.transformed(T(x, y, z))
-    def uv_offset(self, du, dv): m = Mesh(self.pos, self.nrm, self.uv + [du, dv], self.idx); return m
+    def uv_offset(self, du, dv): m = Mesh(self.pos, self.nrm, self.uv + [du, dv], self.idx, self.col); return m
     @property
     def ntri(self): return len(self.idx)
 
@@ -56,8 +61,10 @@ def chain(*Ms):
     return R
 
 # ------------------------------------------------------------------ prymitywy
-def box(sx, sy, sz, uv_scale=0.25, center=(0, 0, 0)):
-    """Prostopadłościan z UV w skali świata (tekstura nie rozciąga się)."""
+def box(sx, sy, sz, uv_scale=0.25, center=(0, 0, 0), div=1):
+    """Prostopadłościan z UV w skali świata (tekstura nie rozciąga się). div > 1 dzieli ściany na siatkę."""
+    if div > 1:
+        return box_div(sx, sy, sz, uv_scale, center, div)
     x, y, z = sx / 2, sy / 2, sz / 2
     faces = [  # normalna, 4 narożniki (przeciwnie do wskazówek patrząc z zewnątrz), wymiary (u,v)
         ((0, 0, 1), [(-x, -y, z), (x, -y, z), (x, y, z), (-x, y, z)], (sx, sy)),
@@ -74,9 +81,38 @@ def box(sx, sy, sz, uv_scale=0.25, center=(0, 0, 0)):
         I += [(b, b + 1, b + 2), (b, b + 2, b + 3)]
     return Mesh(np.array(P) + center, N, U, I)
 
-def lathe(profile, n=32, uv_scale=0.25, smooth_deg=40, cap_bottom=False, cap_top=False, a0=0.0, a1=2 * math.pi, flat=False):
-    """Bryła obrotowa z profilu [(r, y), ...] podanego od dołu do góry. Ściany skierowane na zewnątrz."""
+def box_div(sx, sy, sz, uv_scale, center, div):
+    out = []
+    for axis, sgn in ((2, 1), (2, -1), (0, 1), (0, -1), (1, 1), (1, -1)):
+        dims = [sx, sy, sz]; u_ax, v_ax = {2: (0, 1), 0: (2, 1), 1: (0, 2)}[axis]
+        P, N, U, I = [], [], [], []
+        for j in range(div + 1):
+            for i in range(div + 1):
+                p = [0.0, 0.0, 0.0]
+                p[axis] = sgn * dims[axis] / 2
+                p[u_ax] = (-0.5 + i / div) * dims[u_ax]; p[v_ax] = (-0.5 + j / div) * dims[v_ax]
+                n = [0, 0, 0]; n[axis] = sgn
+                P.append(p); N.append(n); U.append((p[u_ax] / uv_scale, -p[v_ax] / uv_scale))
+        for j in range(div):
+            for i in range(div):
+                a = j * (div + 1) + i; b = a + div + 1
+                I += [(a, a + 1, b + 1), (a, b + 1, b)]
+        m = Mesh(P, N, U, I)
+        fn = np.cross(m.pos[m.idx[:, 1]] - m.pos[m.idx[:, 0]], m.pos[m.idx[:, 2]] - m.pos[m.idx[:, 0]])
+        if np.sum(fn * m.nrm[m.idx[:, 0]]) < 0: m.idx = m.idx[:, ::-1]
+        out.append(m)
+    return merge(out).moved(*center)
+
+def lathe(profile, n=32, uv_scale=0.25, smooth_deg=40, cap_bottom=False, cap_top=False, a0=0.0, a1=2 * math.pi, flat=False, maxseg=None):
+    """Bryła obrotowa z profilu [(r, y), ...] podanego od dołu do góry. Ściany skierowane na zewnątrz.
+    maxseg – dzieli długie odcinki profilu (gęstsza siatka = płynniejsze cienie AO)."""
     prof = np.asarray(profile, float)
+    if maxseg:
+        out = [prof[0]]
+        for a, b in zip(prof[:-1], prof[1:]):
+            k = max(1, int(math.ceil(np.linalg.norm(b - a) / maxseg)))
+            for j in range(1, k + 1): out.append(a + (b - a) * j / k)
+        prof = np.array(out)
     segs = len(prof) - 1
     seg_n, seg_len = [], []
     for i in range(segs):
@@ -115,22 +151,25 @@ def lathe(profile, n=32, uv_scale=0.25, smooth_deg=40, cap_bottom=False, cap_top
     if cap_top and prof[-1, 0] > 0: m = m + disk(prof[-1, 0], prof[-1, 1], n, uv_scale, up=True, a0=a0, a1=a1)
     return m
 
-def disk(r, y, n=32, uv_scale=0.25, up=True, a0=0.0, a1=2 * math.pi, r_in=0.0):
-    P, N, U, I = [], [], [], []
-    ny = 1 if up else -1
-    for k in range(n + 1):
-        a = a0 + (a1 - a0) * k / n
-        for rr in (r_in, r):
-            x, z = rr * math.cos(a), rr * math.sin(a)
-            P.append((x, y, z)); N.append((0, ny, 0)); U.append((x / uv_scale, z / uv_scale))
-    for k in range(n):
-        p = 2 * k
-        tri = ([(p, p + 2, p + 3)] if r_in > 0 else []) + [(p, p + 3, p + 1)]
-        if up: tri = [t[::-1] for t in tri]
-        I += tri
-    m = Mesh(P, N, U, I)
-    m.idx = m.idx[:, ::-1]
-    return m
+def disk(r, y, n=32, uv_scale=0.25, up=True, a0=0.0, a1=2 * math.pi, r_in=0.0, rings=1):
+    """Tarcza / pierścień. rings > 1 dzieli promieniowo (gęstsza siatka pod cienie kontaktowe)."""
+    out = []
+    radii = [r_in + (r - r_in) * k / rings for k in range(rings + 1)]
+    for ra, rb in zip(radii[:-1], radii[1:]):
+        P, N, U, I = [], [], [], []
+        ny = 1 if up else -1
+        for k in range(n + 1):
+            a = a0 + (a1 - a0) * k / n
+            for rr in (ra, rb):
+                x, z = rr * math.cos(a), rr * math.sin(a)
+                P.append((x, y, z)); N.append((0, ny, 0)); U.append((x / uv_scale, z / uv_scale))
+        for k in range(n):
+            p = 2 * k
+            tri = ([(p, p + 2, p + 3)] if ra > 0 else []) + [(p, p + 3, p + 1)]
+            if up: tri = [t[::-1] for t in tri]
+            I += tri
+        m = Mesh(P, N, U, I); m.idx = m.idx[:, ::-1]; out.append(m)
+    return merge(out)
 
 def cylinder(r, h, n=24, uv_scale=0.25, y0=0.0, caps=True, r_top=None):
     rt = r if r_top is None else r_top
@@ -275,6 +314,7 @@ def write_glb(path, nodes, materials, textures, animations=(), generator='przewo
         if len(col) == 3: col.append(1.0)
         pbr = {'baseColorFactor': lin(col) + [col[3]], 'roughnessFactor': m.get('rough', 0.8), 'metallicFactor': m.get('metal', 0.0)}
         if m.get('tex'): pbr['baseColorTexture'] = {'index': tex_index[m['tex']]}
+        if m.get('mr'): pbr['metallicRoughnessTexture'] = {'index': tex_index[m['mr']]}
         g = {'name': name, 'pbrMetallicRoughness': pbr}
         if m.get('normal'): g['normalTexture'] = {'index': tex_index[m['normal']], 'scale': m.get('normal_scale', 1.0)}
         if m.get('emissive'): g['emissiveFactor'] = lin(m['emissive'])
@@ -301,7 +341,13 @@ def write_glb(path, nodes, materials, textures, animations=(), generator='przewo
             ua = acc(M.uv.astype(np.float32), 5126, 'VEC2', 34962)
             big = len(M.pos) > 65535
             ia = acc(M.idx.astype(np.uint32 if big else np.uint16).reshape(-1), 5125 if big else 5123, 'SCALAR', 34963)
-            prims.append({'attributes': {'POSITION': pa, 'NORMAL': na, 'TEXCOORD_0': ua}, 'indices': ia, 'material': mat_index[mat]})
+            attrs = {'POSITION': pa, 'NORMAL': na, 'TEXCOORD_0': ua}
+            if M.col is not None:
+                c = np.ones((len(M.pos), 4)); c[:, :3] = np.clip(M.col[:, :3], 0, 1)
+                ca = acc((c * 255 + 0.5).astype(np.uint8), 5121, 'VEC4', 34962)
+                accessors[ca]['normalized'] = True
+                attrs['COLOR_0'] = ca
+            prims.append({'attributes': attrs, 'indices': ia, 'material': mat_index[mat]})
         if prims:
             meshes.append({'primitives': prims, 'name': nd['name']}); g['mesh'] = len(meshes) - 1
         gl_nodes.append(g)

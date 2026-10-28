@@ -153,7 +153,7 @@ def plaster(n=512, seed=4, base=(238, 234, 226)):
 def grass(n=512, seed=5):
     rng = np.random.default_rng(seed)
     low = fbm(n, seed, 5, n / 6); mid = fbm(n, seed + 1, 4, n / 40)
-    a, b, c = np.array([86, 128, 58]), np.array([118, 150, 70]), np.array([140, 132, 78])
+    a, b, c = np.array([84, 112, 60]), np.array([112, 132, 74]), np.array([138, 128, 84])
     col = a + (b - a) * low[..., None]
     col = col + (c - col) * (np.clip(mid - 0.65, 0, 1) * 2)[..., None]
     img = to_img(col); d = ImageDraw.Draw(img)
@@ -229,16 +229,17 @@ def painted_metal(n=256, seed=10, base=(40, 42, 46)):
     col = col * (1 - rust[..., None]) + np.array([120, 66, 38]) * rust[..., None]
     return to_img(col), normal_map(0.5 * f + rust, 1.5)
 
-def all_textures():
-    """Wszystkie tekstury używane przez modele (generowane raz)."""
+def all_textures(hq=False):
+    """Wszystkie tekstury używane przez modele (generowane raz). hq=True – wyższa rozdzielczość."""
     T = {}
+    H = 1024 if hq else 512
     T['kamien'] = stone_blocks(1024)
-    T['kamien_ciemny'] = stone_blocks(512, rows=6, seed=21, base=(150, 140, 124), bw=3.5)
-    T['dachowka'] = tiles(512, 8, 8, seed=2)
-    T['gont'] = tiles(512, 10, 7, seed=12, base=(112, 96, 82), rounded=False, wood=True)
-    T['deski'] = planks(512, 6, seed=3)
-    T['deski_stare'] = planks(512, 7, seed=13, base=(132, 112, 90))
-    T['tynk'] = plaster(512)
+    T['kamien_ciemny'] = stone_blocks(H, rows=6, seed=21, base=(150, 140, 124), bw=3.5)
+    T['dachowka'] = tiles(H, 8, 8, seed=2)
+    T['gont'] = tiles(H, 10, 7, seed=12, base=(112, 96, 82), rounded=False, wood=True)
+    T['deski'] = planks(H, 6, seed=3)
+    T['deski_stare'] = planks(H, 7, seed=13, base=(132, 112, 90))
+    T['tynk'] = plaster(H)
     T['trawa'] = grass(512)
     T['bruk'] = cobble(512)
     T['skala'] = rock_tex(512)

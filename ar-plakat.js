@@ -129,8 +129,9 @@ export async function startPosterAR({ container, mindUrl, modelUrl, orientation 
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   // realistyczne światło: mapa otoczenia (odbicia), słońce z miękkim cieniem, filmowe tony
-  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 0.9));
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.2;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 1.15));
   const sun = new THREE.DirectionalLight(0xfff2e0, 2.3); sun.position.set(0.6, 1.6, 1.0);
   sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.normalBias = 0.01;
   Object.assign(sun.shadow.camera, { left: -1.5, right: 1.5, top: 1.5, bottom: -1.5, near: 0.05, far: 6 }); scene.add(sun);

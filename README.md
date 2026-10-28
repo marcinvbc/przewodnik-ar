@@ -118,6 +118,10 @@ i dużo detali: blanki, machikuły, okiennice, pochodnie, beczki, domek latarnik
 | latarnia.glb | ~14 700 | 0,9 MB | Swiatlo (snop światła) |
 | wiatrak.glb | ~7 600 | 0,8 MB | Smigla |
 
+**Realizm:** cienie kontaktowe wypalone w kolorach wierzchołków (ambient occlusion), patyna i zabrudzenia przy ziemi,
+mapy chropowatości, lekko nieregularne mury, oświetlenie mapą otoczenia (`modele/otoczenie.jpg`) z cieniami we wszystkich widokach.
+Moduł: `tools/hq/realizm.py`. Fotorealizm daje dopiero skan prawdziwego obiektu (Polycam/Scaniverse) – wystarczy podmienić plik .glb.
+
 Generator: `tools/hq/modele_hq.py` (geometria), `tools/hq/tekstury.py` (tekstury), `tools/hq/siatki.py` (eksport GLB),
 `tools/hq/podglad.py` (podgląd bez przeglądarki). Uruchom: `cd tools/hq && python3 modele_hq.py ../../modele`.
 (Stary skrypt `tools/build_models.py` tworzy uproszczone wersje i nadpisałby modele HQ.)

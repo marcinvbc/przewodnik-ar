@@ -203,7 +203,7 @@ export class ScenaLekcji {
     ped.position.y = 0.03; ped.castShadow = ped.receiveShadow = true; group.add(ped);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.285, 0.006, 8, 64), new THREE.MeshStandardMaterial({ color: ACCENT, metalness: 0.6, roughness: 0.3 }));
     ring.rotation.x = Math.PI / 2; ring.position.y = 0.06; group.add(ring);
-    const url = await resolveUrl(m.url);
+    const url = zw(await resolveUrl(m.url));
     let gltf = this.gltfCache.get(url);
     if (!gltf) { gltf = await loader.loadAsync(url); this.gltfCache.set(url, gltf); }
     if (token !== this.token) return;
@@ -223,7 +223,7 @@ export class ScenaLekcji {
 
   /** Awatar-przewodnik stojący z boku sceny (nie znika przy zmianie sceny). */
   async dodajPrzewodnika(url, { x = 1.22, z = 0.55 } = {}) {
-    const g = await loader.loadAsync(url);
+    const g = await loader.loadAsync(zw(url));
     const av = g.scene, box = new THREE.Box3().setFromObject(av), d = box.getSize(new THREE.Vector3());
     const k = 0.62 / d.y; av.scale.setScalar(k); av.position.y = -box.min.y * k;
     av.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
@@ -271,10 +271,13 @@ export class ScenaLekcji {
 
   /** Element trafiony promieniem (klik w scenę) → id materiału albo null */
   trafienie(raycaster) {
-    const hit = raycaster.intersectObjects(this.root.children, true).find(h => h.object.visible);
-    let o = hit?.object;
-    while (o && !o.userData.id) o = o.parent;
-    return o?.userData.id || null;
+    // pierwszy trafiony obiekt należący do elementu lekcji (pomija podłogę, cień, napisy)
+    for (const h of raycaster.intersectObjects(this.root.children, true)) {
+      if (!h.object.visible) continue;
+      let o = h.object; while (o && !o.userData.id) o = o.parent;
+      if (o) return o.userData.id;
+    }
+    return null;
   }
 
   /** Pozycja elementu w układzie świata (do ustawienia kamery) */
@@ -303,11 +306,12 @@ export class ScenaLekcji {
 }
 
 export const ADRES_OTOCZENIA = new URL("../modele/otoczenie.jpg", import.meta.url).href;
+const zw = u => (window.zWersja ? window.zWersja(u) : u);
 
 /** Oświetlenie: światło nieba + słońce rzucające cienie (dla widoku 3D i AR) */
 export function swiatla(scene, { cien = true } = {}) {
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7f70, 0.9));
-  const sun = new THREE.DirectionalLight(0xfff2e0, 2.3); sun.position.set(1.4, 2.6, 1.9);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7f70, 1.15));
+  const sun = new THREE.DirectionalLight(0xfff2e0, 2.4); sun.position.set(1.4, 2.6, 1.9);
   if (cien) {
     sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.015;
     Object.assign(sun.shadow.camera, { left: -2, right: 2, top: 2, bottom: -2, near: 0.1, far: 10 });
@@ -317,8 +321,16 @@ export function swiatla(scene, { cien = true } = {}) {
 }
 
 /** Realistyczne odbicia i rozproszone światło z mapy otoczenia (niebo, horyzont) + filmowe mapowanie tonów. */
+export const JASNOSCI = matchMedia("(pointer: coarse)").matches ? [1.35, 1.7, 2.1, 1.0] : [1.15, 1.5, 1.9, 0.9];   // telefon: domyślnie jaśniej
+export function jasnosc() { try { const v = +localStorage.getItem("jasnosc3d"); return JASNOSCI.includes(v) ? v : JASNOSCI[0]; } catch { return JASNOSCI[0]; } }
+export function zmienJasnosc(renderer) {
+  const v = JASNOSCI[(JASNOSCI.indexOf(jasnosc()) + 1) % JASNOSCI.length];
+  try { localStorage.setItem("jasnosc3d", v); } catch {}
+  if (renderer) renderer.toneMappingExposure = v;
+  return v;
+}
 export async function otoczenie(renderer, scene, url = ADRES_OTOCZENIA) {
-  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = jasnosc();
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   try {
     const tex = await texLoader.loadAsync(url);

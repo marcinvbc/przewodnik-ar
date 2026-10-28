@@ -6,6 +6,7 @@
 <title>Przewodnik AR</title>
 <meta name="theme-color" content="#1f2a2e">
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<script src="wersja.js"></script>
 <script src="atrakcje.js"></script>
 <script src="lekcje/konfiguracja.js"></script>
 <style>
@@ -51,6 +52,8 @@
     background: var(--accent); color: #fff; box-shadow: 0 8px 22px rgba(0,0,0,.22); display: flex; gap: 8px; align-items: center; }
   .no-ar { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); font-size: 13px;
     background: rgba(255,255,255,.9); padding: 8px 14px; border-radius: 99px; color: var(--muted); white-space: nowrap; }
+  .sun-btn { position: absolute; left: 12px; top: 12px; border: 0; border-radius: 99px; padding: 8px 11px; font: 600 13px system-ui, sans-serif;
+    background: rgba(255,255,255,.92); color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,.15); cursor: pointer; z-index: 2; }
   .hand-btn { position: absolute; right: 12px; top: 12px; border: 0; border-radius: 99px; padding: 8px 12px; font: 600 13px system-ui, sans-serif;
     background: rgba(255,255,255,.92); color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,.15); cursor: pointer; }
   .hand-btn.on { background: #2f6b3a; color: #fff; }
@@ -114,6 +117,10 @@
 <script>
 const $ = (s, el = document) => el.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+/* jasność modeli (zapamiętywana) – na telefonach z przyciemnionym ekranem model może wydawać się ciemny */
+const TELEFON = matchMedia("(pointer: coarse)").matches;          // na telefonach domyślnie jaśniej
+const JASNOSCI = TELEFON ? [1.35, 1.7, 2.1, 1.0] : [1.15, 1.5, 1.9, 0.9];
+function jasnosc() { try { const v = +localStorage.getItem("jasnosc"); return JASNOSCI.includes(v) ? v : JASNOSCI[0]; } catch { return JASNOSCI[0]; } }
 const store = {
   get() { try { return JSON.parse(localStorage.getItem("odwiedzone") || "[]"); } catch { return []; } },
   add(id) { try { const v = new Set(store.get()); v.add(id); localStorage.setItem("odwiedzone", JSON.stringify([...v])); } catch {} },
@@ -136,8 +143,8 @@ const AVATAR = `
 </svg>`;
 
 function mv(a, extra = "") {
-  return `<model-viewer src="${esc(a.model)}" ${a.modelIOS ? `ios-src="${esc(a.modelIOS)}"` : ""}
-    alt="Model 3D: ${esc(a.nazwa)}" shadow-intensity="1" shadow-softness="0.8" exposure="1" environment-image="modele/otoczenie.jpg" tone-mapping="aces" ${extra}></model-viewer>`;
+  return `<model-viewer src="${esc(zWersja(a.model))}" ${a.modelIOS ? `ios-src="${esc(zWersja(a.modelIOS))}"` : ""}
+    alt="Model 3D: ${esc(a.nazwa)}" shadow-intensity="1" shadow-softness="0.8" exposure="${jasnosc()}" environment-image="neutral" ${extra}></model-viewer>`;
 }
 
 /* ---------------- strona główna ---------------- */
@@ -162,6 +169,7 @@ function renderHome() {
           <span class="stamp ${seen.includes(a.id) ? "ok" : ""}">${seen.includes(a.id) ? "✓ odwiedzone" : "do odkrycia"}</span>
         </a>`).join("")}
     </div>
+    <p class="foot" style="float:right;opacity:.6">wersja ${esc(window.WERSJA || "")}</p>
     <p class="foot">Odwiedzone: ${seen.filter(id => ATRAKCJE.some(a => a.id === id)).length} / ${ATRAKCJE.length} · <a href="qr.html">Kody QR do wydruku</a> · <a href="plakaty.html">Plakaty AR do wydruku</a> · <a href="kreator.html">Kreator znaczników AR</a></p>
     <a href="lekcje/nauczyciel.html" style="display:flex;gap:12px;align-items:center;text-decoration:none;background:var(--ink);color:#fff;border-radius:16px;padding:14px 16px;margin-top:14px">
       <span style="font-size:28px">🧑‍🏫</span><span><b>Lekcja AR dla nauczycieli</b><br><small style="opacity:.8">Wgraj slajdy, filmy i modele 3D: AI ułoży sceny, a uczniowie oglądają je na telefonach</small></span></a>
@@ -190,10 +198,10 @@ function renderAttraction(a) {
 
   $("#app").innerHTML = `
   <div class="stage">
-    <model-viewer id="mv" src="${esc(a.model)}" ${a.modelIOS ? `ios-src="${esc(a.modelIOS)}"` : ""}
+    <model-viewer id="mv" src="${esc(zWersja(a.model))}" ${a.modelIOS ? `ios-src="${esc(zWersja(a.modelIOS))}"` : ""}
       alt="Model 3D: ${esc(a.nazwa)}" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor"
       camera-controls touch-action="pan-y" autoplay auto-rotate auto-rotate-delay="2500" shadow-intensity="1.1" shadow-softness="0.75"
-      environment-image="modele/otoczenie.jpg" tone-mapping="aces" exposure="1" camera-orbit="35deg 72deg auto">
+      environment-image="neutral" exposure="${jasnosc()}" camera-orbit="35deg 72deg auto">
       ${(a.punkty || []).map((p, k) => `
         <button class="hotspot" slot="hotspot-${k}" data-position="${esc(p.pozycja)}" data-normal="${esc(p.normal || "0 1 0")}"
           data-visibility-attribute="visible">${esc(p.etykieta)}</button>`).join("")}
@@ -203,6 +211,7 @@ function renderAttraction(a) {
         Zobacz w AR
       </button>
     </model-viewer>
+    <button class="sun-btn" id="sunBtn" title="Jaśniej / ciemniej">☀️</button>
     <button class="hand-btn" id="handBtn" title="Obracaj model ruchem dłoni przed kamerą">🤏 Steruj dłonią</button>
     <div class="hand-help" id="handHelp" hidden>🤏 chwyć i przesuń: obrót · przybliż dłoń: zoom · ✋ dłoń: reset · 👍 Bartek opowiada · 👋 machnij: kolejna atrakcja</div>
     <div class="no-ar" id="noar" hidden>AR działa na telefonie · tu możesz obracać model palcem/myszką</div>
@@ -216,7 +225,7 @@ function renderAttraction(a) {
 
     <div class="guide">
       <div class="avatar-box" title="Kliknij, żeby pomachać">
-        <model-viewer id="av3d" src="${esc(guideModel(a))}" alt="Awatar przewodnika" camera-orbit="-14deg 84deg auto"
+        <model-viewer id="av3d" src="${esc(zWersja(guideModel(a)))}" alt="Awatar przewodnika" camera-orbit="-14deg 84deg auto"
           disable-zoom disable-pan interaction-prompt="none" shadow-intensity="0.7" environment-image="neutral" exposure="1.1"></model-viewer>
         ${AVATAR}
         <span class="name">${esc((window.PRZEWODNIK && PRZEWODNIK.imie) || "Przewodnik")}</span>
@@ -239,6 +248,7 @@ function renderAttraction(a) {
 
     ${a.ciekawostki?.length ? `<div class="facts"><h2>Ciekawostki</h2><ul>${a.ciekawostki.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>` : ""}
 
+    <p style="font-size:11px;color:var(--muted);text-align:right;margin:4px 0 0">wersja ${esc(window.WERSJA || "")}</p>
     <div class="nav">
       <a href="?a=${encodeURIComponent(prev.id)}"><small>← poprzednia</small>${esc(prev.nazwa)}</a>
       <a href="?a=${encodeURIComponent(next.id)}"><small>następna →</small>${esc(next.nazwa)}</a>
@@ -252,6 +262,14 @@ function renderAttraction(a) {
 
   setupNarrator(sentences);
   setupHand(viewer, prev, next);
+  const sunBtn = $("#sunBtn");
+  const pokazJ = () => sunBtn.textContent = "☀️ " + Math.round(jasnosc() / JASNOSCI[0] * 100) + "%";
+  pokazJ();
+  sunBtn.onclick = () => {
+    const i = (JASNOSCI.indexOf(jasnosc()) + 1) % JASNOSCI.length;
+    try { localStorage.setItem("jasnosc", JASNOSCI[i]); } catch {}
+    viewer.exposure = JASNOSCI[i]; pokazJ();
+  };
 }
 
 /* ---------------- sterowanie modelem dłonią (MediaPipe + model-viewer) ---------------- */

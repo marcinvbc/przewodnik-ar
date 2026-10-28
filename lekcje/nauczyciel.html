@@ -10,6 +10,7 @@
   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
 } }
 </script>
+<script src="../wersja.js"></script>
 <script src="konfiguracja.js"></script>
 <link rel="stylesheet" href="styl.css">
 <style>
@@ -56,6 +57,7 @@
 <header class="top">
   <div class="logo">AR</div><b>Lekcja AR · panel nauczyciela</b>
   <span class="badge" id="mode"></span>
+  <span class="small muted" id="ver"></span>
   <span class="sp"></span>
   <span class="small muted" id="who"></span>
   <a class="btn sm ghost" href="../index.html">Przewodnik AR</a>
@@ -165,7 +167,7 @@ const ICON = { slajd: "📄", obraz: "🖼", wideo: "🎬", model: "🧊", pdf: 
 const TYP = { slajd: "slajd", obraz: "zdjęcie", wideo: "film", model: "model 3D", pdf: "PDF" };
 
 const b = await backend();
-$("#mode").textContent = DEMO ? "TRYB DEMO" : "Supabase"; $("#mode").classList.toggle("on", !DEMO);
+$("#mode").textContent = DEMO ? "TRYB DEMO" : "Supabase"; $("#ver").textContent = "wersja " + (window.WERSJA || ""); $("#mode").classList.toggle("on", !DEMO);
 $("#limitInfo").textContent = DEMO ? "" : `Limit: ${MAX_MB} MB na plik (darmowy plan Supabase).`;
 if (!b.ai.dostepne) { $("#planAI").title = DEMO ? "AI działa po podłączeniu Supabase i funkcji „claude”" : "AI wyłączone w konfiguracji"; }
 

@@ -13,6 +13,7 @@
   "mindar-image": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"
 } }
 </script>
+<script src="../wersja.js"></script>
 <script src="konfiguracja.js"></script>
 <link rel="stylesheet" href="styl.css">
 <style>
@@ -101,6 +102,7 @@
       <button class="chipw" id="bWow">😮</button>
       <button class="chipw" id="bAsk" hidden>💬 Zapytaj Bartka</button>
       <button class="chipw" id="bSound">🔇</button>
+      <button class="chipw" id="bSun" title="Jaśniej / ciemniej">☀️</button>
       <button class="chipw" id="bGrab" title="Steruj sceną dłonią przed kamerą">🤏 Chwyć</button>
       <button class="chipw" id="bOrient" hidden>Znacznik: leży</button>
     </div>
@@ -120,7 +122,7 @@
 <script type="module">
 import * as THREE from "three";
 import { backend, DEMO, esc, toast, uid, resolveUrl } from "./wspolne.js";
-import { ScenaLekcji, swiatla, otoczenie } from "./silnik-sceny.js";
+import { ScenaLekcji, swiatla, otoczenie, zmienJasnosc, jasnosc, JASNOSCI } from "./silnik-sceny.js";
 import { widok3D } from "./widok3d.js";
 
 const $ = s => document.querySelector(s);
@@ -200,7 +202,10 @@ function quiz() {
 }
 
 /* ------------------------------------------------------------------ tryby oglądania */
-let cleanup = null, view3d = null, mode = null, worldScale = 0.5, holder = null;
+let cleanup = null, view3d = null, mode = null, worldScale = 0.5, holder = null, aktywnyRenderer = null;
+const pokazJ = () => $("#bSun").textContent = "☀️ " + Math.round(jasnosc() / JASNOSCI[0] * 100) + "%";
+pokazJ();
+$("#bSun").onclick = () => { zmienJasnosc(view3d?.renderer || aktywnyRenderer); pokazJ(); };
 document.querySelectorAll("[data-mode]").forEach(m => m.onclick = () => start(m.dataset.mode));
 $("#bMode").onclick = async () => { await stopMode(); document.body.classList.remove("live"); $("#stage").hidden = $("#hud").hidden = true; $("#scaleBtns").hidden = true; $("#sMode").hidden = false; };
 
@@ -239,7 +244,7 @@ async function startZnacznik() {
   const { MindARThree } = await import("mindar-image-three");
   const mindUrl = await getMindUrl({ image: "znacznik-lekcji.jpg" }, p => hint(`<img src="znacznik-lekcji.jpg" alt=""><span>Uczę się znacznika… ${Math.round(p)}% (tylko za pierwszym razem)</span>`));
   const mindar = new MindARThree({ container: $("#stage"), imageTargetSrc: mindUrl, uiLoading: "no", uiScanning: "no", uiError: "yes" });
-  const { renderer, scene, camera } = mindar;
+  const { renderer, scene, camera } = mindar; aktywnyRenderer = renderer;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   swiatla(scene); otoczenie(renderer, scene);
   const anchor = mindar.addAnchor(0);
@@ -264,7 +269,7 @@ async function startZnacznik() {
 async function startLawka() {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(innerWidth, innerHeight);
-  renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.xr.enabled = true;
+  renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.xr.enabled = true; aktywnyRenderer = renderer;
   $("#stage").appendChild(renderer.domElement);
   const scene = new THREE.Scene(); swiatla(scene); otoczenie(renderer, scene);
   const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.01, 30);

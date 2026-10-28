@@ -5,6 +5,7 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(__file__))
 from siatki import *
 import tekstury
+import realizm
 
 PI = math.pi
 TEX = None
@@ -14,7 +15,7 @@ def mat(color=(1, 1, 1, 1), tex=None, normal=True, ns=1.0, rough=0.85, metal=0.0
                 metal=metal, emissive=emissive, double=double)
 
 MATS = {
-    'trawa': mat(tex='trawa', rough=0.95, ns=0.8),
+    'trawa': mat((0.86, 0.9, 0.8, 1), tex='trawa', rough=0.95, ns=0.8),
     'ziemia': mat((0.62, 0.5, 0.38, 1), tex='skala', rough=1.0),
     'bruk': mat(tex='bruk', rough=0.9),
     'kamien': mat(tex='kamien', rough=0.9),
@@ -34,9 +35,9 @@ MATS = {
     'ciemne': mat((0.05, 0.045, 0.04, 1), rough=1.0),
     'okno_swiatlo': mat((1, 0.78, 0.45, 1), rough=0.4, emissive=(0.95, 0.62, 0.25)),
     'ogien': mat((1, 0.6, 0.2, 1), rough=1, emissive=(1.0, 0.55, 0.15)),
-    'flaga': mat((0.78, 0.12, 0.1, 1), tex='plotno', rough=0.9, normal=False, double=True),
+    'flaga': mat((0.62, 0.1, 0.09, 1), tex='plotno', rough=0.9, normal=False, double=True),
     'flaga_zolta': mat((0.95, 0.78, 0.25, 1), tex='plotno', rough=0.9, normal=False, double=True),
-    'krzew': mat((0.55, 0.78, 0.45, 1), tex='trawa', rough=1.0),
+    'krzew': mat((0.5, 0.66, 0.42, 1), tex='trawa', rough=1.0),
     'szklo': mat((0.75, 0.9, 1.0, 0.25), rough=0.05),
     'lampa': mat((1, 0.92, 0.6, 1), rough=0.2, emissive=(1.0, 0.85, 0.45)),
     'kopula': mat((0.72, 0.17, 0.14, 1), rough=0.35, metal=0.3),
@@ -108,7 +109,7 @@ def barrel(h=0.1, r=0.04):
 
 def ground(r=0.5, top=0.045, n=72):
     side = lathe([(r, 0.0), (r, top - 0.012), (r - 0.02, top)], n, 0.2, cap_bottom=True)
-    return disk(r - 0.02, top, n, 0.32), side
+    return disk(r - 0.02, top, n, 0.32, rings=14), side
 
 def bushes(seed, spots, top):
     rng = np.random.default_rng(seed)
@@ -129,26 +130,27 @@ def baszta():
     add = lambda m, k: parts.append((m, k))
     g_top, g_side = ground(0.5, 0.045)
     add(g_top, 'trawa'); add(g_side, 'ziemia')
-    add(disk(0.31, 0.047, 64, 0.22, r_in=0.25), 'bruk')
+    add(disk(0.31, 0.047, 64, 0.22, r_in=0.25, rings=3), 'bruk')
     add(box(0.13, 0.004, 0.2, 0.22, center=(0, 0.047, 0.38)), 'bruk')
     # cokół i trzon
-    add(lathe([(0.262, 0.045), (0.262, 0.06), (0.244, 0.165)], 64, 0.34), 'kamien_ciemny')
-    add(lathe([(0.244, 0.165), (0.229, 0.74)], 72, 0.42), 'kamien')
+    add(realizm.nierownosc(lathe([(0.262, 0.045), (0.262, 0.06), (0.244, 0.165)], 64, 0.34, maxseg=0.025), amp=0.003, freq=45, seed=4), 'kamien_ciemny')
+    add(realizm.nierownosc(lathe([(0.244, 0.165), (0.229, 0.74)], 72, 0.42, maxseg=0.025), amp=0.0025, freq=55, seed=3), 'kamien')
     # gzyms + konsole (machikuły)
     add(lathe([(0.229, 0.735), (0.262, 0.765), (0.262, 0.788)], 72, 0.3, smooth_deg=20), 'kamien_ciemny')
     for i in range(24):
         a = 2 * PI * i / 24
         add(on_wall(box(0.028, 0.06, 0.04, 0.12), a, 0.24, 0.712), 'kamien_ciemny')
     # parapet z blankami
-    add(lathe([(0.258, 0.788), (0.258, 0.84)], 72, 0.42), 'kamien')
+    add(lathe([(0.258, 0.788), (0.258, 0.84)], 72, 0.42, maxseg=0.02), 'kamien')
     add(lathe([(0.216, 0.84), (0.216, 0.788)], 72, 0.42), 'kamien')
     add(disk(0.258, 0.84, 72, 0.2, r_in=0.216), 'kamien_ciemny')
     for i in range(12):
         a = 2 * PI * (i + 0.5) / 12
-        add(on_wall(box(0.082, 0.062, 0.04, 0.3), a, 0.237, 0.871), 'kamien')
+        jr = np.random.default_rng(100 + i)
+        add(on_wall(box(0.082 + jr.uniform(-0.004, 0.004), 0.062 + jr.uniform(-0.004, 0.003), 0.04, 0.3, div=3).transformed(Rz(jr.uniform(-0.03, 0.03))), a + jr.uniform(-0.01, 0.01), 0.237, 0.871), 'kamien')
         add(on_wall(box(0.088, 0.01, 0.046, 0.2), a, 0.237, 0.906), 'kamien_ciemny')
     # dach stożkowy, lekko wklęsły
-    add(lathe([(0.212, 0.79), (0.21, 0.84), (0.19, 0.89), (0.15, 0.97), (0.095, 1.06), (0.04, 1.15), (0.004, 1.2)], 72, 0.24, smooth_deg=35), 'dachowka')
+    add(lathe([(0.212, 0.79), (0.21, 0.84), (0.19, 0.89), (0.15, 0.97), (0.095, 1.06), (0.04, 1.15), (0.004, 1.2)], 72, 0.24, smooth_deg=35, maxseg=0.03), 'dachowka')
     add(torus(0.207, 0.008, 72, 8, y=0.842), 'metal')
     # iglica, kula, flaga
     add(cylinder(0.01, 0.16, 12, 0.1, y0=1.17), 'metal')
@@ -208,7 +210,7 @@ def baszta():
 # =====================================================================================  LATARNIA
 def latarnia():
     parts = []; add = lambda m, k: parts.append((m, k))
-    add(disk(0.6, 0.0, 72, 0.45), 'woda')
+    add(disk(0.6, 0.0, 72, 0.45, rings=10), 'woda')
     add(lathe([(0.6, -0.03), (0.6, 0.0)], 72, 0.3, cap_bottom=True), 'ciemne')
     isl = rock(0.38, seed=5, sub=3, rough=0.22).transformed(S(1, 0.42, 1)).moved(0, 0.02, 0)
     add(isl, 'skala')
@@ -218,7 +220,7 @@ def latarnia():
         add(rock(s, seed=100 + i, sub=2).moved(r * math.cos(a), s * 0.15, r * math.sin(a)), 'skala')
     # taras
     add(lathe([(0.3, 0.06), (0.3, 0.125), (0.31, 0.135)], 12, 0.3), 'kamien_ciemny')
-    add(disk(0.31, 0.135, 12, 0.22), 'bruk')
+    add(disk(0.31, 0.135, 12, 0.22, rings=8), 'bruk')
     for i in range(36):
         a = 2 * PI * i / 36
         add(cylinder(0.0035, 0.06, 6, 0.1, y0=0.135, caps=False).moved(0.29 * math.cos(a), 0, 0.29 * math.sin(a)), 'metal')
@@ -229,7 +231,7 @@ def latarnia():
     for i in range(bands):
         ya, yb = y0 + (y1 - y0) * i / bands, y0 + (y1 - y0) * (i + 1) / bands
         ra, rb = r0 + (r1 - r0) * i / bands, r0 + (r1 - r0) * (i + 1) / bands
-        add(lathe([(ra, ya), (rb, yb)], 64, 0.3), 'tynk_czerwony' if i % 2 else 'tynk')
+        add(lathe([(ra, ya), (rb, yb)], 64, 0.3, maxseg=0.03), 'tynk_czerwony' if i % 2 else 'tynk')
     add(lathe([(0.152, 0.135), (0.152, 0.16), (0.146, 0.17)], 64, 0.3), 'kamien_ciemny')
     # okienka (spiralnie)
     for k, (ang, y) in enumerate(((PI / 2 + 0.9, 0.33), (PI / 2 - 0.8, 0.47), (PI / 2 + 2.2, 0.6), (PI / 2 + 0.2, 0.73))):
@@ -268,7 +270,7 @@ def latarnia():
     # domek latarnika przy wieży
     hx, hz, ha = -0.19, -0.1, -0.5
     Mh = chain(T(hx, 0.135, hz), Ry(ha))
-    add(box(0.16, 0.12, 0.13, 0.25, center=(0, 0.06, 0)).transformed(Mh), 'tynk')
+    add(box(0.16, 0.12, 0.13, 0.25, center=(0, 0.06, 0), div=5).transformed(Mh), 'tynk')
     add(prism(0.16, 0.07, 0.13, 0.25).moved(0, 0.12, 0).transformed(Mh), 'tynk')
     add(gable_roof(0.16, 0.07, 0.13, 0.015, 0.012, 0.16).moved(0, 0.12, 0).transformed(chain(Mh, Ry(0))), 'dachowka')
     add(box(0.03, 0.08, 0.03, 0.1, center=(0.04, 0.2, -0.03)).transformed(Mh), 'kamien_ciemny')
@@ -308,7 +310,7 @@ def wiatrak():
         add(beam((x * 0.85, G + 0.1, z * 0.85), (x * 0.12, 0.36, z * 0.12), 0.03, 0.03, 0.2), 'deski_ciemne')
     # korpus
     bw, bh, bd, by = 0.36, 0.4, 0.4, 0.42
-    add(box(bw, bh, bd, 0.26, center=(0, by + bh / 2, 0)), 'deski_stare')
+    add(box(bw, bh, bd, 0.26, center=(0, by + bh / 2, 0), div=8), 'deski_stare')
     for sx in (-1, 1):
         for sz in (-1, 1):
             add(box(0.026, bh + 0.01, 0.026, 0.15, center=(sx * bw / 2, by + bh / 2, sz * bd / 2)), 'deski_ciemne')
@@ -381,26 +383,38 @@ def wiatrak():
     return nodes, [{'name': 'Smigla', 'channels': [('smigla', 'rotation', times, rots)]}]
 
 # =====================================================================================
+SWIECACE = {"okno_swiatlo", "ogien", "lampa", "snop", "szklo"}
+PATYNA = {"kamien", "kamien_ciemny", "tynk", "tynk_czerwony", "deski", "deski_ciemne", "deski_stare", "metal"}
+MECH = {"kamien", "kamien_ciemny", "deski_stare", "tynk"}
+# chropowatość: (bazowa, zakres zmienności) – mapa G jest mnożona przez roughnessFactor = 1
+CHROPOWATOSC = {"kamien": (0.88, 0.4), "kamien_ciemny": (0.9, 0.35), "dachowka": (0.68, 0.45), "gont": (0.8, 0.35),
+                "deski": (0.72, 0.4), "deski_stare": (0.85, 0.3), "tynk": (0.82, 0.3), "bruk": (0.75, 0.45),
+                "skala": (0.85, 0.4), "metal": (0.45, 0.5), "trawa": (0.95, 0.1)}
+ZIEMIA_Y = {"baszta": 0.045, "latarnia": 0.135, "wiatrak": 0.045}
+
 def build(out_dir):
     global TEX
-    TEX = tekstury.all_textures()
+    TEX = tekstury.all_textures(hq=True)
     os.makedirs(out_dir, exist_ok=True)
     for name, fn in (('baszta', baszta), ('latarnia', latarnia), ('wiatrak', wiatrak)):
         nodes, anims = fn()
+        nodes = [{**nd, "parent": nd.get("parent")} for nd in nodes]
+        realizm.patyna(nodes, PATYNA, ziemia_y=ZIEMIA_Y[name], mech=MECH, seed=len(name))
+        realizm.wypal_ao(nodes, pomin=SWIECACE | {"snop"}, sila=1.0)
         used = sorted({k for nd in nodes for _, k in nd['parts']})
-        mats = {k: MATS[k] for k in used}
-        tex_keys = sorted({m[f] for m in mats.values() for f in ('tex', 'normal') if m.get(f)})
+        mats = {k: dict(MATS[k]) for k in used}
         textures = {}
-        for k in tex_keys:
-            c, n = TEX[k]
-            textures[k] = (c, 'jpeg')
-            textures[k + '_n'] = (n, 'jpeg')
-        for m in mats.values():
-            if m.get('normal'): m['normal'] = m['normal'] + '_n'
+        for k, m in mats.items():
+            if m.get('tex'):
+                c, n = TEX[m['tex']]
+                textures[m['tex']] = (c, 'jpeg')
+                if m.get('normal'): textures[m['tex'] + '_n'] = (n, 'jpeg'); m['normal'] = m['tex'] + '_n'
+                if m['tex'] in CHROPOWATOSC and m.get('metal', 0) < 0.5:
+                    b_, z_ = CHROPOWATOSC[m['tex']]
+                    textures[m['tex'] + '_mr'] = (realizm.mapa_chropowatosci(c, baza=b_, zakres=z_, seed=len(k)), 'jpeg')
+                    m['mr'] = m['tex'] + '_mr'; m['rough'] = 1.0
         path = os.path.join(out_dir, f'{name}.glb')
         ntri = write_glb(path, nodes, mats, textures, anims)
-        for m in mats.values():
-            if m.get('normal'): m['normal'] = m['normal'][:-2]
         print(f'{name:9s} {ntri:6d} trójkątów  {os.path.getsize(path) / 1e6:.2f} MB  tekstury: {len(textures)}')
 
 if __name__ == '__main__':
