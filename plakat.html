@@ -13,6 +13,8 @@
   "mindar-image": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"
 } }
 </script>
+<script src="wersja.js"></script>
+<script>window.WERSJA = window.WERSJA || ""; window.zWersja = window.zWersja || (u => u);</script>
 <script src="atrakcje.js"></script>
 <style>
   * { box-sizing: border-box; }
@@ -110,9 +112,9 @@ $("#go").onclick = async () => {
     $("#prog div").style.width = "100%";
     $("#status").textContent = "Uruchamiam kamerę i model 3D…";
     ar = await startPosterAR({
-      container: $("#ar"), mindUrl, modelUrl: a.model,
+      container: $("#ar"), mindUrl, modelUrl: zWersja(a.model),
       orientation: a.orientacja || "sciana", size: a.wielkoscNaPlakacie || 0.9,
-      avatarUrl: a.bezPrzewodnika ? null : (a.przewodnik || window.PRZEWODNIK?.model || null),
+      avatarUrl: a.bezPrzewodnika ? null : zWersja(a.przewodnik || window.PRZEWODNIK?.model || null),
       onFound: () => $("#hint").classList.add("hide"),
       onLost: () => $("#hint").classList.remove("hide"),
     });
