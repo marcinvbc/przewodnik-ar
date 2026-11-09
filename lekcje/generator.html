@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generator scenariuszy · Lekcja AR</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script src="../wersja.js"></script>
+<script>window.WERSJA = window.WERSJA || ""; window.zWersja = window.zWersja || (u => u);</script>
+<script src="konfiguracja.js"></script>
+<link rel="stylesheet" href="styl.css">
+<style>
+  :root { --soft: #f1ebdd; }
+  .hero { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-top: 10px; }
+  .tile { border: 2px solid var(--line); background: #fff; border-radius: 16px; padding: 14px; cursor: pointer; text-align: left; font: inherit; color: inherit; display: grid; gap: 4px; }
+  .tile:hover { border-color: #cfc5b0; } .tile.on { border-color: var(--accent); background: #fff4ef; box-shadow: 0 0 0 3px #f6d3c4; }
+  .tile .ik { font-size: 28px; } .tile b { font-size: 14px; line-height: 1.25; }
+  .chipy { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .chipy button { border: 1.5px solid var(--line); background: #fff; border-radius: 99px; padding: 7px 14px; font: 600 14px system-ui; cursor: pointer; color: var(--ink); }
+  .chipy button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .krok { margin-top: 16px; } .krok > h2 { font-size: 19px; display: flex; gap: 10px; align-items: center; }
+  .krok > h2 .n { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 14px; flex: none; }
+  .krok.off { opacity: .45; pointer-events: none; }
+  .ramka { background: #eef6ef; border: 1px solid #b9dcc0; color: #24502c; border-radius: 12px; padding: 9px 12px; font-size: 13px; margin-top: 10px; }
+  .dzialy details { border: 1px solid var(--line); border-radius: 12px; background: #fff; margin-top: 8px; }
+  .dzialy summary { padding: 10px 14px; cursor: pointer; font-weight: 700; }
+  .dzialy .chipy { padding: 0 12px 12px; margin: 0; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; } @media (max-width: 700px) { .grid3 { grid-template-columns: 1fr; } }
+  .szablon { border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px; cursor: pointer; background: #fff; }
+  .szablon.on { border-color: var(--accent); background: #fff4ef; }
+  /* edytor */
+  .edytor { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 900px) { .edytor { grid-template-columns: 1fr; } .nav { position: static !important; } }
+  .nav { position: sticky; top: 76px; display: grid; gap: 4px; }
+  .nav a { display: flex; gap: 8px; align-items: center; padding: 7px 10px; border-radius: 10px; text-decoration: none; font-size: 14px; }
+  .nav a:hover { background: var(--soft); }
+  .nav a i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #cfc5b0; flex: none; font-style: normal; font-size: 11px; display: grid; place-items: center; }
+  .nav a i.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .nav a.etap { padding-left: 22px; }
+  .sek { scroll-margin-top: 80px; margin-bottom: 14px; }
+  .sek > header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .sek > header h2 { font-size: 18px; flex: 1; min-width: 200px; }
+  .sek > header input.tyt { font-size: 17px; font-weight: 800; flex: 1; min-width: 200px; }
+  .sek.etap { border-left: 5px solid var(--gold); }
+  .pole { margin-top: 10px; }
+  .pole label { font-weight: 700; font-size: 13px; color: #3d4448; display: flex; gap: 6px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .pole textarea { min-height: 90px; line-height: 1.5; }
+  .aibar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .aibar button { border: 1px solid #e8d7a9; background: #fff8e6; color: #6b5200; border-radius: 99px; padding: 4px 11px; font: 600 12.5px system-ui; cursor: pointer; }
+  .aibar button:hover { background: #ffefc4; } .aibar button:disabled { opacity: .5; }
+  .aibar button.cof { background: #fff; border-color: var(--line); color: var(--muted); }
+  .aibar .wlasne { display: flex; gap: 6px; flex: 1; min-width: 240px; } .aibar .wlasne input { padding: 4px 10px; font-size: 13px; border-radius: 99px; }
+  .uwaga { font-size: 12px; color: #7a5a00; margin-top: 4px; }
+  .media { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 8px; }
+  .mk { position: relative; background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 12px; }
+  .mk .th { aspect-ratio: 16/10; background: #eef0ee center/cover no-repeat; display: grid; place-items: center; font-size: 34px; }
+  .mk .th video { width: 100%; height: 100%; object-fit: cover; }
+  .mk .nm { padding: 5px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mk .ty { position: absolute; top: 5px; left: 5px; background: rgba(31,42,46,.85); color: #fff; border-radius: 99px; padding: 1px 8px; font-size: 11px; font-weight: 700; }
+  .mk .x { position: absolute; top: 4px; right: 4px; border: 0; width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,.95); cursor: pointer; font-weight: 700; }
+  .dodaj-m { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .dodaj-m button { border: 1.5px dashed #cfc5b0; background: transparent; border-radius: 12px; padding: 7px 12px; font: 600 13px system-ui; cursor: pointer; color: var(--ink); }
+  .dodaj-m button:hover { background: #fff; border-style: solid; }
+  .quiz { background: var(--paper); border-radius: 10px; padding: 8px; margin-top: 6px; }
+  .wym label { display: flex; gap: 10px; align-items: flex-start; padding: 6px 4px; border-bottom: 1px dashed var(--line); cursor: pointer; }
+  .wym input { margin-top: 4px; width: auto; }
+  .infotab { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; font-size: 14px; }
+  .infotab b { color: #3d4448; }
+  .toolbar { position: sticky; top: 59px; z-index: 15; background: var(--paper); padding: 10px 0; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+  .toolbar input { font-size: 19px; font-weight: 800; flex: 1; min-width: 240px; background: transparent; border-color: transparent; }
+  .toolbar input:hover, .toolbar input:focus { background: #fff; border-color: var(--line); }
+  .zapis { font-size: 12px; color: var(--muted); min-width: 90px; }
+  .czas-suma { font-size: 13px; color: var(--muted); padding: 4px 10px; }
+  .czas-suma.zle { color: var(--bad); font-weight: 700; }
+  .modal { position: fixed; inset: 0; background: rgba(15,20,22,.6); z-index: 90; display: grid; place-items: center; padding: 14px; }
+  .modal .box { background: var(--card); border-radius: 20px; padding: 20px; max-width: 760px; width: 100%; max-height: 92vh; overflow: auto; }
+  .opcje { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-top: 12px; }
+  .opcja { border: 2px solid var(--line); border-radius: 16px; padding: 14px; background: #fff; cursor: pointer; text-align: left; font: inherit; color: inherit; display: grid; gap: 4px; }
+  .opcja:hover { border-color: var(--accent); } .opcja .ik { font-size: 30px; }
+  .bib { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+  .bib button { border: 1px solid var(--line); background: #fff; border-radius: 12px; overflow: hidden; padding: 0; cursor: pointer; text-align: left; font: 600 12px system-ui; color: var(--ink); }
+  .bib button div { aspect-ratio: 16/10; background: #eef0ee center/cover; display: grid; place-items: center; font-size: 34px; }
+  .bib button span { display: block; padding: 6px 8px; }
+  .sc-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 14px; }
+  .tag { display: inline-block; background: #fff3d6; color: #7a5a00; border: 1px solid #f0d58a; border-radius: 99px; padding: 0 8px; font-size: 11px; font-weight: 700; }
+  /* czat AI */
+  .czat-ai { position: fixed; inset: 0; z-index: 120; }
+  .czat-tlo { position: absolute; inset: 0; background: rgba(15,20,22,.45); }
+  .czat-panel { position: absolute; right: 0; top: 0; bottom: 0; width: min(520px, 100%); background: var(--card); display: flex; flex-direction: column; box-shadow: -10px 0 40px rgba(0,0,0,.25); }
+  .czat-panel header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .czat-panel .rama { background: #eef6ef; color: #24502c; padding: 7px 16px; border-bottom: 1px solid #d5e9d8; }
+  .czat-panel .wiad { flex: 1; overflow: auto; padding: 14px; display: grid; gap: 10px; align-content: start; }
+  .czat-panel .msg { padding: 10px 12px; border-radius: 14px; max-width: 92%; font-size: 14px; }
+  .czat-panel .msg > div { margin-top: 8px; }
+  .czat-panel .msg.ai { background: #fff; border: 1px solid var(--line); }
+  .czat-panel .msg.ja { background: var(--ink); color: #fff; justify-self: end; white-space: pre-wrap; }
+  .czat-panel footer { border-top: 1px solid var(--line); padding: 12px; display: grid; gap: 8px; }
+  .podglad-obraz img { width: 100%; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+  .podglad-3d { height: 280px; border-radius: 12px; background: radial-gradient(#fff, #e9edf0); overflow: hidden; }
+  .kropki i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); margin-right: 4px; animation: kr 1s infinite; }
+  .kropki i:nth-child(2) { animation-delay: .15s } .kropki i:nth-child(3) { animation-delay: .3s }
+  @keyframes kr { 50% { transform: translateY(-5px); opacity: .5 } }
+  .wyk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } @media (max-width: 700px) { .wyk-grid { grid-template-columns: 1fr; } }
+  .wyk-grid canvas { width: 100%; border-radius: 10px; border: 1px solid var(--line); }
+  .postep { height: 8px; background: var(--soft); border-radius: 99px; overflow: hidden; margin-top: 10px; } .postep div { height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">AR</div><b>Generator scenariuszy lekcji</b>
+  <span class="badge" id="mode"></span>
+  <span class="small muted" id="ver"></span>
+  <span class="sp"></span>
+  <button class="btn sm" id="kto" hidden></button>
+  <a class="btn sm ghost" href="nauczyciel.html">Panel nauczyciela</a>
+</header>
+
+<!-- LOGOWANIE (Supabase) -->
+<main class="wrap" id="vLogin" hidden>
+  <div class="card" style="max-width:420px;margin:40px auto">
+    <h2 style="font-size:22px;margin-bottom:6px">Zaloguj się</h2>
+    <p class="muted small">Scenariusze zapisują się na Twoim koncie nauczyciela.</p>
+    <label class="l" for="em">E-mail</label><input type="email" id="em" autocomplete="email">
+    <label class="l" for="pw">Hasło</label><input type="password" id="pw" autocomplete="current-password">
+    <div class="row" style="margin-top:14px"><button class="btn primary" id="signin">Zaloguj</button><a class="btn" href="nauczyciel.html">Załóż konto</a></div>
+    <p class="small" id="loginMsg"></p>
+  </div>
+</main>
+
+<!-- START -->
+<main class="wrap" id="vStart" hidden>
+  <div class="hero">
+    <div><h1 style="font-size:28px">Twoje scenariusze</h1>
+      <p class="muted" style="margin:4px 0 0">Wybierz szkołę, przedmiot i temat – generator przygotuje układ lekcji, a AI pomoże go wypełnić w ramach podstawy programowej. Na końcu jednym kliknięciem zrobisz z niego lekcję w rozszerzonej rzeczywistości.</p></div>
+    <button class="btn accent" id="nowy" style="font-size:16px;padding:12px 20px">➕ Nowy scenariusz</button>
+  </div>
+  <div class="card" style="margin-top:14px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:#1f2a2e;color:#fff;border-color:#1f2a2e">
+    <span style="font-size:36px">❤️</span>
+    <div style="flex:1;min-width:240px"><b style="font-size:16px">Przykład: Biologia, klasa 7 – Budowa serca i układu krwionośnego</b><br>
+      <span class="small" style="opacity:.82">Gotowy scenariusz zgodny z podstawą programową: 6 etapów, 4 modele 3D, ilustracje, animacja, wykres, karta pracy i quiz.</span></div>
+    <button class="btn gold" id="przyklad">Wczytaj przykład</button>
+  </div>
+  <div class="sc-lista" id="lista"></div>
+</main>
+
+<!-- KREATOR -->
+<main class="wrap" id="vKreator" hidden>
+  <div class="row" style="justify-content:space-between"><button class="btn sm" data-wroc>← Scenariusze</button><span class="small muted">Trzy proste kroki – potem wszystko możesz zmienić.</span></div>
+  <section class="card krok" id="k1">
+    <h2><span class="n">1</span>Gdzie uczysz?</h2>
+    <div class="tiles" id="typy"></div>
+    <div id="szkolaPola"></div>
+    <div class="ramka" id="ramaInfo" hidden></div>
+  </section>
+  <section class="card krok off" id="k2">
+    <h2><span class="n">2</span>Jaki przedmiot?</h2>
+    <div class="chipy" id="przedmioty"></div>
+    <div class="row" style="margin-top:10px"><input type="text" id="przedmiotInny" placeholder="…albo wpisz nazwę przedmiotu" style="max-width:360px"></div>
+  </section>
+  <section class="card krok off" id="k3">
+    <h2><span class="n">3</span>Temat lekcji</h2>
+    <p class="muted small" style="margin:0">Wybierz z listy działów albo wpisz własny temat.</p>
+    <div class="row" style="margin-top:8px"><input type="text" id="temat" placeholder="np. Budowa serca i układu krwionośnego" style="flex:1;min-width:260px">
+      <button class="btn" id="tematyAI">✨ Zaproponuj tematy</button></div>
+    <div class="chipy" id="tematyPropozycje"></div>
+    <div class="dzialy" id="dzialy"></div>
+    <div class="grid3" style="margin-top:14px" id="szablony"></div>
+    <div class="row" style="margin-top:14px;justify-content:space-between">
+      <label class="row small" style="gap:6px">Czas lekcji: <input type="text" id="czas" value="45" style="width:70px"> min</label>
+      <button class="btn accent" id="utworz" style="font-size:16px;padding:12px 22px">Utwórz scenariusz →</button>
+    </div>
+  </section>
+</main>
+
+<!-- EDYTOR -->
+<main class="wrap" id="vEdytor" hidden>
+  <div class="toolbar">
+    <button class="btn sm" data-wroc>←</button>
+    <input type="text" id="tytul" aria-label="Tytuł scenariusza">
+    <span class="zapis" id="zapis"></span>
+    <button class="btn sm" id="wypelnij">✨ Uzupełnij puste z AI</button>
+    <button class="btn sm" id="druk">🖨 Drukuj / PDF</button>
+    <button class="btn sm" id="word">⬇ Word</button>
+    <button class="btn sm accent" id="doLekcji">🚀 Utwórz lekcję AR</button>
+  </div>
+  <div class="edytor">
+    <nav class="nav card" id="nav" style="padding:10px"></nav>
+    <div id="sekcje"></div>
+  </div>
+</main>
+
+<script type="module">
+import { backend, DEMO, esc, toast, resolveUrl, uid } from "./wspolne.js";
+import { TYPY_SZKOL, ROK_SZKOLNY, rokTekst, rama, tematyDla, SZABLONY, nowaSekcja, BIOLOGIA_CELE_OGOLNE } from "./gen-dane.js";
+import { ai, kontekstAI } from "./gen-ai.js";
+import { oknoCzatuAI, svgDoJpg, obrazZPliku, wykresJpg, rysujWykres, kartaPliku, podgladPliku, typPliku, zaladujXLSX, eksportGLB, zbudujZPrzepisu } from "./gen-media.js";
+import { scenariuszDoLekcji, drukuj, pobierzWord, podsumowanieLekcji } from "./gen-lekcja.js";
+import { SCENARIUSZ_SERCE, BIBLIOTEKA } from "./pokazowa-biologia/scenariusz.js";
+
+const $ = s => document.querySelector(s);
+const show = id => ["vLogin", "vStart", "vKreator", "vEdytor"].forEach(v => $("#" + v).hidden = v !== id);
+const b = await backend();
+$("#mode").textContent = DEMO ? "TRYB DEMO · AI pokazowe" : (b.ai.dostepne ? "Supabase · Claude" : "Supabase");
+$("#mode").classList.toggle("on", !DEMO); $("#ver").textContent = "wersja " + (window.WERSJA || "");
+let ja = null, sc = null, saveT = null;
+const IKONY = { obraz: "🖼", film: "🎬", model: "🧊", wykres: "📊", plik: "📎" };
+const NAZWY = { obraz: "obraz", film: "film", model: "model 3D", wykres: "wykres", plik: "plik" };
+const prowadzacy = () => ja?.profil ? [ja.profil.imie, ja.profil.nazwisko].filter(Boolean).join(" ") || ja.email : ja?.email || "";
+
+/* ================================================================== logowanie / profil */
+async function init() {
+  ja = await b.auth.user();
+  if (!ja) { show("vLogin"); return; }
+  $("#kto").hidden = false; $("#kto").textContent = "👤 " + (prowadzacy() || "Nauczyciel") + (DEMO ? " ▾" : "");
+  const id = new URLSearchParams(location.search).get("s");
+  if (id) return otworz(id);
+  if (new URLSearchParams(location.search).has("nowy")) return kreator();
+  lista();
+}
+$("#signin").onclick = async () => { try { await b.auth.signIn($("#em").value.trim(), $("#pw").value); init(); } catch (e) { $("#loginMsg").textContent = "❌ " + e.message; } };
+$("#kto").onclick = () => DEMO ? wyborProfilu() : profilForm(ja.profil);
+
+function modal(html, cls = "") {
+  const m = document.createElement("div"); m.className = "modal"; m.innerHTML = `<div class="box ${cls}">${html}</div>`;
+  m.onclick = e => { if (e.target === m) m.remove(); }; document.body.appendChild(m);
+  m.querySelectorAll("[data-zamknij]").forEach(x => x.onclick = () => m.remove());
+  return m;
+}
+function wyborProfilu() {
+  const l = b.auth.profile();
+  const m = modal(`<h2 style="font-size:20px">Kto prowadzi zajęcia?</h2>
+    <p class="muted small">W trybie demo to makieta logowania: każdy nauczyciel ma swoje scenariusze i lekcje w tej przeglądarce. Po podłączeniu Supabase są to prawdziwe konta z hasłem.</p>
+    <div class="opcje">${l.map(p => `<button class="opcja" data-p="${p.id}"><span class="ik">👩‍🏫</span><b>${esc(p.imie)} ${esc(p.nazwisko)}</b><span class="small muted">${esc(p.email || "")}${p.szkola ? "<br>" + esc(p.szkola) : ""}</span></button>`).join("")}
+    <button class="opcja" data-nowy><span class="ik">➕</span><b>Dodaj nauczyciela</b></button></div>
+    <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-zamknij>Zamknij</button></div>`);
+  m.onclick = e => {
+    if (e.target === m) return m.remove();
+    const p = e.target.closest("[data-p]"); if (p) { b.auth.wybierz(p.dataset.p); m.remove(); location.href = location.pathname; }
+    if (e.target.closest("[data-nowy]")) { m.remove(); profilForm(null); }
+  };
+}
+function profilForm(p) {
+  const m = modal(`<h2 style="font-size:20px">${p ? "Mój profil" : "Nowy nauczyciel"}</h2>
+    <div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label class="l">Imię</label><input type="text" id="pImie" value="${esc(p?.imie || "")}"></div>
+      <div><label class="l">Nazwisko</label><input type="text" id="pNaz" value="${esc(p?.nazwisko || "")}"></div></div>
+    ${DEMO ? `<label class="l">E-mail</label><input type="email" id="pEm" value="${esc(p?.email || "")}">` : ""}
+    <label class="l">Szkoła (podpowiada się w nowych scenariuszach)</label><input type="text" id="pSz" value="${esc(p?.szkola || "")}" placeholder="np. Szkoła Podstawowa nr 5 w Toruniu">
+    <div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn" data-zamknij>Anuluj</button><button class="btn primary" id="pZap">Zapisz</button></div>`);
+  m.querySelector("#pZap").onclick = async () => {
+    const d = { ...(p || {}), imie: m.querySelector("#pImie").value.trim(), nazwisko: m.querySelector("#pNaz").value.trim(), szkola: m.querySelector("#pSz").value.trim() };
+    if (DEMO) d.email = m.querySelector("#pEm").value.trim();
+    if (!d.imie) return toast("Wpisz imię");
+    const z = await b.auth.zapiszProfil(d); if (DEMO) b.auth.wybierz(z.id);
+    m.remove(); location.reload();
+  };
+}
+
+/* ================================================================== lista */
+async function lista() {
+  history.replaceState(null, "", location.pathname); show("vStart");
+  const l = await b.scenariusze.list();
+  $("#lista").innerHTML = l.length ? l.map(s => `<div class="card">
+      <div class="small muted">${esc(s.przedmiot || "")}${s.szkola?.klasa ? " · klasa " + esc(s.szkola.klasa) : ""} · ${new Date(s.zmieniono).toLocaleString("pl-PL")}</div>
+      <h3 style="font-size:17px;margin:4px 0 8px">${esc(s.tytul || s.temat)}</h3>
+      <div class="row"><button class="btn sm primary" data-o="${s.id}">✏️ Otwórz</button>${s.lekcjaId ? `<a class="btn sm" href="nauczyciel.html?id=${s.lekcjaId}">🥽 Lekcja AR</a>` : ""}<button class="btn sm ghost" data-u="${s.id}">🗑</button></div></div>`).join("")
+    : `<div class="card empty">Nie masz jeszcze scenariuszy. Kliknij <b>Nowy scenariusz</b> albo wczytaj przykład.</div>`;
+}
+$("#lista").onclick = async e => {
+  const o = e.target.closest("[data-o]"), u = e.target.closest("[data-u]");
+  if (o) otworz(o.dataset.o);
+  if (u && confirm("Usunąć scenariusz? (lekcja AR utworzona z niego zostaje)")) { await b.scenariusze.remove(u.dataset.u); lista(); }
+};
+$("#nowy").onclick = () => kreator();
+document.querySelectorAll("[data-wroc]").forEach(x => x.onclick = () => { flush(); lista(); });
+
+/* ================================================================== kreator */
+let K = null;
+function kreator() {
+  K = { szkola: { typ: null, nazwa: ja?.profil?.szkola || "", klasa: null, rok: ROK_SZKOLNY }, przedmiot: "", temat: "", dzial: "", wymaganiaLista: [], szablon: "konspekt", czas: 45 };
+  show("vKreator"); history.replaceState(null, "", "?nowy");
+  $("#typy").innerHTML = TYPY_SZKOL.map(t => `<button class="tile" data-t="${t.id}"><span class="ik">${t.ikona}</span><b>${t.nazwa}</b></button>`).join("");
+  $("#szkolaPola").innerHTML = ""; $("#ramaInfo").hidden = true; $("#temat").value = ""; $("#przedmiotInny").value = "";
+  $("#szablony").innerHTML = Object.entries(SZABLONY).map(([k, s]) => `<div class="szablon ${k === K.szablon ? "on" : ""}" data-sz="${k}"><b>${s.nazwa}</b><div class="small muted">${s.opis}</div></div>`).join("");
+  ["#k2", "#k3"].forEach(x => $(x).classList.add("off")); $("#przedmioty").innerHTML = ""; $("#dzialy").innerHTML = ""; $("#tematyPropozycje").innerHTML = "";
+}
+$("#typy").onclick = e => {
+  const t = e.target.closest("[data-t]"); if (!t) return;
+  K.szkola.typ = t.dataset.t; K.szkola.klasa = null; K.przedmiot = "";
+  document.querySelectorAll("#typy .tile").forEach(x => x.classList.toggle("on", x === t));
+  polaSzkoly(); odswiezRame();
+};
+function wlasneSzkoly() { return ja?.profil?.wlasneSzkoly || []; }
+function polaSzkoly() {
+  const t = TYPY_SZKOL.find(x => x.id === K.szkola.typ), s = K.szkola;
+  let h = `<div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+    <div><label class="l">Nazwa szkoły</label><input type="text" data-k="nazwa" value="${esc(s.nazwa)}" placeholder="np. Szkoła Podstawowa nr 5"></div>
+    <div><label class="l">Rok szkolny</label><select data-k="rok">${[ROK_SZKOLNY - 1, ROK_SZKOLNY, ROK_SZKOLNY + 1].map(r => `<option value="${r}" ${r === s.rok ? "selected" : ""}>${rokTekst(r)}</option>`).join("")}</select></div></div>`;
+  if (t.wlasna) {
+    const zap = wlasneSzkoly();
+    h += `${zap.length ? `<label class="l">Zapisane definicje</label><div class="chipy">${zap.map((w, i) => `<button data-wl="${i}">${esc(w.nazwa)}</button>`).join("")}</div>` : ""}
+      <div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label class="l">Rodzaj szkoły / kursu</label><input type="text" data-k="etap" value="${esc(s.etap || "")}" placeholder="np. szkoła językowa, kurs zawodowy"></div>
+      <div><label class="l">Poziomy (po przecinku)</label><input type="text" data-k="poziomy" value="${esc(s.poziomy || "")}" placeholder="np. A1, A2, B1"></div></div>
+      <label class="l">Przedmioty (po przecinku)</label><input type="text" data-k="przedmiotyWl" value="${esc(s.przedmiotyWl || "")}" placeholder="np. język angielski, konwersacje">
+      <label class="l">Rama programowa, której AI ma się trzymać</label><textarea data-k="wlasnaRama" placeholder="np. Program nauczania szkoły X, poziom B1 wg CEFR…">${esc(s.wlasnaRama || "")}</textarea>
+      <div class="row" style="margin-top:8px"><button class="btn sm" id="zapiszWl">💾 Zapisz definicję w moim profilu</button></div>`;
+  }
+  const klasy = t.wlasna ? String(s.poziomy || "").split(",").map(x => x.trim()).filter(Boolean) : t.klasy;
+  if (klasy.length) h += `<label class="l">${t.uczelnia ? "Rok studiów" : t.wlasna ? "Poziom" : "Klasa"}</label><div class="chipy" id="klasy">${klasy.map(k => `<button data-kl="${k}" class="${String(k) === String(s.klasa) ? "on" : ""}">${k}</button>`).join("")}</div>`;
+  if (t.zakresy) h += `<label class="l">Zakres</label><div class="chipy" id="zakresy">${["podstawowy", "rozszerzony"].map(z => `<button data-zk="${z}" class="${s.zakres === z ? "on" : ""}">${z}</button>`).join("")}</div>`;
+  if (t.zawod) h += `<label class="l">Zawód (opcjonalnie)</label><input type="text" data-k="zawod" value="${esc(s.zawod || "")}" placeholder="np. technik informatyk">`;
+  if (t.uczelnia) h += `<label class="l">Kierunek studiów</label><input type="text" data-k="kierunek" value="${esc(s.kierunek || "")}" placeholder="np. pielęgniarstwo">`;
+  $("#szkolaPola").innerHTML = h;
+}
+$("#szkolaPola").addEventListener("input", e => { const k = e.target.dataset.k; if (k) { K.szkola[k] = k === "rok" ? +e.target.value : e.target.value; if (k === "poziomy") { polaSzkoly(); e.target.focus?.(); } odswiezRame(); } });
+$("#szkolaPola").addEventListener("change", e => { if (e.target.dataset.k === "rok") { K.szkola.rok = +e.target.value; odswiezRame(); przedmioty(); } if (e.target.dataset.k === "poziomy") polaSzkoly(); });
+$("#szkolaPola").addEventListener("click", async e => {
+  const kl = e.target.closest("[data-kl]"), zk = e.target.closest("[data-zk]"), wl = e.target.closest("[data-wl]");
+  if (kl) { K.szkola.klasa = /^\d+$/.test(kl.dataset.kl) ? +kl.dataset.kl : kl.dataset.kl; polaSzkoly(); odswiezRame(); przedmioty(); }
+  if (zk) { K.szkola.zakres = zk.dataset.zk; polaSzkoly(); odswiezRame(); }
+  if (wl) { Object.assign(K.szkola, wlasneSzkoly()[+wl.dataset.wl]); polaSzkoly(); odswiezRame(); przedmioty(); }
+  if (e.target.id === "zapiszWl") {
+    const s = K.szkola; if (!s.etap && !s.nazwa) return toast("Wpisz nazwę lub rodzaj szkoły");
+    const d = { nazwa: s.nazwa || s.etap, etap: s.etap, poziomy: s.poziomy, przedmiotyWl: s.przedmiotyWl, wlasnaRama: s.wlasnaRama };
+    const lista = [...wlasneSzkoly().filter(x => x.nazwa !== d.nazwa), d];
+    ja.profil = await b.auth.zapiszProfil({ ...ja.profil, wlasneSzkoly: lista }) || ja.profil; ja.profil.wlasneSzkoly = lista;
+    toast("💾 Zapisano definicję szkoły"); polaSzkoly();
+  }
+});
+function odswiezRame() {
+  const s = K.szkola, t = TYPY_SZKOL.find(x => x.id === s.typ);
+  if (!t) return;
+  const gotowa = t.wlasna ? true : s.klasa != null;
+  if (!gotowa) { $("#ramaInfo").hidden = true; return; }
+  const r = rama(s);
+  $("#ramaInfo").hidden = false;
+  $("#ramaInfo").innerHTML = `🎯 <b>Rama programowa:</b> ${esc(r.nazwa)}${r.opis ? ` <span class="muted">– ${esc(r.opis)}</span>` : ""}<br>AI będzie pisać tylko w tym zakresie i na tym poziomie nauczania.`;
+  if (t.wlasna) przedmioty();
+}
+function przedmioty() {
+  const s = K.szkola, t = TYPY_SZKOL.find(x => x.id === s.typ);
+  const lista = t.wlasna ? String(s.przedmiotyWl || "").split(",").map(x => x.trim()).filter(Boolean) : t.przedmioty(s.klasa, s.rok);
+  $("#k2").classList.remove("off");
+  $("#przedmioty").innerHTML = lista.map(p => `<button data-pr="${esc(p)}" class="${p === K.przedmiot ? "on" : ""}">${esc(p)}</button>`).join("") || `<span class="muted small">Wpisz nazwę przedmiotu poniżej.</span>`;
+}
+$("#przedmioty").onclick = e => { const p = e.target.closest("[data-pr]"); if (!p) return; wybierzPrzedmiot(p.dataset.pr.includes("wpisz") ? "" : p.dataset.pr); if (p.dataset.pr.includes("wpisz")) $("#przedmiotInny").focus(); };
+$("#przedmiotInny").oninput = e => wybierzPrzedmiot(e.target.value.trim(), true);
+function wybierzPrzedmiot(p, zPola) {
+  K.przedmiot = p; if (!zPola) $("#przedmiotInny").value = "";
+  document.querySelectorAll("#przedmioty button").forEach(x => x.classList.toggle("on", x.dataset.pr === p));
+  if (!p) return;
+  $("#k3").classList.remove("off");
+  const r = rama(K.szkola), t = tematyDla(p, K.szkola.klasa, r.podstawa);
+  K.tematy = t;
+  $("#dzialy").innerHTML = t ? t.dzialy.map((d, i) => `<details ${d.wymagania.length || t.dzialy.length <= 4 ? "open" : ""}><summary>${esc(d.dzial)}${d.wymagania.length ? ` <span class="tag">wymagania z podstawy</span>` : ""}</summary>
+      <div class="chipy">${d.tematy.map(x => `<button data-d="${i}" data-tm="${esc(x)}" class="${x === K.temat ? "on" : ""}">${esc(x)}</button>`).join("")}</div></details>`).join("")
+    : `<p class="small muted" style="margin-top:10px">Dla tego przedmiotu nie mam jeszcze listy działów – wpisz temat albo kliknij <b>Zaproponuj tematy</b>.</p>`;
+  if (K.szkola.typ === "uczelnia") $("#czas").value = 90;
+  $("#k3").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+$("#dzialy").onclick = e => {
+  const x = e.target.closest("[data-tm]"); if (!x) return;
+  const d = K.tematy.dzialy[+x.dataset.d];
+  K.temat = x.dataset.tm; K.dzial = d.dzial; K.wymaganiaLista = d.wymagania; $("#temat").value = K.temat;
+  document.querySelectorAll("#dzialy [data-tm]").forEach(y => y.classList.toggle("on", y === x));
+};
+$("#temat").oninput = e => { K.temat = e.target.value; K.dzial = ""; K.wymaganiaLista = []; document.querySelectorAll("#dzialy [data-tm]").forEach(y => y.classList.remove("on")); };
+$("#tematyAI").onclick = async () => {
+  if (!K.przedmiot) return toast("Najpierw wybierz przedmiot");
+  $("#tematyAI").disabled = true; $("#tematyPropozycje").innerHTML = `<span class="kropki"><i></i><i></i><i></i></span>`;
+  try {
+    const r = rama(K.szkola);
+    const w = await ai(b, "tematy", { przedmiot: K.przedmiot, klasa: K.szkola.klasa, podstawa: r.podstawa, rama: r.nazwa, szkola: opisSzkoly(K.szkola), temat: K.temat });
+    $("#tematyPropozycje").innerHTML = (w.tematy || []).map(t => `<button data-tp="${esc(t)}">${esc(t)}</button>`).join("");
+  } catch (e) { $("#tematyPropozycje").textContent = "❌ " + e.message; }
+  $("#tematyAI").disabled = false;
+};
+$("#tematyPropozycje").onclick = e => { const x = e.target.closest("[data-tp]"); if (x) { $("#temat").value = K.temat = x.dataset.tp; } };
+$("#szablony").onclick = e => { const x = e.target.closest("[data-sz]"); if (!x) return; K.szablon = x.dataset.sz; document.querySelectorAll(".szablon").forEach(y => y.classList.toggle("on", y === x)); };
+function opisSzkoly(s) {
+  const t = TYPY_SZKOL.find(x => x.id === s.typ) || {};
+  const typ = t.wlasna ? (s.etap || "szkoła") : t.nazwa?.replace(/, klasy.*$/, "");
+  const nz = (s.nazwa || "").trim(), podobna = nz && typ && (nz.toLowerCase().startsWith(typ.toLowerCase()) || typ.toLowerCase().startsWith(nz.toLowerCase()));
+  return [nz, podobna ? "" : typ, s.klasa != null ? (t.uczelnia ? s.klasa : `klasa ${s.klasa}`) : "", s.zakres ? `zakres ${s.zakres}` : "", s.zawod, s.kierunek ? `kierunek ${s.kierunek}` : ""].filter(Boolean).join(", ");
+}
+$("#utworz").onclick = async () => {
+  const t = TYPY_SZKOL.find(x => x.id === K.szkola.typ);
+  if (!t) return toast("Wybierz typ szkoły");
+  if (!t.wlasna && K.szkola.klasa == null) return toast("Wybierz klasę");
+  if (!K.przedmiot) return toast("Wybierz przedmiot");
+  K.temat = $("#temat").value.trim(); if (!K.temat) return toast("Wpisz albo wybierz temat");
+  K.czas = +$("#czas").value || 45;
+  sc = await b.scenariusze.save(nowyScenariusz(K));
+  otworz(sc.id);
+};
+function nowyScenariusz(k) {
+  const r = rama(k.szkola), szablon = SZABLONY[k.szablon];
+  const etapy = szablon.sekcje.filter(s => s.typ === "etap");
+  const naEtap = Math.max(5, Math.round(k.czas / Math.max(1, etapy.length)));
+  return {
+    tytul: k.temat, temat: k.temat, dzial: k.dzial, przedmiot: k.przedmiot, czas: k.czas, szablon: k.szablon,
+    szkola: k.szkola, szkolaOpis: opisSzkoly(k.szkola), rama: r,
+    wymaganiaLista: k.wymaganiaLista || [], wymagania: (k.wymaganiaLista || []).map(w => w.kod), wymaganiaWlasne: "",
+    celeOgolneLista: k.przedmiot === "biologia" && r.podstawa === "pp2017" ? BIOLOGIA_CELE_OGOLNE : [], celeOgolne: [],
+    sekcje: szablon.sekcje.map((s, i) => nowaSekcja({ ...s, czas: s.typ === "etap" ? (k.czas === 45 ? s.czas : naEtap) : undefined }, i)),
+  };
+}
+
+/* ------------------------------------------------------------------ przykład */
+$("#przyklad").onclick = async () => {
+  const P = SCENARIUSZ_SERCE, k = { szkola: { ...P.szkola, rok: ROK_SZKOLNY, nazwa: ja?.profil?.szkola || P.szkola.nazwa }, przedmiot: P.przedmiot, temat: P.temat, dzial: P.dzial, szablon: P.szablon, czas: P.czas };
+  // rama dla przykładu: klasa 7 w bieżącym roku uczy się wg podstawy 2017 (Kompas Jutra dojdzie do kl. 7 w 2029/30)
+  const t = tematyDla("biologia", 7, "pp2017");
+  k.wymaganiaLista = t.dzialy.find(d => d.dzial === P.dzial).wymagania;
+  const s = nowyScenariusz(k);
+  s.tytul = P.tytul; s.wymagania = P.wymagania; s.celeOgolne = P.celeOgolne;
+  // dodatkowy etap 4 (doświadczenie) przed podsumowaniem
+  const ip = s.sekcje.findIndex(x => x.klucz === "podsumowanie");
+  s.sekcje.splice(ip, 0, nowaSekcja({ klucz: "etap4", tytul: "Etap 4", typ: "etap", czas: 6 }, ip));
+  for (const sek of s.sekcje) {
+    const d = P.sekcje[sek.klucz]; if (!d) continue;
+    Object.assign(sek, { tytul: d.tytul || sek.tytul, czas: d.czas || sek.czas, tresc: d.tresc || "", narracja: d.narracja || "", quiz: structuredClone(d.quiz || []),
+      media: (d.media || []).filter(Boolean).map(m => ({ ...structuredClone(m), id: uid() })) });
+  }
+  sc = await b.scenariusze.save(s); toast("❤️ Przykładowy scenariusz wczytany"); otworz(sc.id);
+};
+
+/* ================================================================== edytor */
+async function otworz(id) {
+  sc = await b.scenariusze.get(id);
+  if (!sc) { toast("Nie znaleziono scenariusza"); return lista(); }
+  history.replaceState(null, "", `?s=${id}`); show("vEdytor");
+  $("#tytul").value = sc.tytul || ""; $("#zapis").textContent = "";
+  $("#doLekcji").textContent = sc.lekcjaId ? "🚀 Zaktualizuj lekcję AR" : "🚀 Utwórz lekcję AR";
+  renderuj();
+}
+$("#tytul").oninput = e => { sc.tytul = e.target.value; zapisz(); };
+function zapisz() { $("#zapis").textContent = "zapisywanie…"; clearTimeout(saveT); saveT = setTimeout(flush, 700); }
+async function flush() {
+  if (!saveT || !sc) return; clearTimeout(saveT); saveT = null;
+  try { const z = await b.scenariusze.save(sc); sc.id = z.id; $("#zapis").textContent = "✓ zapisano"; } catch (e) { $("#zapis").textContent = "❌ " + e.message; }
+}
+addEventListener("beforeunload", () => { if (saveT) flush(); });
+
+const wypelniona = s => s.typ === "info" ? true : s.typ === "wymagania" ? (sc.wymagania?.length || sc.wymaganiaWlasne?.trim()) : s.typ === "etap" ? (s.tresc?.trim() || s.narracja?.trim()) : !!s.tresc?.trim();
+function nav() {
+  const suma = sc.sekcje.filter(s => s.typ === "etap").reduce((a, s) => a + (+s.czas || 0), 0);
+  $("#nav").innerHTML = sc.sekcje.map(s => `<a href="#${s.id}" class="${s.typ === "etap" ? "etap" : ""}"><i class="${wypelniona(s) ? "ok" : ""}">${wypelniona(s) ? "✓" : ""}</i>${esc(s.tytul)}</a>`).join("")
+    + `<div class="czas-suma ${suma !== +sc.czas ? "zle" : ""}">⏱ etapy: ${suma} / ${sc.czas} min</div>`;
+}
+function aibar(pole, pusta) {
+  return `<div class="aibar" data-pole="${pole}">${pusta ? `<button data-ai="napisz">✨ Napisz z AI</button>` : `<button data-ai="rozwin">✨ Rozwiń</button><button data-ai="uprosc">✨ Uprość</button><button data-ai="popraw">✨ Popraw język</button>`}
+    <span class="wlasne"><input type="text" placeholder="💬 własne polecenie dla AI, np. dodaj przykład z życia" data-pol><button data-ai="polecenie">↵</button></span></div><div class="uwaga" data-uw="${pole}"></div>`;
+}
+function renderSekcja(s, i) {
+  const etap = s.typ === "etap";
+  const ruch = etap ? `<button class="btn sm ghost" data-akc="gora" title="W górę">↑</button><button class="btn sm ghost" data-akc="dol" title="W dół">↓</button><button class="btn sm ghost" data-akc="usun" title="Usuń etap">🗑</button>` : "";
+  let body = "";
+  if (s.typ === "info") {
+    body = `<div class="infotab" style="margin-top:8px">
+      <b>Prowadzący</b><span>${esc(prowadzacy())}</span><b>Szkoła</b><span>${esc(sc.szkolaOpis)}</span><b>Przedmiot</b><span>${esc(sc.przedmiot)}${sc.dzial ? " · dział: " + esc(sc.dzial) : ""}</span>
+      <b>Temat</b><span><input type="text" data-sc="temat" value="${esc(sc.temat)}"></span>
+      <b>Czas</b><span><input type="text" data-sc="czas" value="${esc(sc.czas)}" style="width:80px"> min</span>
+      <b>Rama programowa</b><span>${esc(sc.rama?.nazwa || "")}</span></div>`;
+  } else if (s.typ === "wymagania") {
+    body = `<p class="small muted" style="margin:6px 0">Zaznacz wymagania realizowane na tej lekcji. <b>AI pisze wyłącznie w ich zakresie</b> i na poziomie tej klasy.
+      ${sc.dzial && sc.przedmiot === "biologia" ? `<a href="https://zpe.gov.pl/podstawa-programowa/szkola-podstawowa/biologia" target="_blank" rel="noopener">Podstawa programowa (ZPE) ↗</a>` : `<a href="https://zpe.gov.pl/podstawa-programowa" target="_blank" rel="noopener">Podstawa programowa (ZPE) ↗</a>`}</p>
+      ${sc.celeOgolneLista?.length ? `<div class="small" style="font-weight:700;margin-top:6px">Wymagania ogólne</div><div class="wym">${sc.celeOgolneLista.map(c => { const k = c.split(".")[0]; return `<label><input type="checkbox" data-co="${k}" ${sc.celeOgolne?.includes(k) ? "checked" : ""}><span class="small">${esc(c)}</span></label>`; }).join("")}</div>` : ""}
+      ${sc.wymaganiaLista?.length ? `<div class="small" style="font-weight:700;margin-top:10px">Wymagania szczegółowe – uczeń:</div><div class="wym">${sc.wymaganiaLista.map(w => `<label><input type="checkbox" data-wy="${w.kod}" ${sc.wymagania?.includes(w.kod) ? "checked" : ""}><span><b>${esc(w.kod)}</b> ${esc(w.tekst)}</span></label>`).join("")}</div>` : ""}
+      <div class="pole"><label>${sc.wymaganiaLista?.length ? "Inne wymagania (opcjonalnie)" : "Wymagania z podstawy programowej / efekty uczenia się – wklej lub wpisz"}</label>
+      <textarea data-sc="wymaganiaWlasne" placeholder="np. III.4.1 rozpoznaje elementy budowy układu krążenia…">${esc(sc.wymaganiaWlasne || "")}</textarea></div>`;
+  } else if (etap) {
+    body = `<div class="pole"><label>Przebieg – co robimy (dla nauczyciela)</label><textarea data-f="tresc" placeholder="Czynności nauczyciela i uczniów, pytania, polecenia…">${esc(s.tresc)}</textarea>${aibar("tresc", !s.tresc?.trim())}</div>
+      <div class="pole"><label><span>Treść dla uczniów <span class="muted" style="font-weight:500">– czyta ją przewodnik Bartek w lekcji AR</span></span>
+        <span class="row small" style="font-weight:500"><label class="row" style="gap:4px"><input type="checkbox" data-f="tablica" ${s.tablica !== false ? "checked" : ""} style="width:auto"> pokaż też jako tablicę w AR</label></span></label>
+        <textarea data-f="narracja" placeholder="2–4 proste zdania do uczniów">${esc(s.narracja)}</textarea>${aibar("narracja", !s.narracja?.trim())}</div>
+      <div class="pole"><label>Materiały: zdjęcia, filmy, modele 3D, wykresy, pliki</label>
+        <div class="media">${(s.media || []).map(m => `<div class="mk"><div class="th" data-th="${m.id}">${m.rodzaj === "obraz" || m.rodzaj === "wykres" || (m.rodzaj === "plik" && m.karta) ? "" : IKONY[m.rodzaj]}</div>
+          <span class="ty">${NAZWY[m.rodzaj]}${m.zrodlo === "ai" ? " ✨" : ""}</span><button class="x" data-mrm="${m.id}" title="Usuń">×</button><div class="nm" title="${esc(m.nazwa)}">${esc(m.nazwa)}</div></div>`).join("")}</div>
+        <div class="dodaj-m">${Object.entries(IKONY).map(([k, v]) => `<button data-dodaj="${k}">${v} + ${NAZWY[k]}</button>`).join("")}</div></div>
+      <div class="pole"><label><span>Pytania sprawdzające (quiz na telefonach) – ${(s.quiz || []).length}</span><span class="aibar" style="margin:0"><button data-ai="quiz">✨ Ułóż pytania z AI</button></span></label>
+        ${(s.quiz || []).map((q, k) => `<div class="quiz"><input type="text" data-q="${k}" data-qf="pytanie" value="${esc(q.pytanie)}" placeholder="Pytanie">
+          <textarea data-q="${k}" data-qf="odpowiedzi" style="min-height:50px;margin-top:4px" placeholder="Odpowiedzi – każda w osobnej linii">${esc(q.odpowiedzi.join("\n"))}</textarea>
+          <div class="row small" style="margin-top:4px">Poprawna: <select data-q="${k}" data-qf="poprawna" style="width:auto">${q.odpowiedzi.map((a, j) => `<option value="${j}" ${j === q.poprawna ? "selected" : ""}>${j + 1}. ${esc(a).slice(0, 34)}</option>`).join("")}</select>
+          <button class="btn sm ghost" data-qdel="${k}">🗑</button></div></div>`).join("")}
+        <button class="btn sm" data-qadd style="margin-top:6px">+ pytanie</button></div>
+      <label class="row small" style="margin-top:10px;gap:6px"><input type="checkbox" data-f="wAR" ${s.wAR !== false ? "checked" : ""} style="width:auto"> Ten etap jest sceną w lekcji AR</label>`;
+  } else if (s.typ === "zrodla") {
+    const wsz = sc.sekcje.flatMap(x => (x.media || []).map(m => `${IKONY[m.rodzaj]} ${m.nazwa}${m.zrodlo === "ai" ? " (wygenerowano z AI)" : ""}`));
+    body = `<div class="pole"><textarea data-f="tresc" placeholder="Źródła, literatura, linki">${esc(s.tresc)}</textarea>${aibar("tresc", !s.tresc?.trim())}</div>
+      ${wsz.length ? `<div class="small muted" style="margin-top:8px"><b>Załączniki w scenariuszu (${wsz.length}):</b><br>${wsz.map(esc).join("<br>")}</div>` : ""}`;
+  } else {
+    body = `<div class="pole"><textarea data-f="tresc" placeholder="${esc(s.podpowiedz || "")}">${esc(s.tresc)}</textarea>${aibar("tresc", !s.tresc?.trim())}</div>`;
+  }
+  const head = etap ? `<input class="tyt" type="text" data-f="tytul" value="${esc(s.tytul)}"><label class="row small" style="gap:4px">⏱<input type="text" data-f="czas" value="${esc(s.czas || "")}" style="width:56px"> min</label>${ruch}`
+    : `<h2>${esc(s.tytul)}</h2>`;
+  return `<section class="card sek ${etap ? "etap" : ""}" id="${s.id}" data-i="${i}"><header>${head}</header>${body}</section>`
+    + (etap && sc.sekcje[i + 1]?.typ !== "etap" ? `<div style="margin:-4px 0 14px"><button class="btn sm" data-nowy-etap="${i}">➕ Dodaj etap lekcji</button></div>` : "");
+}
+function renderuj() {
+  $("#sekcje").innerHTML = sc.sekcje.map(renderSekcja).join(""); nav(); miniatury();
+  document.querySelectorAll("#sekcje textarea").forEach(rosnij);
+}
+function rerenderSekcja(i) {
+  const el = document.querySelector(`.sek[data-i="${i}"]`); if (!el) return renderuj();
+  const nastepny = el.nextElementSibling?.querySelector?.("[data-nowy-etap]") ? el.nextElementSibling : null;
+  const tmp = document.createElement("div"); tmp.innerHTML = renderSekcja(sc.sekcje[i], i);
+  if (nastepny) nastepny.remove();
+  el.replaceWith(...tmp.childNodes); nav(); miniatury();
+  document.querySelectorAll(`.sek[data-i="${i}"] textarea`).forEach(rosnij);
+}
+const rosnij = t => { t.style.height = "auto"; t.style.height = Math.min(600, t.scrollHeight + 4) + "px"; };
+async function miniatury() {
+  for (const el of document.querySelectorAll("[data-th]:not([data-ok])")) {
+    el.dataset.ok = 1;
+    const m = sc.sekcje.flatMap(s => s.media || []).find(x => x.id === el.dataset.th); if (!m) continue;
+    try {
+      const u = await resolveUrl(m.rodzaj === "plik" ? m.karta : m.rodzaj === "wykres" ? m.podglad : m.url);
+      if (m.rodzaj === "film") el.innerHTML = `<video src="${u}#t=1" muted preload="metadata"></video>`;
+      else if (u && m.rodzaj !== "model") el.style.backgroundImage = `url("${u}")`;
+    } catch {}
+  }
+}
+
+/* ---------------------------------------------------------------- zdarzenia edytora */
+const sekcjaZ = e => { const c = e.target.closest(".sek"); return c ? [sc.sekcje[+c.dataset.i], +c.dataset.i] : [null, -1]; };
+$("#sekcje").addEventListener("input", e => {
+  const t = e.target; if (t.tagName === "TEXTAREA") rosnij(t);
+  if (t.dataset.sc) { sc[t.dataset.sc] = t.dataset.sc === "czas" ? (+t.value || t.value) : t.value; if (t.dataset.sc === "temat") sc.tytul ||= t.value; zapisz(); nav(); return; }
+  const [s] = sekcjaZ(e); if (!s) return;
+  const f = t.dataset.f, qf = t.dataset.qf;
+  if (f && t.type !== "checkbox") { s[f] = f === "czas" ? (+t.value || "") : t.value; zapisz(); if (f === "tytul" || f === "czas") nav(); else nav(); }
+  if (qf === "pytanie") { s.quiz[+t.dataset.q].pytanie = t.value; zapisz(); }
+  if (qf === "odpowiedzi") { const q = s.quiz[+t.dataset.q]; q.odpowiedzi = t.value.split("\n").map(x => x.trim()).filter(Boolean); q.poprawna = Math.min(q.poprawna, Math.max(0, q.odpowiedzi.length - 1)); zapisz(); }
+});
+$("#sekcje").addEventListener("change", e => {
+  const t = e.target, [s, i] = sekcjaZ(e);
+  if (t.dataset.wy) { sc.wymagania = t.checked ? [...new Set([...(sc.wymagania || []), t.dataset.wy])] : sc.wymagania.filter(x => x !== t.dataset.wy); zapisz(); nav(); }
+  if (t.dataset.co) { sc.celeOgolne = t.checked ? [...new Set([...(sc.celeOgolne || []), t.dataset.co])] : sc.celeOgolne.filter(x => x !== t.dataset.co); zapisz(); }
+  if (s && t.type === "checkbox" && t.dataset.f) { s[t.dataset.f] = t.checked; zapisz(); }
+  if (s && t.dataset.qf === "poprawna") { s.quiz[+t.dataset.q].poprawna = +t.value; zapisz(); }
+  if (s && t.dataset.qf === "odpowiedzi") rerenderSekcja(i);
+});
+$("#sekcje").addEventListener("keydown", e => { if (e.target.matches("[data-pol]") && e.key === "Enter") { e.preventDefault(); e.target.parentElement.querySelector("[data-ai]").click(); } });
+$("#sekcje").addEventListener("click", async e => {
+  const ne = e.target.closest("[data-nowy-etap]");
+  if (ne) { const i = +ne.dataset.nowyEtap + 1; const n = sc.sekcje.filter(x => x.typ === "etap").length; sc.sekcje.splice(i, 0, nowaSekcja({ klucz: "etap" + uid().slice(0, 4), tytul: `Etap ${n + 1}`, typ: "etap", czas: 5 }, i)); renderuj(); zapisz(); document.getElementById(sc.sekcje[i].id)?.scrollIntoView({ behavior: "smooth" }); return; }
+  const [s, i] = sekcjaZ(e); if (!s) return;
+  const akc = e.target.closest("[data-akc]")?.dataset.akc;
+  if (akc) {
+    const S = sc.sekcje;
+    if (akc === "gora" && S[i - 1]?.typ === "etap") [S[i - 1], S[i]] = [S[i], S[i - 1]];
+    if (akc === "dol" && S[i + 1]?.typ === "etap") [S[i + 1], S[i]] = [S[i], S[i + 1]];
+    if (akc === "usun" && confirm(`Usunąć etap „${s.tytul}”?`)) S.splice(i, 1);
+    renderuj(); zapisz(); return;
+  }
+  if (e.target.closest("[data-qadd]")) { (s.quiz ||= []).push({ pytanie: "", odpowiedzi: ["", ""], poprawna: 0 }); rerenderSekcja(i); zapisz(); return; }
+  const qd = e.target.closest("[data-qdel]"); if (qd) { s.quiz.splice(+qd.dataset.qdel, 1); rerenderSekcja(i); zapisz(); return; }
+  const mr = e.target.closest("[data-mrm]"); if (mr) { const m = s.media.find(x => x.id === mr.dataset.mrm); if (confirm(`Usunąć „${m.nazwa}” z etapu?`)) { s.media = s.media.filter(x => x !== m); if (m.path) b.files.remove([m.path]).catch(() => {}); rerenderSekcja(i); zapisz(); } return; }
+  const dm = e.target.closest("[data-dodaj]"); if (dm) return dodajMedia(s, i, dm.dataset.dodaj);
+  const ab = e.target.closest("[data-ai]"); if (ab) return akcjaAI(s, i, ab.dataset.ai, ab);
+});
+
+/* ---------------------------------------------------------------- AI w sekcji */
+const historia = new Map();
+async function akcjaAI(s, i, zad, btn) {
+  const bar = btn.closest(".aibar"), pole = bar?.dataset.pole || "tresc";
+  const polecenie = bar?.querySelector("[data-pol]")?.value.trim();
+  if (zad === "polecenie" && !polecenie) return toast("Wpisz polecenie dla AI");
+  if (zad === "cofnij") { const h = historia.get(s.id + pole); if (h?.length) { s[pole] = h.pop(); rerenderSekcja(i); zapisz(); } return; }
+  bar?.querySelectorAll("button").forEach(x => x.disabled = true); const old = btn.textContent; btn.textContent = "✨ AI pisze…";
+  try {
+    const r = await ai(b, zad, { ...kontekstAI(sc, s), pole, polecenie });
+    if (zad === "quiz") { s.quiz = [...(s.quiz || []).filter(q => q.pytanie), ...(r.quiz || [])]; }
+    else if (r.tekst != null) {
+      const h = historia.get(s.id + pole) || []; h.push(s[pole] || ""); historia.set(s.id + pole, h);
+      s[pole] = r.tekst;
+    }
+    zapisz(); rerenderSekcja(i);
+    const uw = document.querySelector(`.sek[data-i="${i}"] [data-uw="${pole}"]`);
+    const cof = historia.get(s.id + pole)?.length ? `<button class="btn sm ghost" style="padding:0 6px" data-ai="cofnij">↶ Cofnij</button>` : "";
+    if (uw) { uw.innerHTML = `${r.pokazowe ? '<span class="tag">AI pokazowe</span> ' : "✨ "}${esc(r.uwaga || (r.pokazowe ? "Odpowiedź przykładowa" : "Gotowe – sprawdź i popraw według potrzeb."))} ${cof}`; uw.closest(".pole").querySelector(".aibar").dataset.pole = pole; uw.querySelector("[data-ai=cofnij]")?.addEventListener("click", ev => { ev.stopPropagation(); akcjaAI(s, i, "cofnij", uw.closest(".pole").querySelector(".aibar button")); }); }
+  } catch (e) { toast("❌ AI: " + e.message, 5000); btn.textContent = old; bar?.querySelectorAll("button").forEach(x => x.disabled = false); }
+}
+$("#wypelnij").onclick = async () => {
+  const zadania = [];
+  for (const [i, s] of sc.sekcje.entries()) {
+    if (["tekst", "zrodla"].includes(s.typ) && !s.tresc?.trim()) zadania.push([i, s, "tresc"]);
+    if (s.typ === "etap") { if (!s.tresc?.trim()) zadania.push([i, s, "tresc"]); if (!s.narracja?.trim()) zadania.push([i, s, "narracja"]); if (!(s.quiz || []).length && s.klucz !== "wstep") zadania.push([i, s, "quiz"]); }
+  }
+  if (!zadania.length) return toast("Wszystkie sekcje są już wypełnione 👍");
+  if (!confirm(`AI wypełni ${zadania.length} pustych pól w ramie: ${sc.rama?.nazwa}. Kontynuować?`)) return;
+  $("#wypelnij").disabled = true; let n = 0, pok = false;
+  for (const [i, s, pole] of zadania) {
+    $("#wypelnij").textContent = `✨ ${++n}/${zadania.length}…`;
+    try {
+      const r = await ai(b, pole === "quiz" ? "quiz" : "napisz", { ...kontekstAI(sc, s), pole });
+      pok ||= r.pokazowe;
+      if (pole === "quiz") s.quiz = r.quiz || []; else s[pole] = r.tekst || "";
+      rerenderSekcja(i); zapisz();
+    } catch (e) { toast("❌ " + e.message, 5000); break; }
+  }
+  $("#wypelnij").disabled = false; $("#wypelnij").textContent = "✨ Uzupełnij puste z AI";
+  toast(pok ? "Gotowe (AI pokazowe – dla innych tematów to szablony)" : "✨ Gotowe – przejrzyj i popraw treści", 4000);
+};
+
+/* ---------------------------------------------------------------- multimedia */
+const pobierzPlik = accept => new Promise(res => { const i = document.createElement("input"); i.type = "file"; i.accept = accept; i.onchange = () => res(i.files[0] || null); i.click(); });
+const wgraj = (blob, name, type) => b.files.upload(sc.id, blob, name, type);
+function dodajDoSekcji(s, i, m) { (s.media ||= []).push({ id: uid(), ...m }); rerenderSekcja(i); zapisz(); toast(`${IKONY[m.rodzaj]} Dodano: ${m.nazwa}`); }
+function autoPrompt(s, rodzaj) {
+  const opis = (s.narracja || s.tresc || "").replace(/\s+/g, " ").slice(0, 260);
+  return rodzaj === "obraz"
+    ? `Ilustracja edukacyjna do etapu „${s.tytul}” (temat: ${sc.temat}, ${sc.przedmiot}, ${sc.szkolaOpis}). Czytelny schemat z polskimi podpisami, odpowiedni dla tej klasy. ${opis ? "Ma pokazywać: " + opis : ""}`
+    : `Model 3D do etapu „${s.tytul}” (temat: ${sc.temat}). ${opis ? "Ma pokazywać: " + opis : ""} Kolory jak w podręczniku, prosta animacja, jeśli pomaga zrozumieć.`;
+}
+function biblioteka(rodzaj) {
+  return { obraz: BIBLIOTEKA.obrazy, model: BIBLIOTEKA.modele, film: BIBLIOTEKA.filmy, plik: BIBLIOTEKA.pliki }[rodzaj] || [];
+}
+function dodajMedia(s, i, rodzaj) {
+  if (rodzaj === "wykres") return edytorWykresu(s, i);
+  const bib = biblioteka(rodzaj);
+  const ai_ = rodzaj === "obraz" || rodzaj === "model";
+  const akcept = { obraz: "image/*", film: "video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov,.m4v", model: ".glb", plik: ".doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf,.odt,.ods,.odp,.csv,.txt" }[rodzaj];
+  const m = modal(`<div class="row" style="justify-content:space-between"><h2 style="font-size:20px">${IKONY[rodzaj]} Dodaj ${NAZWY[rodzaj]} – ${esc(s.tytul)}</h2><button class="btn sm ghost" data-zamknij>✕</button></div>
+    <div class="opcje">
+      <button class="opcja" data-z="plik"><span class="ik">📁</span><b>Z komputera lub telefonu</b><span class="small muted">${{ obraz: "JPG, PNG, WebP", film: "MP4, WebM, MOV", model: "plik GLB", plik: "Word, Excel, PowerPoint, PDF…" }[rodzaj]}</span></button>
+      ${ai_ ? `<button class="opcja" data-z="ai"><span class="ik">✨</span><b>Wygeneruj z AI</b><span class="small muted">${rodzaj === "obraz" ? "ilustracja z polskimi podpisami – poprawiasz w czacie" : "model z opisu – poprawiasz w czacie"}</span></button>` : ""}
+    </div>
+    ${bib.length ? `<h3 style="font-size:15px;margin-top:16px">📚 Biblioteka przykładów <span class="small muted" style="font-weight:500">(lekcja o sercu)</span></h3><div class="bib">${bib.map((x, k) => `<button data-bib="${k}"><div style="${x.rodzaj === "obraz" ? `background-image:url('${x.url}')` : ""}">${x.rodzaj === "obraz" ? "" : IKONY[x.rodzaj]}</div><span>${esc(x.nazwa)}</span></button>`).join("")}</div>` : ""}
+    <div class="small muted" id="mStan" style="margin-top:10px"></div>`);
+  const stan = t => m.querySelector("#mStan").textContent = t;
+  m.addEventListener("click", async e => {
+    const z = e.target.closest("[data-z]")?.dataset.z, bb = e.target.closest("[data-bib]");
+    if (bb) { const x = bib[+bb.dataset.bib]; dodajDoSekcji(s, i, { ...structuredClone(x), id: undefined }); m.remove(); return; }
+    if (z === "ai") {
+      m.remove();
+      oknoCzatuAI({ b, rodzaj, kontekst: kontekstAI(sc, s), autoPrompt: autoPrompt(s, rodzaj),
+        onDodaj: async w => {
+          if (rodzaj === "obraz") {
+            const { blob, w: W, h: H } = await svgDoJpg(w.svg);
+            const [j, v] = await Promise.all([wgraj(blob, "ilustracja-ai.jpg", "image/jpeg"), wgraj(new Blob([w.svg], { type: "image/svg+xml" }), "ilustracja-ai.svg", "image/svg+xml")]);
+            dodajDoSekcji(s, i, { rodzaj: "obraz", nazwa: w.nazwa || "Ilustracja", url: j.url, path: j.path, svg: v.url, w: W, h: H, zrodlo: "ai" });
+          } else if (w.model) dodajDoSekcji(s, i, { ...structuredClone(w.model), id: undefined, zrodlo: "ai" });
+          else {
+            const { obiekt, clips } = zbudujZPrzepisu(w.przepis);
+            const glb = await eksportGLB(obiekt, clips); const up = await wgraj(glb, "model-ai.glb", "model/gltf-binary");
+            dodajDoSekcji(s, i, { rodzaj: "model", nazwa: w.przepis.nazwa || "Model 3D", url: up.url, path: up.path, przepis: w.przepis, zrodlo: "ai" });
+          }
+        } });
+      return;
+    }
+    if (z === "plik") {
+      const f = await pobierzPlik(akcept); if (!f) return;
+      const max = DEMO ? 300 : 50; if (f.size > max * 1048576) return stan(`❌ Plik ma ${(f.size / 1048576).toFixed(0)} MB – limit ${max} MB`);
+      try {
+        stan("⏳ Wysyłam…");
+        if (rodzaj === "obraz") { const r = await obrazZPliku(f); const up = await wgraj(r.blob, f.name.replace(/\.\w+$/, ".jpg"), "image/jpeg"); dodajDoSekcji(s, i, { rodzaj, nazwa: f.name, url: up.url, path: up.path, w: r.w, h: r.h, zrodlo: "plik" }); }
+        else if (rodzaj === "film") { const wh = await wymiaryWideo(f); const up = await wgraj(f, f.name, f.type || "video/mp4"); dodajDoSekcji(s, i, { rodzaj, nazwa: f.name, url: up.url, path: up.path, ...wh, zrodlo: "plik" }); }
+        else if (rodzaj === "model") { const up = await wgraj(f, f.name, "model/gltf-binary"); dodajDoSekcji(s, i, { rodzaj, nazwa: f.name, url: up.url, path: up.path, zrodlo: "plik" }); }
+        else {
+          stan("⏳ Czytam zawartość pliku…"); const pg = await podgladPliku(f);
+          const k = await kartaPliku(f.name, pg);
+          const [up, ku] = await Promise.all([wgraj(f, f.name, f.type || "application/octet-stream"), wgraj(k.blob, "karta.jpg", "image/jpeg")]);
+          dodajDoSekcji(s, i, { rodzaj, nazwa: f.name, url: up.url, path: up.path, karta: ku.url, typPliku: typPliku(f.name), zrodlo: "plik" });
+          if (pg?.tabela && pg.tabela.length > 1 && confirm("To arkusz z danymi. Zrobić z niego też wykres?")) edytorWykresu(s, i, pg.tabela, f.name);
+        }
+        m.remove();
+      } catch (err) { stan("❌ " + err.message); }
+    }
+  });
+}
+function wymiaryWideo(file) {
+  return new Promise(res => { const v = document.createElement("video"); v.preload = "metadata"; v.muted = true;
+    v.onloadedmetadata = () => { res({ w: v.videoWidth || 16, h: v.videoHeight || 9 }); URL.revokeObjectURL(v.src); }; v.onerror = () => res({ w: 16, h: 9 }); v.src = URL.createObjectURL(file); });
+}
+
+/* ---------------------------------------------------------------- wykres */
+function tabelaNaDane(rows) {
+  const r = rows.filter(x => x.length > 1);
+  if (!r.length) return null;
+  const naglowek = r[0].slice(1).every(v => isNaN(parseFloat(String(v).replace(",", "."))));
+  const dane = naglowek ? r.slice(1) : r;
+  const liczba = v => parseFloat(String(v ?? "").replace(",", "."));
+  const kol = Math.max(...dane.map(x => x.length));
+  const serie = [];
+  for (let c = 1; c < kol; c++) { const w = dane.map(x => liczba(x[c])); if (w.some(Number.isFinite)) serie.push({ nazwa: naglowek ? String(r[0][c] || `seria ${c}`) : `seria ${c}`, wartosci: w.map(v => Number.isFinite(v) ? v : 0) }); }
+  return { etykiety: dane.map(x => String(x[0] ?? "")), serie };
+}
+function edytorWykresu(s, i, tabela, nazwaPliku) {
+  const startowe = tabela ? tabela.map(r => r.join("; ")).join("\n") : "w spoczynku; 75\npo 20 przysiadach; 121\npo 3 min odpoczynku; 81";
+  const m = modal(`<div class="row" style="justify-content:space-between"><h2 style="font-size:20px">📊 Wykres – ${esc(s.tytul)}</h2><button class="btn sm ghost" data-zamknij>✕</button></div>
+    <div class="wyk-grid" style="margin-top:10px"><div>
+      <label class="l">Tytuł</label><input type="text" id="wT" value="${esc(nazwaPliku ? nazwaPliku.replace(/\.\w+$/, "") : "Tętno przed i po wysiłku")}">
+      <div class="two" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="l">Rodzaj</label><select id="wTyp"><option value="slupkowy">słupkowy</option><option value="liniowy">liniowy</option><option value="kolowy">kołowy</option></select></div>
+      <div><label class="l">Opis osi Y</label><input type="text" id="wOs" value="${tabela ? "" : "uderzenia na minutę"}"></div></div>
+      <label class="l">Dane: etykieta; wartość (; kolejne serie) – albo wklej z Excela</label><textarea id="wD" style="min-height:150px;font-family:ui-monospace,monospace">${esc(startowe)}</textarea>
+      <button class="btn sm" id="wX" style="margin-top:6px">📂 Wczytaj z pliku Excel / CSV</button></div>
+      <div><canvas id="wC" width="1600" height="1000"></canvas><p class="small muted">Wykres trafi do lekcji AR jako obraz. Dane zostają w scenariuszu – możesz je później zmienić.</p></div></div>
+    <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-zamknij>Anuluj</button><button class="btn accent" id="wOk">Dodaj wykres</button></div>`);
+  const dane = () => {
+    const rows = m.querySelector("#wD").value.split("\n").map(l => l.split(/\t|;/).map(x => x.trim())).filter(r => r.some(Boolean));
+    const d = tabelaNaDane(rows) || { etykiety: [], serie: [] };
+    return { typ: m.querySelector("#wTyp").value, tytul: m.querySelector("#wT").value, os: m.querySelector("#wOs").value, ...d };
+  };
+  const rys = () => rysujWykres(m.querySelector("#wC"), dane());
+  m.addEventListener("input", rys); m.addEventListener("change", rys); rys();
+  m.querySelector("#wX").onclick = async () => {
+    const f = await pobierzPlik(".xlsx,.xls,.ods,.csv"); if (!f) return;
+    try { const pg = await podgladPliku(f); if (!pg?.tabela) throw new Error("nie znalazłem danych"); m.querySelector("#wD").value = pg.tabela.map(r => r.join("; ")).join("\n"); rys(); }
+    catch (e) { toast("❌ " + e.message); }
+  };
+  m.querySelector("#wOk").onclick = async () => {
+    const d = dane(); if (!d.serie.length) return toast("Wpisz dane liczbowe");
+    m.querySelector("#wOk").disabled = true;
+    const { blob } = await wykresJpg(d); const up = await wgraj(blob, "wykres.jpg", "image/jpeg");
+    dodajDoSekcji(s, i, { rodzaj: "wykres", nazwa: d.tytul || "Wykres", dane: d, podglad: up.url, path: up.path, zrodlo: "plik" }); m.remove();
+  };
+}
+
+/* ---------------------------------------------------------------- druk, Word, lekcja AR */
+$("#druk").onclick = () => { try { drukuj(sc, prowadzacy()); } catch (e) { toast(e.message, 5000); } };
+$("#word").onclick = () => pobierzWord(sc, prowadzacy());
+$("#doLekcji").onclick = () => {
+  const p = podsumowanieLekcji(sc);
+  const m = modal(`<h2 style="font-size:21px">🚀 ${sc.lekcjaId ? "Zaktualizuj" : "Utwórz"} lekcję w rozszerzonej rzeczywistości</h2>
+    <p class="muted">Każdy etap oznaczony jako scena AR stanie się sceną lekcji. Uczniowie zobaczą materiały wokół biurka na swoich telefonach, a Bartek przeczyta treść dla uczniów.</p>
+    <div class="infotab" style="margin:10px 0"><b>Sceny</b><span>${p.sceny}</span><b>Modele 3D</b><span>${p.modele}</span><b>Zdjęcia i ilustracje</b><span>${p.obrazy}</span>
+      <b>Filmy</b><span>${p.filmy}</span><b>Wykresy</b><span>${p.wykresy}</span><b>Pliki (karty)</b><span>${p.pliki}</span><b>Tablice z tekstem</b><span>${p.tablice}</span><b>Pytania quizu</b><span>${p.quiz}</span></div>
+    ${!p.sceny ? `<div class="note">Brak etapów oznaczonych jako scena AR.</div>` : ""}
+    <div class="postep" hidden><div></div></div><p class="small" id="lStan"></p>
+    <div class="row" style="justify-content:flex-end" id="lBtn"><button class="btn" data-zamknij>Anuluj</button><button class="btn accent" id="lOk" ${p.sceny ? "" : "disabled"}>${sc.lekcjaId ? "Zaktualizuj lekcję" : "Utwórz lekcję"}</button></div>`);
+  m.querySelector("#lOk").onclick = async () => {
+    m.querySelector("#lOk").disabled = true; m.querySelector(".postep").hidden = false;
+    let k = 0; const tot = p.sceny + 2;
+    try {
+      await flush();
+      const l = await scenariuszDoLekcji(b, sc, t => { m.querySelector("#lStan").textContent = t; m.querySelector(".postep div").style.width = Math.min(100, ++k / tot * 100) + "%"; });
+      sc.lekcjaId = l.id; saveT = 1; await flush(); $("#doLekcji").textContent = "🚀 Zaktualizuj lekcję AR";
+      m.querySelector(".postep div").style.width = "100%";
+      m.querySelector("#lStan").innerHTML = `✅ Lekcja <b>${esc(l.tytul)}</b> jest gotowa. Kod dla uczniów: <span class="code">${esc(l.kod)}</span>`;
+      m.querySelector("#lBtn").innerHTML = `<button class="btn" data-zamknij>Zostań w generatorze</button><a class="btn primary" href="nauczyciel.html?id=${l.id}">✏️ Otwórz w panelu nauczyciela</a><a class="btn accent" href="prowadzenie.html?l=${encodeURIComponent(l.kod)}&id=${l.id}" target="_blank">▶ Rozpocznij lekcję</a>`;
+      m.querySelector("[data-zamknij]").onclick = () => m.remove();
+    } catch (e) { m.querySelector("#lStan").textContent = "❌ " + e.message; m.querySelector("#lOk").disabled = false; }
+  };
+};
+
+init();
+</script>
+</body>
+</html>

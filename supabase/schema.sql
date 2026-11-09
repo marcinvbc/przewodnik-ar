@@ -61,3 +61,21 @@ create policy "lekcje_pliki_delete" on storage.objects for delete to authenticat
   using (bucket_id = 'lekcje' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "lekcje_pliki_select" on storage.objects for select to authenticated
   using (bucket_id = 'lekcje' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- =====================================================================
+-- Generator scenariuszy lekcji (wersja 13)
+-- Scenariusze nauczyciela: każdy widzi i edytuje tylko swoje.
+-- Uruchom ten fragment w SQL Editor, jeśli tabela lekcje już istnieje.
+-- =====================================================================
+create table if not exists public.scenariusze (
+  id uuid primary key default gen_random_uuid(),
+  wlasciciel uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  tytul text not null default 'Scenariusz',
+  dane jsonb not null default '{}'::jsonb,
+  utworzono timestamptz not null default now(),
+  zmieniono timestamptz not null default now()
+);
+alter table public.scenariusze enable row level security;
+drop policy if exists "scenariusze: wlasciciel" on public.scenariusze;
+create policy "scenariusze: wlasciciel" on public.scenariusze
+  for all using (auth.uid() = wlasciciel) with check (auth.uid() = wlasciciel);

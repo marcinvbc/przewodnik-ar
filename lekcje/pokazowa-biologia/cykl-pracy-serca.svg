@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1840 920" width="1840" height="920" font-family="'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif">
+<defs>
+ <marker id="grot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2a2e"/></marker>
+ <marker id="grotB" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fff" stroke="#1f2a2e" stroke-width="1.2"/></marker>
+ <style>.podpisy text{font-size:34px;font-weight:600;fill:#1f2a2e} .podpisy line,.podpisy path{stroke:#1f2a2e;stroke-width:2.5;fill:none}
+ .tytul{font-size:48px;font-weight:800;fill:#1f2a2e} .legenda text{font-size:28px;fill:#1f2a2e} .male{font-size:26px;font-weight:500;fill:#4a5357}</style>
+</defs>
+<rect width="1840" height="920" fill="#fffdf8"/>
+<text class="tytul" x="60" y="80">Cykl pracy serca (ok. 0,8 s)</text>
+<rect x="40" y="120" width="560" height="760" rx="30" fill="#fff" stroke="#e3dccd" stroke-width="4"/>
+<g transform="translate(-30,150) scale(0.46)">
+<path d="M 720 650 L 720 360 C 720 300 690 290 640 290 L 330 290" fill="none" stroke="#1f2a2e" stroke-width="86" stroke-linecap="round" stroke-linejoin="round"/><path d="M 720 650 L 720 360 C 720 300 690 290 640 290 L 330 290" fill="none" stroke="#3f63c9" stroke-width="78" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 720 380 C 760 300 900 330 1040 330 L 1290 330" fill="none" stroke="#1f2a2e" stroke-width="78" stroke-linecap="round" stroke-linejoin="round"/><path d="M 720 380 C 760 300 900 330 1040 330 L 1290 330" fill="none" stroke="#3f63c9" stroke-width="70" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1125 455 L 1330 430" fill="none" stroke="#1f2a2e" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/><path d="M 1125 455 L 1330 430" fill="none" stroke="#ec776c" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1125 545 L 1330 570" fill="none" stroke="#1f2a2e" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/><path d="M 1125 545 L 1330 570" fill="none" stroke="#ec776c" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 455 1010 L 455 580 C 455 535 470 520 510 520" fill="none" stroke="#1f2a2e" stroke-width="88" stroke-linecap="round" stroke-linejoin="round"/><path d="M 455 1010 L 455 580 C 455 535 470 520 510 520" fill="none" stroke="#3f63c9" stroke-width="80" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 575 70 L 575 420" fill="none" stroke="#1f2a2e" stroke-width="92" stroke-linecap="round" stroke-linejoin="round"/><path d="M 575 70 L 575 420" fill="none" stroke="#3f63c9" stroke-width="84" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 845 650 L 845 300 C 845 190 910 150 990 150 C 1075 150 1125 205 1125 290 L 1125 370" fill="none" stroke="#1f2a2e" stroke-width="100" stroke-linecap="round" stroke-linejoin="round"/><path d="M 845 650 L 845 300 C 845 190 910 150 990 150 C 1075 150 1125 205 1125 290 L 1125 370" fill="none" stroke="#c8372d" stroke-width="92" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 905 175 L 880 60" fill="none" stroke="#1f2a2e" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/><path d="M 905 175 L 880 60" fill="none" stroke="#c8372d" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 990 152 L 990 50" fill="none" stroke="#1f2a2e" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/><path d="M 990 152 L 990 50" fill="none" stroke="#c8372d" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1070 170 L 1100 62" fill="none" stroke="#1f2a2e" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/><path d="M 1070 170 L 1100 62" fill="none" stroke="#c8372d" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 470 430 C 440 560 470 720 560 830 C 640 930 740 1000 820 1050 C 930 990 1060 900 1120 790 C 1180 680 1190 540 1140 440 C 1100 370 1000 350 930 370 L 690 370 C 600 350 500 360 470 430 Z" fill="#a9443a" stroke="#7d2b24" stroke-width="8"/>
+<path d="M 500 440 C 500 405 520 395 550 395 L 650 395 C 680 395 690 412 690 440 L 690 565 C 690 590 672 600 645 600 L 545 600 C 517 600 500 585 500 560 Z" fill="#7f9be6" stroke="#7d2b24" stroke-width="4" transform="translate(595,600) scale(1.0) translate(-595,-600)"/>
+<path d="M 905 440 C 905 420 915 410 935 410 L 1085 410 C 1112 410 1125 425 1125 455 L 1125 552 C 1125 576 1110 588 1085 588 L 940 588 C 915 588 905 572 905 548 Z" fill="#ec776c" stroke="#7d2b24" stroke-width="4" transform="translate(1015,588) scale(1.0) translate(-1015,-588)"/>
+<path d="M 520 645 L 760 645 L 760 905 C 715 880 640 832 590 772 C 547 718 520 684 520 645 Z" fill="#7f9be6" stroke="#7d2b24" stroke-width="4" transform="translate(640,645) scale(1.0) translate(-640,-645)"/>
+<path d="M 852 645 L 1078 645 C 1083 742 1043 832 982 902 C 932 957 882 990 852 1002 Z" fill="#ec776c" stroke="#7d2b24" stroke-width="4" transform="translate(965,645) scale(1.0) translate(-965,-645)"/>
+<path d="M 535 603 L 565 668 M 655 603 L 625 668" stroke="#fbf3e4" stroke-width="13" stroke-linecap="round"/>
+<path d="M 935 603 L 965 668 M 1060 603 L 1030 668" stroke="#fbf3e4" stroke-width="13" stroke-linecap="round"/>
+<path d="M 688 640 Q 720 610 752 640" stroke="#fbf3e4" stroke-width="10" fill="none" stroke-linecap="round"/>
+<path d="M 813 640 Q 845 610 877 640" stroke="#fbf3e4" stroke-width="10" fill="none" stroke-linecap="round"/>
+<g class="strzalki">
+<path d="M 575 200 L 575 430" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 595 500 L 605 700" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 1250 440 L 1035 470" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 1010 520 L 990 720" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 455 900 L 455 640" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+</g>
+</g>
+<text x="320" y="720" text-anchor="middle" font-size="36" font-weight="800" fill="#1f2a2e">1. Rozkurcz</text>
+<text x="320" y="770" text-anchor="middle" font-size="25" fill="#1f2a2e">krew napływa do przedsionków i komór</text>
+<text x="320" y="850" text-anchor="middle" class="male">ok. 0,4 s</text>
+<rect x="640" y="120" width="560" height="760" rx="30" fill="#fff" stroke="#e3dccd" stroke-width="4"/>
+<g transform="translate(570,150) scale(0.46)">
+<path d="M 720 650 L 720 360 C 720 300 690 290 640 290 L 330 290" fill="none" stroke="#1f2a2e" stroke-width="86" stroke-linecap="round" stroke-linejoin="round"/><path d="M 720 650 L 720 360 C 720 300 690 290 640 290 L 330 290" fill="none" stroke="#3f63c9" stroke-width="78" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 720 380 C 760 300 900 330 1040 330 L 1290 330" fill="none" stroke="#1f2a2e" stroke-width="78" stroke-linecap="round" stroke-linejoin="round"/><path d="M 720 380 C 760 300 900 330 1040 330 L 1290 330" fill="none" stroke="#3f63c9" stroke-width="70" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1125 455 L 1330 430" fill="none" stroke="#1f2a2e" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/><path d="M 1125 455 L 1330 430" fill="none" stroke="#ec776c" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1125 545 L 1330 570" fill="none" stroke="#1f2a2e" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/><path d="M 1125 545 L 1330 570" fill="none" stroke="#ec776c" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 455 1010 L 455 580 C 455 535 470 520 510 520" fill="none" stroke="#1f2a2e" stroke-width="88" stroke-linecap="round" stroke-linejoin="round"/><path d="M 455 1010 L 455 580 C 455 535 470 520 510 520" fill="none" stroke="#3f63c9" stroke-width="80" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 575 70 L 575 420" fill="none" stroke="#1f2a2e" stroke-width="92" stroke-linecap="round" stroke-linejoin="round"/><path d="M 575 70 L 575 420" fill="none" stroke="#3f63c9" stroke-width="84" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 845 650 L 845 300 C 845 190 910 150 990 150 C 1075 150 1125 205 1125 290 L 1125 370" fill="none" stroke="#1f2a2e" stroke-width="100" stroke-linecap="round" stroke-linejoin="round"/><path d="M 845 650 L 845 300 C 845 190 910 150 990 150 C 1075 150 1125 205 1125 290 L 1125 370" fill="none" stroke="#c8372d" stroke-width="92" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 905 175 L 880 60" fill="none" stroke="#1f2a2e" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/><path d="M 905 175 L 880 60" fill="none" stroke="#c8372d" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 990 152 L 990 50" fill="none" stroke="#1f2a2e" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/><path d="M 990 152 L 990 50" fill="none" stroke="#c8372d" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1070 170 L 1100 62" fill="none" stroke="#1f2a2e" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/><path d="M 1070 170 L 1100 62" fill="none" stroke="#c8372d" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 470 430 C 440 560 470 720 560 830 C 640 930 740 1000 820 1050 C 930 990 1060 900 1120 790 C 1180 680 1190 540 1140 440 C 1100 370 1000 350 930 370 L 690 370 C 600 350 500 360 470 430 Z" fill="#a9443a" stroke="#7d2b24" stroke-width="8"/>
+<path d="M 500 440 C 500 405 520 395 550 395 L 650 395 C 680 395 690 412 690 440 L 690 565 C 690 590 672 600 645 600 L 545 600 C 517 600 500 585 500 560 Z" fill="#7f9be6" stroke="#7d2b24" stroke-width="4" transform="translate(595,600) scale(0.9) translate(-595,-600)"/>
+<path d="M 905 440 C 905 420 915 410 935 410 L 1085 410 C 1112 410 1125 425 1125 455 L 1125 552 C 1125 576 1110 588 1085 588 L 940 588 C 915 588 905 572 905 548 Z" fill="#ec776c" stroke="#7d2b24" stroke-width="4" transform="translate(1015,588) scale(0.9) translate(-1015,-588)"/>
+<path d="M 520 645 L 760 645 L 760 905 C 715 880 640 832 590 772 C 547 718 520 684 520 645 Z" fill="#7f9be6" stroke="#7d2b24" stroke-width="4" transform="translate(640,645) scale(1.0) translate(-640,-645)"/>
+<path d="M 852 645 L 1078 645 C 1083 742 1043 832 982 902 C 932 957 882 990 852 1002 Z" fill="#ec776c" stroke="#7d2b24" stroke-width="4" transform="translate(965,645) scale(1.0) translate(-965,-645)"/>
+<path d="M 535 603 L 565 668 M 655 603 L 625 668" stroke="#fbf3e4" stroke-width="13" stroke-linecap="round"/>
+<path d="M 935 603 L 965 668 M 1060 603 L 1030 668" stroke="#fbf3e4" stroke-width="13" stroke-linecap="round"/>
+<path d="M 688 640 Q 720 610 752 640" stroke="#fbf3e4" stroke-width="10" fill="none" stroke-linecap="round"/>
+<path d="M 813 640 Q 845 610 877 640" stroke="#fbf3e4" stroke-width="10" fill="none" stroke-linecap="round"/>
+<g class="strzalki">
+<path d="M 575 200 L 575 430" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 595 500 L 605 700" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 1250 440 L 1035 470" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 1010 520 L 990 720" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 455 900 L 455 640" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+</g>
+</g>
+<text x="920" y="720" text-anchor="middle" font-size="36" font-weight="800" fill="#1f2a2e">2. Skurcz przedsionków</text>
+<text x="920" y="770" text-anchor="middle" font-size="25" fill="#1f2a2e">przedsionki dopychają krew do komór</text>
+<text x="920" y="850" text-anchor="middle" class="male">ok. 0,1 s</text>
+<rect x="1240" y="120" width="560" height="760" rx="30" fill="#fff" stroke="#e3dccd" stroke-width="4"/>
+<g transform="translate(1170,150) scale(0.46)">
+<path d="M 720 650 L 720 360 C 720 300 690 290 640 290 L 330 290" fill="none" stroke="#1f2a2e" stroke-width="86" stroke-linecap="round" stroke-linejoin="round"/><path d="M 720 650 L 720 360 C 720 300 690 290 640 290 L 330 290" fill="none" stroke="#3f63c9" stroke-width="78" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 720 380 C 760 300 900 330 1040 330 L 1290 330" fill="none" stroke="#1f2a2e" stroke-width="78" stroke-linecap="round" stroke-linejoin="round"/><path d="M 720 380 C 760 300 900 330 1040 330 L 1290 330" fill="none" stroke="#3f63c9" stroke-width="70" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1125 455 L 1330 430" fill="none" stroke="#1f2a2e" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/><path d="M 1125 455 L 1330 430" fill="none" stroke="#ec776c" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1125 545 L 1330 570" fill="none" stroke="#1f2a2e" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/><path d="M 1125 545 L 1330 570" fill="none" stroke="#ec776c" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 455 1010 L 455 580 C 455 535 470 520 510 520" fill="none" stroke="#1f2a2e" stroke-width="88" stroke-linecap="round" stroke-linejoin="round"/><path d="M 455 1010 L 455 580 C 455 535 470 520 510 520" fill="none" stroke="#3f63c9" stroke-width="80" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 575 70 L 575 420" fill="none" stroke="#1f2a2e" stroke-width="92" stroke-linecap="round" stroke-linejoin="round"/><path d="M 575 70 L 575 420" fill="none" stroke="#3f63c9" stroke-width="84" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 845 650 L 845 300 C 845 190 910 150 990 150 C 1075 150 1125 205 1125 290 L 1125 370" fill="none" stroke="#1f2a2e" stroke-width="100" stroke-linecap="round" stroke-linejoin="round"/><path d="M 845 650 L 845 300 C 845 190 910 150 990 150 C 1075 150 1125 205 1125 290 L 1125 370" fill="none" stroke="#c8372d" stroke-width="92" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 905 175 L 880 60" fill="none" stroke="#1f2a2e" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/><path d="M 905 175 L 880 60" fill="none" stroke="#c8372d" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 990 152 L 990 50" fill="none" stroke="#1f2a2e" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/><path d="M 990 152 L 990 50" fill="none" stroke="#c8372d" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1070 170 L 1100 62" fill="none" stroke="#1f2a2e" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/><path d="M 1070 170 L 1100 62" fill="none" stroke="#c8372d" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 470 430 C 440 560 470 720 560 830 C 640 930 740 1000 820 1050 C 930 990 1060 900 1120 790 C 1180 680 1190 540 1140 440 C 1100 370 1000 350 930 370 L 690 370 C 600 350 500 360 470 430 Z" fill="#a9443a" stroke="#7d2b24" stroke-width="8"/>
+<path d="M 500 440 C 500 405 520 395 550 395 L 650 395 C 680 395 690 412 690 440 L 690 565 C 690 590 672 600 645 600 L 545 600 C 517 600 500 585 500 560 Z" fill="#7f9be6" stroke="#7d2b24" stroke-width="4" transform="translate(595,600) scale(1.0) translate(-595,-600)"/>
+<path d="M 905 440 C 905 420 915 410 935 410 L 1085 410 C 1112 410 1125 425 1125 455 L 1125 552 C 1125 576 1110 588 1085 588 L 940 588 C 915 588 905 572 905 548 Z" fill="#ec776c" stroke="#7d2b24" stroke-width="4" transform="translate(1015,588) scale(1.0) translate(-1015,-588)"/>
+<path d="M 520 645 L 760 645 L 760 905 C 715 880 640 832 590 772 C 547 718 520 684 520 645 Z" fill="#7f9be6" stroke="#7d2b24" stroke-width="4" transform="translate(640,645) scale(0.86) translate(-640,-645)"/>
+<path d="M 852 645 L 1078 645 C 1083 742 1043 832 982 902 C 932 957 882 990 852 1002 Z" fill="#ec776c" stroke="#7d2b24" stroke-width="4" transform="translate(965,645) scale(0.86) translate(-965,-645)"/>
+<path d="M 535 608 L 591.0 628 M 655 608 L 599.0 628" stroke="#fbf3e4" stroke-width="13" stroke-linecap="round"/>
+<path d="M 935 608 L 993.5 628 M 1060 608 L 1001.5 628" stroke="#fbf3e4" stroke-width="13" stroke-linecap="round"/>
+<path d="M 690 650 L 686 590 M 750 650 L 754 590" stroke="#fbf3e4" stroke-width="10" stroke-linecap="round"/>
+<path d="M 815 650 L 811 590 M 875 650 L 879 590" stroke="#fbf3e4" stroke-width="10" stroke-linecap="round"/>
+<g class="strzalki">
+<path d="M 680 820 L 718 560" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 718 450 L 718 340" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 950 860 L 860 560" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 870 330 L 920 210" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+</g>
+</g>
+<text x="1520" y="720" text-anchor="middle" font-size="36" font-weight="800" fill="#1f2a2e">3. Skurcz komór</text>
+<text x="1520" y="770" text-anchor="middle" font-size="25" fill="#1f2a2e">zastawki przedsionkowo-komorowe zamykają się,</text>
+<text x="1520" y="804" text-anchor="middle" font-size="25" fill="#1f2a2e">krew płynie do aorty i pnia płucnego</text>
+<text x="1520" y="850" text-anchor="middle" class="male">ok. 0,3 s</text>
+</svg>

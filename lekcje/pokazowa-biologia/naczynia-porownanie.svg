@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 940" width="1800" height="940" font-family="'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif">
+<defs>
+ <marker id="grot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2a2e"/></marker>
+ <marker id="grotB" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fff" stroke="#1f2a2e" stroke-width="1.2"/></marker>
+ <style>.podpisy text{font-size:34px;font-weight:600;fill:#1f2a2e} .podpisy line,.podpisy path{stroke:#1f2a2e;stroke-width:2.5;fill:none}
+ .tytul{font-size:48px;font-weight:800;fill:#1f2a2e} .legenda text{font-size:28px;fill:#1f2a2e} .male{font-size:26px;font-weight:500;fill:#4a5357}</style>
+</defs>
+<rect width="1800" height="940" fill="#fffdf8"/>
+<text class="tytul" x="60" y="80">Naczynia krwionośne – porównanie</text>
+<circle cx="330" cy="380" r="200" fill="#f1e2bf" stroke="#b89a62" stroke-width="4"/><circle cx="330" cy="380" r="172" fill="#cf5a50"/><circle cx="330" cy="380" r="98" fill="#fbe4df"/><circle cx="330" cy="380" r="88" fill="#ec776c"/>
+<ellipse cx="900" cy="380" rx="215" ry="150" fill="#f1e2bf" stroke="#b89a62" stroke-width="4"/><ellipse cx="900" cy="380" rx="198" ry="134" fill="#9a86c9"/><ellipse cx="900" cy="380" rx="182" ry="120" fill="#fbe4df"/><ellipse cx="900" cy="380" rx="174" ry="112" fill="#7f9be6"/><path d="M 730 340 Q 860 380 890 470 M 1070 340 Q 940 380 910 470" stroke="#fbf3e4" stroke-width="12" fill="none" stroke-linecap="round"/>
+<rect x="1240" y="330" width="460" height="100" rx="50" fill="#fbe4df" stroke="#d99b92" stroke-width="10"/>
+<ellipse cx="1310" cy="380" rx="26" ry="36" fill="#c8372d"/>
+<ellipse cx="1390" cy="380" rx="26" ry="36" fill="#c8372d"/>
+<ellipse cx="1470" cy="380" rx="26" ry="36" fill="#c8372d"/>
+<ellipse cx="1550" cy="380" rx="26" ry="36" fill="#c8372d"/>
+<ellipse cx="1630" cy="380" rx="26" ry="36" fill="#c8372d"/>
+<line x1="1260" y1="322" x2="1260" y2="338" stroke="#b5776f" stroke-width="4"/>
+<line x1="1344" y1="322" x2="1344" y2="338" stroke="#b5776f" stroke-width="4"/>
+<line x1="1428" y1="322" x2="1428" y2="338" stroke="#b5776f" stroke-width="4"/>
+<line x1="1512" y1="322" x2="1512" y2="338" stroke="#b5776f" stroke-width="4"/>
+<line x1="1596" y1="322" x2="1596" y2="338" stroke="#b5776f" stroke-width="4"/>
+<line x1="1680" y1="322" x2="1680" y2="338" stroke="#b5776f" stroke-width="4"/>
+<g class="podpisy">
+<text x="330" y="660" text-anchor="middle" style="font-size:42px;font-weight:800">Tętnica</text>
+<text x="900" y="660" text-anchor="middle" style="font-size:42px;font-weight:800">Żyła</text>
+<text x="1470" y="660" text-anchor="middle" style="font-size:42px;font-weight:800">Naczynie włosowate</text>
+<line x1="180" y1="260" x2="28" y2="150"/><circle cx="180" cy="260" r="6" fill="#1f2a2e"/><text x="40" y="160" text-anchor="start">tkanka łączna</text>
+<line x1="450" y1="270" x2="508" y2="140"/><circle cx="450" cy="270" r="6" fill="#1f2a2e"/><text x="520" y="150" text-anchor="start">mięśnie gładkie</text>
+<line x1="960" y1="420" x2="1048" y2="150"/><circle cx="960" cy="420" r="6" fill="#1f2a2e"/><text x="1060" y="160" text-anchor="start">zastawka</text>
+<line x1="1350" y1="330" x2="1148" y2="240"/><circle cx="1350" cy="330" r="6" fill="#1f2a2e"/><text x="1160" y="250" text-anchor="start">nabłonek (1 warstwa)</text>
+</g>
+<text x="330" y="730" text-anchor="middle" font-size="31" fill="#1f2a2e">• grube, sprężyste ściany</text>
+<text x="330" y="774" text-anchor="middle" font-size="31" fill="#1f2a2e">• wytrzymują wysokie ciśnienie</text>
+<text x="330" y="818" text-anchor="middle" font-size="31" fill="#1f2a2e">• prowadzą krew OD serca</text>
+<text x="330" y="862" text-anchor="middle" font-size="31" fill="#1f2a2e">• wyczuwamy w nich tętno</text>
+<text x="900" y="730" text-anchor="middle" font-size="31" fill="#1f2a2e">• cienkie ściany</text>
+<text x="900" y="774" text-anchor="middle" font-size="31" fill="#1f2a2e">• niskie ciśnienie</text>
+<text x="900" y="818" text-anchor="middle" font-size="31" fill="#1f2a2e">• mają zastawki – krew nie cofa się</text>
+<text x="900" y="862" text-anchor="middle" font-size="31" fill="#1f2a2e">• prowadzą krew DO serca</text>
+<text x="1470" y="730" text-anchor="middle" font-size="31" fill="#1f2a2e">• ściana z jednej warstwy komórek</text>
+<text x="1470" y="774" text-anchor="middle" font-size="31" fill="#1f2a2e">• bardzo cienkie – krwinki płyną gęsiego</text>
+<text x="1470" y="818" text-anchor="middle" font-size="31" fill="#1f2a2e">• tu zachodzi wymiana gazów</text>
+<text x="1470" y="862" text-anchor="middle" font-size="31" fill="#1f2a2e">• i substancji z komórkami</text>
+</svg>

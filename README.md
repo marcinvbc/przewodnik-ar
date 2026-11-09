@@ -19,6 +19,8 @@ przewodnik-ar/
 
 Folder `lekcje/` to prezentacja w AR zamiast PowerPointa: nauczyciel wgrywa slajdy (PDF), filmy, zdjęcia i modele 3D,
 **AI (Claude) układa sceny**, a uczniowie dołączają telefonami (kod QR / kod / e-mail) i widzą wspólną scenę ze swojej perspektywy.
+**Nowość (v13): generator scenariuszy lekcji** – `lekcje/generator.html`: szkoła → klasa → przedmiot → temat, sekcje scenariusza z AI w ramie podstawy programowej, ilustracje i modele 3D z czatu AI, eksport do Worda/PDF i jednym kliknięciem lekcja AR. Przykład: biologia kl. 7 – serce i układ krwionośny.
+
 Start: `lekcje/nauczyciel.html`. Pełna instrukcja: **`lekcje/LEKCJE-INSTRUKCJA.md`** (tryb demo działa od razu, a do pracy z klasą
 potrzebny jest darmowy Supabase). Kod serwera: `supabase/schema.sql` i `supabase/functions/claude/index.ts`.
 

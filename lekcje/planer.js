@@ -24,7 +24,7 @@ function pierwszaLinia(t) {
 const ladnaNazwa = n => String(n || "").replace(/\.[a-z0-9]+$/i, "").replace(/[_-]+/g, " ").replace(/^\d+\s*/, "").trim();
 const zdania = (t, n) => (String(t || "").replace(/\s+/g, " ").match(/[^.!?]+[.!?]+/g) || []).slice(0, n).join(" ").trim();
 
-function wybierzUklad(elems, mats) {
+export function wybierzUklad(elems, mats) {
   const by = id => mats.find(m => m.id === id);
   const typy = elems.map(id => by(id)?.typ);
   const ekrany = typy.filter(t => t !== "model").length;

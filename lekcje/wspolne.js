@@ -51,14 +51,45 @@ function demoBackend() {
   const KEY = "lekcjeAR-demo";
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { return []; } };
   const save = l => localStorage.setItem(KEY, JSON.stringify(l));
-  const user = { id: "demo", email: "tryb demo" };
+  // Profile nauczycieli (makieta logowania w trybie demo – każdy nauczyciel widzi tylko swoje lekcje i scenariusze)
+  const PK = "lekcjeAR-profile", AK = "lekcjeAR-profil";
+  const profile = () => { try { return JSON.parse(localStorage.getItem(PK) || "[]"); } catch { return []; } };
+  const zapiszProfile = l => localStorage.setItem(PK, JSON.stringify(l));
+  if (!profile().length) zapiszProfile([{ id: "demo", imie: "Nauczyciel", nazwisko: "Demo", email: "demo@szkola.pl", szkola: "" }]);
+  const aktywny = () => { const l = profile(); return l.find(p => p.id === localStorage.getItem(AK)) || l[0]; };
+  const jako = p => p && { id: p.id, email: p.email || `${p.imie} ${p.nazwisko}`, profil: p };
+  const moje = l => { const me = aktywny().id; return l.filter(x => (x.wlasciciel || "demo") === me); };
+  const SK = "lekcjeAR-scenariusze";
+  const loadS = () => { try { return JSON.parse(localStorage.getItem(SK) || "[]"); } catch { return []; } };
+  const saveS = l => localStorage.setItem(SK, JSON.stringify(l));
   return {
     demo: true,
-    auth: { async user() { return user; }, async signIn() { return user; }, async signUp() { return user; }, async signOut() {} },
+    auth: {
+      async user() { return jako(aktywny()); }, async signIn() { return jako(aktywny()); }, async signUp() { return jako(aktywny()); }, async signOut() {},
+      profile() { return profile(); },
+      wybierz(id) { localStorage.setItem(AK, id); return jako(aktywny()); },
+      async zapiszProfil(p) {
+        const l = profile(); const i = l.findIndex(x => x.id === p.id);
+        if (i >= 0) l[i] = { ...l[i], ...p }; else l.push({ ...p, id: p.id || uid() });
+        zapiszProfile(l); return l.find(x => x.id === (p.id || l[l.length - 1].id));
+      },
+      usunProfil(id) { zapiszProfile(profile().filter(p => p.id !== id)); if (localStorage.getItem(AK) === id) localStorage.removeItem(AK); },
+    },
+    scenariusze: {
+      async list() { return moje(loadS()).sort((a, b) => b.zmieniono.localeCompare(a.zmieniono)); },
+      async get(id) { return loadS().find(s => s.id === id) || null; },
+      async save(sc) {
+        const all = loadS(); const t = new Date().toISOString();
+        const x = { ...sc, id: sc.id || uid(), wlasciciel: aktywny().id, zmieniono: t, utworzono: sc.utworzono || t };
+        const i = all.findIndex(s => s.id === x.id); if (i >= 0) all[i] = x; else all.push(x);
+        saveS(all); return x;
+      },
+      async remove(id) { saveS(loadS().filter(s => s.id !== id)); },
+    },
     lessons: {
-      async list() { return load().sort((a, b) => b.zmieniono.localeCompare(a.zmieniono)); },
+      async list() { return moje(load()).sort((a, b) => b.zmieniono.localeCompare(a.zmieniono)); },
       async create(tytul) {
-        const l = { id: uid(), kod: nowyKod(), tytul, materialy: [], plan: null, utworzono: new Date().toISOString(), zmieniono: new Date().toISOString() };
+        const l = { id: uid(), kod: nowyKod(), tytul, wlasciciel: aktywny().id, materialy: [], plan: null, utworzono: new Date().toISOString(), zmieniono: new Date().toISOString() };
         save([...load(), l]); return l;
       },
       async get(id) { return load().find(l => l.id === id) || null; },
@@ -98,7 +129,7 @@ function demoBackend() {
       addEventListener("pagehide", () => post("__wyszedl", me));
       return { send: post, close() { clearInterval(beat); post("__wyszedl", me); bc.close(); } };
     },
-    ai: { dostepne: false, async plan() { return null; }, async ask() { return null; } },
+    ai: { dostepne: false, async plan() { return null; }, async ask() { return null; }, async generator() { return null; } },
   };
 }
 
@@ -106,7 +137,7 @@ function demoBackend() {
 async function supabaseBackend() {
   const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
   const sb = createClient(CFG.supabaseUrl, CFG.supabaseKey);
-  const me = async () => (await sb.auth.getSession()).data.session?.user || null;
+  const me = async () => { const u = (await sb.auth.getSession()).data.session?.user || null; if (u) u.profil = { id: u.id, email: u.email, ...(u.user_metadata || {}) }; return u; };
   const ok = ({ data, error }) => { if (error) throw new Error(error.message); return data; };
   return {
     demo: false, sb,
@@ -115,6 +146,19 @@ async function supabaseBackend() {
       async signIn(email, password) { ok(await sb.auth.signInWithPassword({ email, password })); return me(); },
       async signUp(email, password) { return ok(await sb.auth.signUp({ email, password, options: { emailRedirectTo: location.href } })); },
       async signOut() { await sb.auth.signOut(); },
+      async zapiszProfil(p) { const { imie, nazwisko, szkola, wlasneSzkoly } = p; ok(await sb.auth.updateUser({ data: { imie, nazwisko, szkola, wlasneSzkoly } })); return p; },
+    },
+    scenariusze: {
+      async list() { return ok(await sb.from("scenariusze").select("id,tytul,dane,zmieniono").order("zmieniono", { ascending: false })).map(r => ({ ...r.dane, id: r.id, zmieniono: r.zmieniono })); },
+      async get(id) { const r = ok(await sb.from("scenariusze").select("*").eq("id", id).single()); return { ...r.dane, id: r.id, zmieniono: r.zmieniono }; },
+      async save(sc) {
+        const { id, ...dane } = sc;
+        const row = { tytul: sc.tytul || "Scenariusz", dane, zmieniono: new Date().toISOString() };
+        const r = id ? ok(await sb.from("scenariusze").update(row).eq("id", id).select().single())
+                     : ok(await sb.from("scenariusze").insert(row).select().single());
+        return { ...r.dane, id: r.id, zmieniono: r.zmieniono };
+      },
+      async remove(id) { ok(await sb.from("scenariusze").delete().eq("id", id)); },
     },
     lessons: {
       async list() { return ok(await sb.from("lekcje").select("id,kod,tytul,zmieniono,materialy").order("zmieniono", { ascending: false })); },
@@ -162,6 +206,11 @@ async function supabaseBackend() {
         const { data, error } = await sb.functions.invoke("claude", { body: { tryb: "plan", tytul, materialy } });
         if (error || data?.blad) throw new Error(data?.blad || error.message);
         return data.plan;
+      },
+      async generator(body) {
+        const { data, error } = await sb.functions.invoke("claude", { body: { tryb: "generator", ...body } });
+        if (error || data?.blad) throw new Error(data?.blad || error.message);
+        return data;
       },
       async ask(pytanie, kontekst) {
         const { data, error } = await sb.functions.invoke("claude", { body: { tryb: "pytanie", pytanie, kontekst } });

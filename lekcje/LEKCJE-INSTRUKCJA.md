@@ -17,6 +17,39 @@ scenę ze swojego miejsca w klasie.
 W panelu nauczyciela kliknij **Wczytaj gotową lekcję**: „Mikołaj Kopernik – astronom z Torunia” (slajdy, film, 2 animowane modele 3D, quiz).
 Pliki do pokazania procesu wgrywania i scenariusz pokazu: `lekcje/pokazowa/pliki.html` i `lekcje/pokazowa/SCENARIUSZ-POKAZU.md`.
 
+## 🧭 Generator scenariuszy lekcji (nowość w wersji 13)
+
+Adres: `lekcje/generator.html` (albo w panelu nauczyciela: **➕ Dodaj lekcję → Utwórz z generatorem scenariuszy**).
+
+1. **Gdzie uczysz?** – wybierz typ szkoły (przedszkole, SP 1–3, SP 4–8, liceum, technikum, branżowa, uczelnia) albo
+   **Własną definicję szkoły** (np. szkoła językowa: poziomy, przedmioty i rama programowa – można zapisać w profilu).
+   Generator sam rozpoznaje, czy w danej klasie obowiązuje **nowa podstawa „Kompas Jutra” (2026)**, czy **podstawa z 2017 r.**
+   (w roku 2026/27 nowa podstawa obejmuje klasy 1 i 4; klasy 2–3 i 5–8 uczą się jeszcze według podstawy z 2017 r.).
+2. **Przedmiot** – lista dopasowana do klasy (np. w klasie 4 jest przyroda i zajęcia praktyczno-techniczne).
+3. **Temat** – z listy działów (dla biologii kl. 7 z wymaganiami z podstawy programowej), wpisany ręcznie albo
+   zaproponowany przez AI. Do tego szablon: scenariusz (konspekt), wykład akademicki albo krótki plan.
+
+W edytorze każda sekcja ma przyciski **✨ Napisz / Rozwiń / Uprość / Popraw język** i pole na własne polecenie.
+AI dostaje zawsze ramę: szkołę, klasę, przedmiot, dokument (podstawa / sylabus) i zaznaczone wymagania – i pisze tylko w ich zakresie.
+Jeśli poprosisz o coś spoza podstawy, zrobi wersję zgodną z podstawą i dopisze „Uwaga: …”.
+
+Etapy lekcji mają: przebieg dla nauczyciela, tekst dla uczniów (czyta go Bartek), materiały i pytania quizu.
+Materiały: 🖼 obraz, 🎬 film, 🧊 model 3D, 📊 wykres (z danych albo z pliku Excel/CSV), 📎 plik (Word, Excel, PowerPoint, PDF – w AR jako karta z podglądem).
+Obraz i model 3D możesz **wygenerować z AI**: otwiera się okno czatu z gotowym opisem dopasowanym do etapu;
+poprawiasz wynik wiadomościami („bez podpisów”, „większe napisy”), a **✅ Dodaj do lekcji** zamyka czat.
+Ilustracje AI powstają jako grafika wektorowa (SVG) z polskimi podpisami; modele 3D – z brył opisanych przez AI, zapisywane jako GLB.
+
+Na końcu: **🖨 Drukuj / PDF**, **⬇ Word** albo **🚀 Utwórz lekcję AR** – każdy etap staje się sceną, a tekst dla uczniów może pojawić się też jako tablica w AR.
+W panelu nauczyciela przy tekstach przewodnika też są przyciski AI (rozwijanie i upraszczanie „w locie”).
+
+**Przykład:** przycisk **Wczytaj przykład** – biologia kl. 7, „Budowa serca i układu krwionośnego. Krwiobieg mały i duży”
+(wymagania III.4.1, III.4.2, III.4.6): 4 modele 3D (bijące serce, przekrój z przepływem krwi, naczynia, składniki krwi),
+5 ilustracji, animacja „Jak pracuje serce?”, wykres tętna, arkusz pomiarów (xlsx), karta pracy (docx) i quiz. Pliki: `lekcje/pokazowa-biologia/`.
+
+**Tryb demo:** logowanie to makieta – wybierasz nauczyciela z listy (każdy ma swoje scenariusze i lekcje w tej przeglądarce),
+a AI działa jako **„AI pokazowe”**: gotowe treści dla lekcji o sercu, a dla innych tematów szablony i proste plansze.
+Pełne AI (Claude) i prawdziwe konta działają po podłączeniu Supabase – patrz krok 2 (tabela `scenariusze`) i krok 4 (funkcja `claude`).
+
 ## Szybki start: tryb demo (bez zakładania kont)
 
 Od razu po wgraniu na GitHub Pages wejdź na `…/lekcje/nauczyciel.html`. Na górze zobaczysz **TRYB DEMO**.
@@ -62,7 +95,11 @@ ani klucza Claude API.
 
 Od teraz `nauczyciel.html` pokazuje ekran logowania. **Załóż konto nauczyciela** i gotowe.
 
-## Krok 4: Claude (AI planuje sceny, Bartek odpowiada na pytania)
+## Krok 4: Claude (AI planuje sceny, pisze scenariusze, Bartek odpowiada na pytania)
+
+> **Aktualizacja do wersji 13:** jeśli masz już funkcję `claude`, wklej ponownie cały plik `supabase/functions/claude/index.ts` i kliknij **Deploy**
+> (dochodzi tryb „generator”). W SQL Editor uruchom końcowy fragment pliku `supabase/schema.sql` (tabela `scenariusze`).
+
 
 1. Klucz Claude API: wejdź na **console.anthropic.com** (Claude Console), załóż konto, w *Billing* doładuj konto
    (np. 5 USD wystarcza na bardzo wiele lekcji), potem *API Keys* → **Create Key** i skopiuj klucz (`sk-ant-…`).

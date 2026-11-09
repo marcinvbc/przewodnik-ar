@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 960" width="1800" height="960" font-family="'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif">
+<defs>
+ <marker id="grot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2a2e"/></marker>
+ <marker id="grotB" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fff" stroke="#1f2a2e" stroke-width="1.2"/></marker>
+ <style>.podpisy text{font-size:34px;font-weight:600;fill:#1f2a2e} .podpisy line,.podpisy path{stroke:#1f2a2e;stroke-width:2.5;fill:none}
+ .tytul{font-size:48px;font-weight:800;fill:#1f2a2e} .legenda text{font-size:28px;fill:#1f2a2e} .male{font-size:26px;font-weight:500;fill:#4a5357}</style>
+</defs>
+<rect width="1800" height="960" fill="#fffdf8"/>
+<text class="tytul" x="60" y="80">Skład krwi</text>
+<path d="M 180 160 L 180 820 C 180 900 360 900 360 820 L 360 160" fill="#fff" stroke="#55636a" stroke-width="8"/>
+<path d="M 186 470 L 186 820 C 186 892 354 892 354 820 L 354 470 Z" fill="#b3241c"/>
+<rect x="186" y="455" width="168" height="16" fill="#f4efe6"/>
+<rect x="186" y="200" width="168" height="255" fill="#f6d77a"/>
+<g class="podpisy"><line x1="300" y1="320" x2="408" y2="310"/><circle cx="300" cy="320" r="6" fill="#1f2a2e"/><text x="420" y="320" text-anchor="start">osocze ok. 55%</text><line x1="300" y1="463" x2="408" y2="460"/><circle cx="300" cy="463" r="6" fill="#1f2a2e"/><text x="420" y="470" text-anchor="start">krwinki białe i płytki <1%</text><line x1="300" y1="680" x2="408" y2="670"/><circle cx="300" cy="680" r="6" fill="#1f2a2e"/><text x="420" y="680" text-anchor="start">krwinki czerwone ok. 45%</text></g>
+<rect x="900" y="150" width="420" height="370" rx="28" fill="#fff" stroke="#e3dccd" stroke-width="4"/>
+<ellipse cx="1110" cy="255" rx="78" ry="62" fill="#c9302a"/><ellipse cx="1110" cy="255" rx="36" ry="28" fill="#e46a60"/>
+<text x="1110" y="372" text-anchor="middle" font-size="34" font-weight="800" fill="#1f2a2e">Krwinki czerwone</text>
+<text x="1110" y="406" text-anchor="middle" class="male">erytrocyty</text>
+<text x="1110" y="448" text-anchor="middle" font-size="25" fill="#1f2a2e">transportują tlen (hemoglobina)</text>
+<text x="1110" y="478" text-anchor="middle" font-size="25" fill="#1f2a2e">nie mają jądra komórkowego</text>
+<text x="1110" y="508" text-anchor="middle" font-size="25" fill="#1f2a2e">kształt dwuwklęsłego krążka</text>
+<rect x="1350" y="150" width="420" height="370" rx="28" fill="#fff" stroke="#e3dccd" stroke-width="4"/>
+<circle cx="1560" cy="255" r="72" fill="#efe9fb" stroke="#a495cf" stroke-width="5"/><path d="M 1520 249 q 20 -40 42 -6 q 22 -34 40 6 q -10 40 -40 22 q -30 22 -42 -22 z" fill="#7a5bb5"/>
+<text x="1560" y="372" text-anchor="middle" font-size="34" font-weight="800" fill="#1f2a2e">Krwinki białe</text>
+<text x="1560" y="406" text-anchor="middle" class="male">leukocyty</text>
+<text x="1560" y="448" text-anchor="middle" font-size="25" fill="#1f2a2e">bronią organizmu</text>
+<text x="1560" y="478" text-anchor="middle" font-size="25" fill="#1f2a2e">przed drobnoustrojami</text>
+<text x="1560" y="508" text-anchor="middle" font-size="25" fill="#1f2a2e">mają jądro komórkowe</text>
+<rect x="900" y="550" width="420" height="370" rx="28" fill="#fff" stroke="#e3dccd" stroke-width="4"/>
+<ellipse cx="1060" cy="645" rx="20" ry="13" fill="#d99ac5" transform="rotate(0 1060 645)"/>
+<ellipse cx="1110" cy="675" rx="20" ry="13" fill="#d99ac5" transform="rotate(40 1110 675)"/>
+<ellipse cx="1156" cy="637" rx="20" ry="13" fill="#d99ac5" transform="rotate(80 1156 637)"/>
+<ellipse cx="1120" cy="615" rx="20" ry="13" fill="#d99ac5" transform="rotate(120 1120 615)"/>
+<text x="1110" y="772" text-anchor="middle" font-size="34" font-weight="800" fill="#1f2a2e">Płytki krwi</text>
+<text x="1110" y="806" text-anchor="middle" class="male">trombocyty</text>
+<text x="1110" y="848" text-anchor="middle" font-size="25" fill="#1f2a2e">biorą udział</text>
+<text x="1110" y="878" text-anchor="middle" font-size="25" fill="#1f2a2e">w krzepnięciu krwi</text>
+<text x="1110" y="908" text-anchor="middle" font-size="25" fill="#1f2a2e">– zatrzymują krwawienie</text>
+<rect x="1350" y="550" width="420" height="370" rx="28" fill="#fff" stroke="#e3dccd" stroke-width="4"/>
+<path d="M 1560 585 C 1620 655 1610 715 1560 717 C 1510 715 1500 655 1560 585 Z" fill="#f6d77a"/>
+<text x="1560" y="772" text-anchor="middle" font-size="34" font-weight="800" fill="#1f2a2e">Osocze</text>
+<text x="1560" y="806" text-anchor="middle" class="male">ok. 90% wody</text>
+<text x="1560" y="848" text-anchor="middle" font-size="25" fill="#1f2a2e">przenosi składniki odżywcze,</text>
+<text x="1560" y="878" text-anchor="middle" font-size="25" fill="#1f2a2e">CO₂, hormony i zbędne</text>
+<text x="1560" y="908" text-anchor="middle" font-size="25" fill="#1f2a2e">produkty przemiany materii</text>
+</svg>

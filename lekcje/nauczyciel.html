@@ -11,6 +11,7 @@
 } }
 </script>
 <script src="../wersja.js"></script>
+<script>window.WERSJA = window.WERSJA || ""; window.zWersja = window.zWersja || (u => u);</script>
 <script src="konfiguracja.js"></script>
 <link rel="stylesheet" href="styl.css">
 <style>
@@ -50,6 +51,13 @@
   .lessons { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; }
   .lesson h3 { font-size: 17px; margin-bottom: 4px; }
   .note { background: #fff6e0; border: 1px solid #f0d58a; color: #6b5200; border-radius: 12px; padding: 10px 12px; font-size: 13px; }
+  .aibar { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+  .aibar button { border: 1px solid #e8d7a9; background: #fff8e6; color: #6b5200; border-radius: 99px; padding: 3px 10px; font: 600 12px system-ui; cursor: pointer; }
+  .aibar button:disabled { opacity: .5; } .aibar input { padding: 3px 9px; font-size: 12px; border-radius: 99px; flex: 1; min-width: 150px; }
+  .aiuw { font-size: 11.5px; color: #7a5a00; margin-top: 3px; }
+  .wybor { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; } @media (max-width: 640px) { .wybor { grid-template-columns: 1fr; } }
+  .wybor > * { border: 2px solid var(--line); border-radius: 18px; background: #fff; padding: 18px; text-align: left; cursor: pointer; font: inherit; color: inherit; display: grid; gap: 6px; }
+  .wybor > *:hover { border-color: var(--accent); background: #fff8f4; } .wybor .ik { font-size: 36px; }
   .note.ok { background: #eef6ef; border-color: #b9dcc0; color: var(--ok); }
 </style>
 </head>
@@ -59,7 +67,8 @@
   <span class="badge" id="mode"></span>
   <span class="small muted" id="ver"></span>
   <span class="sp"></span>
-  <span class="small muted" id="who"></span>
+  <a class="btn sm" href="generator.html">🧭 Generator scenariuszy</a>
+  <button class="btn sm ghost" id="who" title="Zmień nauczyciela"></button>
   <a class="btn sm ghost" href="../index.html">Przewodnik AR</a>
   <button class="btn sm" id="logout" hidden>Wyloguj</button>
 </header>
@@ -80,7 +89,7 @@
 <main class="wrap" id="vList" hidden>
   <div class="row" style="justify-content:space-between">
     <div><h1 style="font-size:26px">Twoje lekcje</h1><p class="muted" style="margin:2px 0 0">Wgraj materiały, a sceny AR ułożą się same. Potem uczniowie dołączą telefonami.</p></div>
-    <div class="row"><input type="text" id="newTitle" placeholder="Temat lekcji, np. Średniowieczne zamki" style="width:300px"><button class="btn accent" id="create">➕ Nowa lekcja</button></div>
+    <div class="row"><button class="btn accent" id="create" style="font-size:16px;padding:11px 20px">➕ Dodaj lekcję</button></div>
   </div>
   <div id="demoNote" class="note" style="margin-top:14px" hidden>
     <b>Tryb demo:</b> wszystko zapisuje się tylko w tej przeglądarce. „Uczniów” możesz symulować w kolejnych kartach tej samej przeglądarki.
@@ -109,6 +118,7 @@
       <a class="btn accent" id="start" target="_blank">▶ Rozpocznij lekcję</a>
     </div>
   </div>
+  <div class="note ok" id="zScen" style="margin-bottom:12px" hidden></div>
   <div class="grid">
     <div>
       <section class="card">
@@ -157,6 +167,7 @@ import { backend, DEMO, esc, toast, resolveUrl, uid, linkProwadzenia } from "./w
 import { zaplanuj, planRegulowy, UKLADY } from "./planer.js";
 import { ScenaLekcji } from "./silnik-sceny.js";
 import { widok3D } from "./widok3d.js";
+import { ai } from "./gen-ai.js";
 
 const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs";
 const PDFJS_WORKER = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
@@ -178,7 +189,7 @@ const lekcja3D = new ScenaLekcji();
 async function init() {
   const u = await b.auth.user();
   if (!u) { show("vLogin"); $("#logout").hidden = true; $("#who").textContent = ""; return; }
-  $("#who").textContent = u.email || ""; $("#logout").hidden = DEMO;
+  $("#who").textContent = "👤 " + ([u.profil?.imie, u.profil?.nazwisko].filter(Boolean).join(" ") || u.email || "") + (DEMO ? " ▾" : ""); $("#logout").hidden = DEMO;
   const id = new URLSearchParams(location.search).get("id");
   if (id) openLesson(id); else listLessons();
 }
@@ -191,6 +202,17 @@ $("#signup").onclick = async () => {
     const r = await b.auth.signUp($("#em").value.trim(), $("#pw").value);
     if (r?.session) init(); else $("#loginMsg").textContent = "✅ Konto założone. Sprawdź skrzynkę e-mail i kliknij link potwierdzający, potem zaloguj się.";
   } catch (e) { $("#loginMsg").textContent = "❌ " + e.message; }
+};
+$("#who").onclick = () => {
+  if (!DEMO) return;
+  const l = b.auth.profile();
+  const m = document.createElement("div"); m.className = "overlay";
+  m.innerHTML = `<div class="box" style="max-width:560px"><h2 style="font-size:20px">Kto prowadzi zajęcia?</h2>
+    <p class="muted small">Makieta logowania w trybie demo – każdy nauczyciel ma swoje lekcje i scenariusze. Nowych nauczycieli dodasz w generatorze scenariuszy.</p>
+    <div class="wybor">${l.map(p => `<button data-p="${p.id}"><span class="ik">👩‍🏫</span><b>${esc(p.imie)} ${esc(p.nazwisko)}</b><span class="small muted">${esc(p.email || "")}</span></button>`).join("")}</div>
+    <div class="row" style="justify-content:flex-end;margin-top:12px"><a class="btn" href="generator.html">➕ Dodaj nauczyciela</a><button class="btn" data-x>Zamknij</button></div></div>`;
+  m.onclick = e => { const p = e.target.closest("[data-p]"); if (p) { b.auth.wybierz(p.dataset.p); location.href = location.pathname; } if (e.target === m || e.target.closest("[data-x]")) m.remove(); };
+  document.body.appendChild(m);
 };
 $("#logout").onclick = async () => { await b.auth.signOut(); location.href = location.pathname; };
 
@@ -226,9 +248,27 @@ $("#demoLesson").onclick = async () => {
   } catch (e) { toast("Nie udało się wczytać lekcji: " + e.message, 5000); }
   $("#demoLesson").disabled = false; $("#demoLesson").textContent = "Wczytaj gotową lekcję";
 };
-$("#create").onclick = async () => {
-  const t = $("#newTitle").value.trim() || "Nowa lekcja";
-  const l = await b.lessons.create(t); openLesson(l.id);
+$("#create").onclick = () => {
+  const m = document.createElement("div"); m.className = "overlay";
+  m.innerHTML = `<div class="box" style="max-width:720px"><h2 style="font-size:22px">Jak chcesz przygotować lekcję?</h2>
+    <div class="wybor">
+      <div data-w="sam" role="button" tabindex="0"><span class="ik">✍️</span><b style="font-size:17px">Utwórz samodzielnie</b>
+        <span class="small muted">Wpisz temat, wgraj slajdy, zdjęcia, filmy i modele 3D – sceny ułożą się same. Teksty przewodnika możesz rozwijać z pomocą AI.</span>
+        <input type="text" id="newTitle" placeholder="Temat lekcji, np. Średniowieczne zamki" style="margin-top:6px"></div>
+      <button data-w="gen"><span class="ik">🧭</span><b style="font-size:17px">Utwórz z generatorem scenariuszy</b>
+        <span class="small muted">Wybierz szkołę, klasę, przedmiot i temat. Generator przygotuje scenariusz zgodny z podstawą programową, a AI pomoże dodać treści, ilustracje i modele 3D.</span>
+        <span class="badge" style="justify-self:start;margin-top:6px">poleca się na start</span></button>
+    </div><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" data-x>Anuluj</button></div></div>`;
+  document.body.appendChild(m);
+  m.onclick = async e => {
+    if (e.target.id === "newTitle") return;
+    if (e.target === m || e.target.closest("[data-x]")) return m.remove();
+    const w = e.target.closest("[data-w]")?.dataset.w;
+    if (w === "gen") location.href = "generator.html?nowy";
+    if (w === "sam") { const t = m.querySelector("#newTitle").value.trim() || "Nowa lekcja"; m.remove(); const l = await b.lessons.create(t); openLesson(l.id); }
+  };
+  m.querySelector("#newTitle").onkeydown = e => { if (e.key === "Enter") m.querySelector("[data-w=sam]").click(); };
+  setTimeout(() => m.querySelector("#newTitle").focus(), 50);
 };
 
 /* ------------------------------------------------------------------ edytor */
@@ -241,6 +281,10 @@ async function openLesson(id) {
   $("#title").value = lesson.tytul; $("#code").textContent = lesson.kod;
   $("#start").href = `${linkProwadzenia(lesson.kod)}&id=${lesson.id}`;
   $("#marker").href = `znacznik.html?l=${lesson.kod}`;
+  const zs = lesson.plan?.scenariusz;
+  $("#zScen").hidden = !zs;
+  if (zs) $("#zScen").innerHTML = `🧭 Lekcja utworzona z generatora scenariuszy · ${esc(zs.przedmiot || "")}${zs.klasa ? ", klasa " + esc(zs.klasa) : ""} · ${esc(zs.rama || "")}
+    ${zs.id ? `<a class="btn sm" style="margin-left:8px" href="generator.html?s=${encodeURIComponent(zs.id)}">📘 Otwórz scenariusz</a>` : ""}`;
   if (!view) view = widok3D($("#preview"), lekcja3D, { onClick: id => { lekcja3D.ustawFokus(id); view.lecDo(id); } });
   renderMats(); renderScenes(); preview();
 }
@@ -366,7 +410,7 @@ function renderMats() {
   const ms = lesson.materialy;
   $("#mats").innerHTML = ms.length ? ms.map(m => `
     <div class="mat"><div class="th" data-thumb="${m.id}">${m.typ === "slajd" || m.typ === "obraz" ? "" : ICON[m.typ]}</div>
-      <span class="ty">${TYP[m.typ]}</span><button class="x" title="Usuń" data-rm="${m.id}">×</button>
+      <span class="ty">${m.rodzaj ? { tekst: "tablica", wykres: "wykres", dokument: "plik" }[m.rodzaj] || TYP[m.typ] : TYP[m.typ]}</span><button class="x" title="Usuń" data-rm="${m.id}">×</button>
       <div class="nm" title="${esc(m.nazwa)}">${esc(m.nazwa)}</div></div>`).join("") : "";
   thumbs($("#mats"));
 }
@@ -422,7 +466,9 @@ function renderScenes() {
           ${usable.filter(m => !s.elementy.includes(m.id)).map(m => `<option value="${m.id}">${ICON[m.typ]} ${esc(m.nazwa)}</option>`).join("")}</select>
       </div>
       <div class="two" style="margin-top:8px">
-        <div><label class="l">Tekst przewodnika (Bartek czyta go uczniom)</label><textarea data-f="narracja">${esc(s.narracja)}</textarea></div>
+        <div><label class="l">Tekst przewodnika (Bartek czyta go uczniom)</label><textarea data-f="narracja">${esc(s.narracja)}</textarea>
+          <div class="aibar">${s.narracja?.trim() ? `<button data-ai="rozwin">✨ Rozwiń</button><button data-ai="uprosc">✨ Uprość</button><button data-ai="popraw">✨ Popraw</button>` : `<button data-ai="napisz">✨ Napisz z AI</button>`}
+            <input type="text" data-pol placeholder="💬 polecenie dla AI"><button data-ai="polecenie">↵</button></div><div class="aiuw" data-aiuw></div></div>
         <div><label class="l">Quiz (${(s.quiz || []).length})</label>
           ${(s.quiz || []).map((q, k) => `<div class="quiz">
             <input type="text" data-q="${k}" data-qf="pytanie" value="${esc(q.pytanie)}" placeholder="Pytanie">
@@ -442,6 +488,8 @@ $("#scenes").addEventListener("click", e => {
   const i = +card.dataset.i, s = lesson.plan.sceny[i];
   const act = e.target.closest("[data-act]")?.dataset.act, k = +e.target.closest("[data-k]")?.dataset.k;
   if (act === "add") return;
+  const aiBtn = e.target.closest("[data-ai]");
+  if (aiBtn) return aiNarracja(i, aiBtn);
   if (!act) { if (selScene !== i) { selScene = i; document.querySelectorAll(".scene").forEach((c, j) => c.classList.toggle("sel", j === i)); preview(); } return; }
   const sc = lesson.plan.sceny;
   if (act === "up" && i > 0) { [sc[i - 1], sc[i]] = [sc[i], sc[i - 1]]; selScene = i - 1; }
@@ -469,6 +517,26 @@ $("#scenes").addEventListener("input", e => {
   if (qf === "pytanie") { s.quiz[+e.target.dataset.q].pytanie = e.target.value; save(); }
   if (qf === "odpowiedzi") { const q = s.quiz[+e.target.dataset.q]; q.odpowiedzi = e.target.value.split("\n").map(x => x.trim()).filter(Boolean); q.poprawna = Math.min(q.poprawna, Math.max(0, q.odpowiedzi.length - 1)); save(); }
 });
+
+/* ------------------------------------------------------------------ AI przy pisaniu tekstu przewodnika */
+async function aiNarracja(i, btn) {
+  const s = lesson.plan.sceny[i], card = btn.closest(".scene"), zad = btn.dataset.ai;
+  const polecenie = card.querySelector("[data-pol]")?.value.trim();
+  if (zad === "polecenie" && !polecenie) return toast("Wpisz polecenie dla AI");
+  const zs = lesson.plan.scenariusz || {};
+  const mats = s.elementy.map(id => lesson.materialy.find(m => m.id === id)).filter(Boolean);
+  const kontekst = mats.map(m => m.tekst || m.tytulSlajdu || m.nazwa).join(" | ").slice(0, 1500);
+  card.querySelectorAll(".aibar button").forEach(x => x.disabled = true); btn.textContent = "✨ …";
+  try {
+    const r = await ai(b, zad, { temat: lesson.tytul, przedmiot: zs.przedmiot, klasa: zs.klasa, szkola: zs.szkola, rama: zs.rama, wymagania: zs.wymagania || [],
+      sekcja: { klucz: "", typ: "etap", tytul: s.tytul, narracja: s.narracja, tresc: kontekst }, pole: "narracja", polecenie, plan: lesson.plan.sceny.map(x => x.tytul) });
+    if (r.tekst != null) { s._poprz = s.narracja; s.narracja = r.tekst; save(); }
+    renderScenes();
+    const uw = document.querySelectorAll(".scene")[i]?.querySelector("[data-aiuw]");
+    if (uw) { uw.innerHTML = `${r.pokazowe ? "AI pokazowe · " : "✨ "}${esc(r.uwaga || "Gotowe – sprawdź tekst.")} <a href="#" data-cof>↶ Cofnij</a>`;
+      uw.querySelector("[data-cof]").onclick = ev => { ev.preventDefault(); s.narracja = s._poprz ?? s.narracja; save(); renderScenes(); }; }
+  } catch (e) { toast("❌ AI: " + e.message, 5000); renderScenes(); }
+}
 
 function preview() {
   const s = lesson.plan?.sceny?.[selScene];

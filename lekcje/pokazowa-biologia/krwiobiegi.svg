@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 1520" width="1800" height="1520" font-family="'Segoe UI', Roboto, 'DejaVu Sans', Arial, sans-serif">
+<defs>
+ <marker id="grot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2a2e"/></marker>
+ <marker id="grotB" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3.2" markerHeight="3.2" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fff" stroke="#1f2a2e" stroke-width="1.2"/></marker>
+ <style>.podpisy text{font-size:34px;font-weight:600;fill:#1f2a2e} .podpisy line,.podpisy path{stroke:#1f2a2e;stroke-width:2.5;fill:none}
+ .tytul{font-size:48px;font-weight:800;fill:#1f2a2e} .legenda text{font-size:28px;fill:#1f2a2e} .male{font-size:26px;font-weight:500;fill:#4a5357}</style>
+</defs>
+<rect width="1800" height="1520" fill="#fffdf8"/>
+<text class="tytul" x="60" y="80">Krwiobieg mały i duży</text>
+<defs><linearGradient id="gPl" x1="0" x2="1"><stop offset="0.15" stop-color="#3f63c9"/><stop offset="0.85" stop-color="#c8372d"/></linearGradient><linearGradient id="gCi" x1="0" x2="1"><stop offset="0.15" stop-color="#3f63c9"/><stop offset="0.85" stop-color="#c8372d"/></linearGradient></defs>
+<rect x="560" y="160" width="680" height="180" rx="50" fill="#f6d3cd" stroke="#b56b62" stroke-width="5"/>
+<path d="M 600 250 C 760 170 1040 230 1200 250" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 250 C 760 184 1040 244 1200 250" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 250 C 760 198 1040 258 1200 250" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 250 C 760 212 1040 272 1200 250" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 250 C 760 226 1040 286 1200 250" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 250 C 760 240 1040 300 1200 250" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 250 C 760 254 1040 314 1200 250" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 250 C 760 268 1040 328 1200 250" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<rect x="560" y="1070" width="680" height="180" rx="50" fill="#f3e3c4" stroke="#b89a62" stroke-width="5"/>
+<path d="M 600 1160 C 760 1080 1040 1140 1200 1160" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 1160 C 760 1094 1040 1154 1200 1160" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 1160 C 760 1108 1040 1168 1200 1160" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 1160 C 760 1122 1040 1182 1200 1160" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 1160 C 760 1136 1040 1196 1200 1160" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 1160 C 760 1150 1040 1210 1200 1160" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 1160 C 760 1164 1040 1224 1200 1160" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<path d="M 600 1160 C 760 1178 1040 1238 1200 1160" stroke="url(#gPl)" stroke-width="5" fill="none"/>
+<rect x="682" y="542" width="436" height="416" rx="40" fill="#a9443a" stroke="#7d2b24" stroke-width="6"/>
+<rect x="700" y="560" width="192.0" height="182.0" rx="22" fill="#7f9be6"/>
+<text x="796.0" y="630" text-anchor="middle" font-size="29" font-weight="700" fill="#1f2a2e">prawy</text>
+<text x="796.0" y="666" text-anchor="middle" font-size="29" font-weight="700" fill="#1f2a2e">przedsionek</text>
+<rect x="908.0" y="560" width="192.0" height="182.0" rx="22" fill="#ec776c"/>
+<text x="1004.0" y="630" text-anchor="middle" font-size="29" font-weight="700" fill="#1f2a2e">lewy</text>
+<text x="1004.0" y="666" text-anchor="middle" font-size="29" font-weight="700" fill="#1f2a2e">przedsionek</text>
+<rect x="700" y="758.0" width="192.0" height="182.0" rx="22" fill="#7f9be6"/>
+<text x="796.0" y="828.0" text-anchor="middle" font-size="29" font-weight="700" fill="#1f2a2e">prawa</text>
+<text x="796.0" y="864.0" text-anchor="middle" font-size="29" font-weight="700" fill="#1f2a2e">komora</text>
+<rect x="908.0" y="758.0" width="192.0" height="182.0" rx="22" fill="#ec776c"/>
+<text x="1004.0" y="828.0" text-anchor="middle" font-size="29" font-weight="700" fill="#1f2a2e">lewa</text>
+<text x="1004.0" y="864.0" text-anchor="middle" font-size="29" font-weight="700" fill="#1f2a2e">komora</text>
+<path d="M 690 840 L 470 840 Q 420 840 420 790 L 420 300 Q 420 250 470 250 L 590 250" fill="none" stroke="#1f2a2e" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/><path d="M 690 840 L 470 840 Q 420 840 420 790 L 420 300 Q 420 250 470 250 L 590 250" fill="none" stroke="#3f63c9" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1210 250 L 1330 250 Q 1380 250 1380 300 L 1380 590 Q 1380 640 1330 640 L 1110 640" fill="none" stroke="#1f2a2e" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/><path d="M 1210 250 L 1330 250 Q 1380 250 1380 300 L 1380 590 Q 1380 640 1330 640 L 1110 640" fill="none" stroke="#c8372d" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 1110 840 L 1450 840 Q 1500 840 1500 890 L 1500 1105 Q 1500 1160 1450 1160 L 1210 1160" fill="none" stroke="#1f2a2e" stroke-width="52" stroke-linecap="round" stroke-linejoin="round"/><path d="M 1110 840 L 1450 840 Q 1500 840 1500 890 L 1500 1105 Q 1500 1160 1450 1160 L 1210 1160" fill="none" stroke="#c8372d" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 590 1160 L 350 1160 Q 300 1160 300 1105 L 300 690 Q 300 640 350 640 L 690 640" fill="none" stroke="#1f2a2e" stroke-width="52" stroke-linecap="round" stroke-linejoin="round"/><path d="M 590 1160 L 350 1160 Q 300 1160 300 1105 L 300 690 Q 300 640 350 640 L 690 640" fill="none" stroke="#3f63c9" stroke-width="44" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 690 840 L 470 840 Q 420 840 420 790 L 420 600" fill="none" stroke="#1f2a2e" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/><path d="M 690 840 L 470 840 Q 420 840 420 790 L 420 600" fill="none" stroke="#3f63c9" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+<g class="strzalki">
+<path d="M 420 560 L 420 420" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 1380 380 L 1380 520" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 1500 930 L 1500 1060" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 300 1060 L 300 900" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 800 692 L 800 800" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 1000 692 L 1000 800" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 520 250 L 575 250" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" marker-end="url(#grotB)"/>
+<path d="M 1240 1160 L 1220 1160" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" marker-end="url(#grotB)"/>
+</g>
+<g class="podpisy">
+<text x="900" y="145" text-anchor="middle">płuca</text>
+<text x="900" y="1300" text-anchor="middle">narządy całego ciała</text>
+<text x="380" y="470" text-anchor="end" style="fill:#3f63c9">tętnice płucne</text>
+<text x="1425" y="470" style="fill:#c8372d">żyły płucne</text>
+<text x="1545" y="1000" style="fill:#c8372d">aorta</text>
+<text x="255" y="1000" text-anchor="end" style="fill:#3f63c9">żyły główne</text>
+<text x="900" y="395" text-anchor="middle" class="male">w płucach krew oddaje CO₂ i pobiera O₂</text>
+<text x="900" y="1040" text-anchor="middle" class="male">komórki ciała pobierają O₂ i składniki odżywcze, oddają CO₂</text>
+</g>
+<g class="legenda" transform="translate(60,1360)">
+<rect width="800" height="120" rx="20" fill="#eef3ff" stroke="#3f63c9" stroke-width="3"/>
+<text x="24" y="48" font-weight="800" style="font-size:30px">Krwiobieg mały (płucny)</text>
+<text x="24" y="92">prawa komora → płuca → lewy przedsionek</text>
+<rect x="880" width="860" height="120" rx="20" fill="#fff0ee" stroke="#c8372d" stroke-width="3"/>
+<text x="904" y="48" font-weight="800" style="font-size:30px">Krwiobieg duży (ogólny)</text>
+<text x="904" y="92">lewa komora → całe ciało → prawy przedsionek</text></g>
+</svg>
