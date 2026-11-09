@@ -115,6 +115,7 @@
     <div class="row">
       <span class="muted small">Kod:</span><span class="code" id="code"></span>
       <a class="btn" id="marker" href="znacznik.html" target="_blank">🖨 Znacznik</a>
+      <button class="btn" id="doEpear" title="Utwórz kurs na platformie e-peAR">📤 Wyślij do e-peAR</button>
       <a class="btn accent" id="start" target="_blank">▶ Rozpocznij lekcję</a>
     </div>
   </div>
@@ -168,6 +169,7 @@ import { zaplanuj, planRegulowy, UKLADY } from "./planer.js";
 import { ScenaLekcji } from "./silnik-sceny.js";
 import { widok3D } from "./widok3d.js";
 import { ai } from "./gen-ai.js";
+import { oknoEpear, paczkaZLekcji } from "./epear.js";
 
 const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs";
 const PDFJS_WORKER = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
@@ -288,6 +290,10 @@ async function openLesson(id) {
   if (!view) view = widok3D($("#preview"), lekcja3D, { onClick: id => { lekcja3D.ustawFokus(id); view.lecDo(id); } });
   renderMats(); renderScenes(); preview();
 }
+$("#doEpear").onclick = () => {
+  if (!lesson.plan?.sceny?.length) return toast("Najpierw ułóż sceny lekcji");
+  oknoEpear(p => paczkaZLekcji(lesson, p));
+};
 $("#back").onclick = () => { lesson = null; listLessons(); };
 $("#title").oninput = () => { lesson.tytul = $("#title").value; save(); };
 

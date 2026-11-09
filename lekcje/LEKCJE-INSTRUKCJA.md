@@ -50,6 +50,19 @@ W panelu nauczyciela przy tekstach przewodnika też są przyciski AI (rozwijanie
 a AI działa jako **„AI pokazowe”**: gotowe treści dla lekcji o sercu, a dla innych tematów szablony i proste plansze.
 Pełne AI (Claude) i prawdziwe konta działają po podłączeniu Supabase – patrz krok 2 (tabela `scenariusze`) i krok 4 (funkcja `claude`).
 
+## 📤 Wysyłanie lekcji do e-peAR (nowość w wersji 14)
+
+Przycisk **📤 Wyślij do e-peAR** jest w generatorze scenariuszy (pasek u góry) i w panelu nauczyciela (edytor lekcji).
+Zakłada w e-peAR kurs: opis z podstawą programową, celami i przebiegiem, kategorię (dobiera się do przedmiotu),
+punkty „czego się nauczysz” (NaCoBeZu), pliki kursu w kolejności scen (modele GLB, obrazy, wykresy, filmy MP4, teksty przewodnika TXT, PDF),
+galerię (do 6 ilustracji) i quiz ze wszystkimi pytaniami lekcji.
+
+Jednorazowo zainstaluj zakładkę **Pomocnik e-peAR**: strona `epear/index.html` (przeciągnij przycisk na pasek zakładek).
+Potem: **Wyślij do e-peAR → Otwórz e-peAR → kliknij zakładkę „Pomocnik e-peAR” → Utwórz kurs**.
+Pomocnik działa w Twojej zalogowanej sesji e-peAR – hasło nie trafia do aplikacji. Gdy lekcja nie dotrze sama,
+pobierz **paczkę .zip** i wczytaj ją w pomocniku. Adres platformy ustawisz w `lekcje/konfiguracja.js` (`epearUrl`).
+e-peAR nie przyjmuje plików Word/Excel/PowerPoint – zamiast nich wysyłany jest obraz karty pliku.
+
 ## Szybki start: tryb demo (bez zakładania kont)
 
 Od razu po wgraniu na GitHub Pages wejdź na `…/lekcje/nauczyciel.html`. Na górze zobaczysz **TRYB DEMO**.

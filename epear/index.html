@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pomocnik e-peAR · Lekcja AR</title>
+<link rel="stylesheet" href="../lekcje/styl.css">
+<style>
+  .zakladka { display: inline-flex; align-items: center; gap: 8px; background: #c9562f; color: #fff; text-decoration: none; font: 700 17px system-ui; padding: 12px 20px; border-radius: 12px; cursor: grab; box-shadow: 0 6px 18px rgba(201,86,47,.35); }
+  .krok { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; margin-top: 16px; }
+  .krok .n { width: 36px; height: 36px; border-radius: 50%; background: #1f2a2e; color: #fff; display: grid; place-items: center; font-weight: 800; }
+  .pasek { background: #e9e6df; border-radius: 10px 10px 0 0; padding: 7px 10px; font-size: 13px; color: #555; display: flex; gap: 14px; border: 1px solid #d8d2c5; }
+  .pasek span { background: #fff; border-radius: 6px; padding: 2px 8px; }
+  code { background: #f1ebdd; padding: 1px 6px; border-radius: 6px; }
+</style>
+</head>
+<body>
+<header class="top"><div class="logo">AR</div><b>Pomocnik e-peAR</b><span class="sp"></span><a class="btn sm ghost" href="../lekcje/nauczyciel.html">Panel nauczyciela</a></header>
+<main class="wrap" style="max-width:820px">
+  <h1 style="font-size:28px">📤 Wysyłanie lekcji do e-peAR</h1>
+  <p class="muted">Pomocnik to zakładka w przeglądarce. Klikasz ją na stronie e-peAR (gdy jesteś zalogowany), a on zakłada kurs:
+    opis, kategoria, „czego się nauczysz”, pliki (modele 3D, zdjęcia, filmy, teksty, PDF), galeria i quiz z pytaniami.
+    Twoje hasło nie opuszcza e-peAR – pomocnik działa w Twojej zalogowanej sesji, tak jak sama strona.</p>
+
+  <section class="card">
+    <h2 style="font-size:19px">Instalacja (raz, ok. 1 minuty)</h2>
+    <div class="krok"><div class="n">1</div><div>Włącz pasek zakładek: w Chrome i Edge <b>Ctrl + Shift + B</b> (na Macu <b>Cmd + Shift + B</b>).
+      <div class="pasek" style="margin-top:8px"><span>⭐ Zakładki</span><span>…</span><span>📤 Pomocnik e-peAR</span></div></div></div>
+    <div class="krok"><div class="n">2</div><div><b>Przeciągnij</b> ten przycisk myszką na pasek zakładek:
+      <p><a class="zakladka" id="zakl" href="#" title="Przeciągnij na pasek zakładek">📤 Pomocnik e-peAR</a></p>
+      <p class="small muted">Kliknięcie tutaj nic nie zrobi – pomocnik działa tylko na stronie e-peAR.
+        Nie da się przeciągnąć? Kliknij prawym przyciskiem na pasek zakładek → <i>Dodaj stronę…</i>, nazwa „Pomocnik e-peAR”,
+        a w polu adresu wklej kod: <button class="btn sm" id="kopiuj">📋 Skopiuj kod zakładki</button></p></div></div>
+  </section>
+
+  <section class="card" style="margin-top:14px">
+    <h2 style="font-size:19px">Wysyłanie lekcji</h2>
+    <div class="krok"><div class="n">1</div><div>W generatorze scenariuszy albo w panelu nauczyciela kliknij <b>📤 Wyślij do e-peAR</b>.</div></div>
+    <div class="krok"><div class="n">2</div><div>Kliknij <b>Otwórz e-peAR</b> – otworzy się nowa karta. Zaloguj się, jeśli trzeba.</div></div>
+    <div class="krok"><div class="n">3</div><div>Na karcie e-peAR kliknij zakładkę <b>📤 Pomocnik e-peAR</b>. Pojawi się panel z podsumowaniem lekcji.</div></div>
+    <div class="krok"><div class="n">4</div><div>Sprawdź kategorię i kliknij <b>Utwórz kurs w e-peAR</b>. Pasek postępu pokazuje każdy plik; duże modele 3D wgrywają się do minuty.</div></div>
+    <p class="small muted" style="margin-top:14px">Gdy lekcja nie dotrze sama (np. po wylogowaniu), w aplikacji kliknij <b>⬇ Pobierz paczkę .zip</b>,
+      a w panelu pomocnika wybierz ten plik.</p>
+  </section>
+
+  <section class="card" style="margin-top:14px">
+    <h2 style="font-size:19px">Co trafia do e-peAR</h2>
+    <ul>
+      <li><b>Kurs</b>: tytuł, skrócony opis (przedmiot, klasa, temat), opis z podstawą programową, celami i przebiegiem, punkty „czego się nauczysz” (NaCoBeZu), czas.</li>
+      <li><b>Pliki kursu</b> (w kolejności scen, z numerem na początku nazwy): modele 3D (GLB), zdjęcia i ilustracje (JPG/PNG), wykresy (JPG), filmy (MP4), teksty przewodnika (TXT), PDF. Trafiają też do Twoich „Zasobów”.</li>
+      <li><b>Galeria</b>: do 6 ilustracji – pierwsza jest okładką kursu.</li>
+      <li><b>Quiz</b>: wszystkie pytania z lekcji (jednokrotnego wyboru, 1 pkt).</li>
+      <li>e-peAR nie przyjmuje plików Word, Excel i PowerPoint – zamiast nich wysyłany jest obraz karty pliku.</li>
+    </ul>
+  </section>
+</main>
+<script>
+  const src = new URL("pomocnik.js", location.href).href;
+  const kod = `javascript:(()=>{const s=document.createElement('script');s.charset='utf-8';s.src='${src}?v='+Date.now();s.onerror=()=>alert('Nie udało się wczytać Pomocnika e-peAR');document.head.appendChild(s)})()`;
+  const a = document.getElementById("zakl"); a.href = kod;
+  a.onclick = e => { e.preventDefault(); alert("Przeciągnij ten przycisk na pasek zakładek, a potem kliknij go na stronie e-peAR."); };
+  document.getElementById("kopiuj").onclick = async () => { await navigator.clipboard.writeText(kod); document.getElementById("kopiuj").textContent = "✅ Skopiowano"; };
+</script>
+</body>
+</html>

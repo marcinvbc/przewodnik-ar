@@ -12,5 +12,6 @@
 window.LEKCJE_CONFIG = {
   supabaseUrl: "",          // np. "https://abcdefghijkl.supabase.co"
   supabaseKey: "",          // klucz publishable (sb_publishable_…) albo anon (eyJ…)
-  aiWlaczone: true,         // czy próbować planowania i pytań przez Claude (wymaga funkcji „claude” w Supabase)
+  aiWlaczone: true,
+  epearUrl: "https://arplus.test.dio.vobacom.org",   // adres platformy e-peAR (przycisk „📤 Wyślij do e-peAR”)         // czy próbować planowania i pytań przez Claude (wymaga funkcji „claude” w Supabase)
 };

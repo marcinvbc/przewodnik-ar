@@ -187,6 +187,7 @@
     <button class="btn sm" id="wypelnij">✨ Uzupełnij puste z AI</button>
     <button class="btn sm" id="druk">🖨 Drukuj / PDF</button>
     <button class="btn sm" id="word">⬇ Word</button>
+    <button class="btn sm" id="epear" title="Utwórz kurs na platformie e-peAR">📤 e-peAR</button>
     <button class="btn sm accent" id="doLekcji">🚀 Utwórz lekcję AR</button>
   </div>
   <div class="edytor">
@@ -202,6 +203,7 @@ import { ai, kontekstAI } from "./gen-ai.js";
 import { oknoCzatuAI, svgDoJpg, obrazZPliku, wykresJpg, rysujWykres, kartaPliku, podgladPliku, typPliku, zaladujXLSX, eksportGLB, zbudujZPrzepisu } from "./gen-media.js";
 import { scenariuszDoLekcji, drukuj, pobierzWord, podsumowanieLekcji } from "./gen-lekcja.js";
 import { SCENARIUSZ_SERCE, BIBLIOTEKA } from "./pokazowa-biologia/scenariusz.js";
+import { oknoEpear, paczkaZeScenariusza } from "./epear.js";
 
 const $ = s => document.querySelector(s);
 const show = id => ["vLogin", "vStart", "vKreator", "vEdytor"].forEach(v => $("#" + v).hidden = v !== id);
@@ -728,6 +730,7 @@ function edytorWykresu(s, i, tabela, nazwaPliku) {
 /* ---------------------------------------------------------------- druk, Word, lekcja AR */
 $("#druk").onclick = () => { try { drukuj(sc, prowadzacy()); } catch (e) { toast(e.message, 5000); } };
 $("#word").onclick = () => pobierzWord(sc, prowadzacy());
+$("#epear").onclick = async () => { await flush(); oknoEpear(p => paczkaZeScenariusza(sc, p)); };
 $("#doLekcji").onclick = () => {
   const p = podsumowanieLekcji(sc);
   const m = modal(`<h2 style="font-size:21px">🚀 ${sc.lekcjaId ? "Zaktualizuj" : "Utwórz"} lekcję w rozszerzonej rzeczywistości</h2>
