@@ -227,3 +227,18 @@ Lekcja z modelowania procesów: kompletacja → pakowanie → wysyłka.
   W trybie pokazowym (bez Supabase) działa to tylko między kartami jednej przeglądarki; na różnych urządzeniach potrzebny jest Supabase (realtime).
 - **📱 AR / model 3D:** GLB bieżącego wariantu z animacją pracy (10 min zmiany w 60 s).
 - **Kurs e-peAR:** `lekcje/magazyn/magazyn-e-peAR.zip` (4 slajdy, 2 modele, BPMN, film, quiz). Wczytujesz go w Pomocniku e-peAR („wybierz plik .zip”).
+
+## Aranżacja przestrzeni miejskiej (v21) – `lekcje/miasto.html`
+
+Zajęcia w terenie: nowy budynek w realnym miejscu, w skali 1:1.
+
+- **Projekt:** biblioteka modeli parametrycznych (plomba, kamienica, dom, szeregowiec, blok, biurowiec, pawilon) z kondygnacjami, wymiarami, dachem i kolorami. Do tego zieleń i mała architektura. Można też wczytać własny GLB z bazy.
+- **Teren:** kamera telefonu i model na obrazie na żywo. Orientację daje żyroskop i kompas.
+  - **📐 Dopasuj do budynku:** trzy stuknięcia na zamrożonym kadrze (lewy dolny róg, prawy dolny róg, gzyms). Model dostaje zmierzoną szerokość i wysokość i staje frontem w linii pierzei.
+  - **📍 Postaw tutaj:** model staje przed użytkownikiem, potem przesuwa się go palcem i obraca dwoma palcami.
+  - Cień liczony jest z położenia Słońca dla GPS i wybranej godziny. Figura człowieka 1,8 m służy do sprawdzenia skali. Kąt aparatu i wysokość oczu można skalibrować.
+- **Dane o miejscu:** numer działki i obręb (ULDK GUGiK), adres (OpenStreetMap), typowa liczba kondygnacji w okolicy (OpenStreetMap).
+- **📸 Zdjęcie:** karta projektu, czyli zdjęcie z paskiem opisu (nazwa, uzasadnienie, „jak pasuje do otoczenia”, autorzy, data, adres, działka). Można ją pobrać jako JPG, udostępnić albo wysłać do galerii zajęć.
+- **Galeria zajęć:** prowadzący zaznacza „Jestem prowadzącym” i widzi projekty zespołów na mapie oraz w pokazie slajdów.
+- **AR systemowe:** model-viewer (Quick Look na iPhonie, Scene Viewer na Androidzie) daje najstabilniejsze ustawienie. Zdjęcie z AR dodaje się potem do karty projektu.
+- **Kurs e-peAR:** `lekcje/miasto/miasto-e-peAR.zip` (7 slajdów, modele z punktem zaczepienia w środku frontu przy ziemi, sterowanie ucznia włączone).

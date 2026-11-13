@@ -102,7 +102,7 @@ export function symuluj(wariant) {
   const waga = Array.from({ length: nSku }, (_, i) => 1 / Math.pow(i + 1, 1.05));
   const sumW = waga.reduce((a, b) => a + b, 0);
   const losujSku = () => { let x = r() * sumW; for (let i = 0; i < nSku; i++) { x -= waga[i]; if (x <= 0) return i; } return nSku - 1; };
-  const celABC = { x: uklad.pakowanie[0]?.x ?? 30, z: S.poprzeczne[0] };
+  const celABC = { ...uklad.start };   // najczęściej zamawiane najbliżej miejsca, z którego kompletujący wyruszają
   const rr = rng((param.ziarno || 1) * 31 + 5);
   const miejsce = rozmiesc(param.rozmieszczenie, nSku, rr, celABC);
 
