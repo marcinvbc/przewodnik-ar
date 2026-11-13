@@ -39,10 +39,11 @@ function przedmiotySP(klasa, rok) {
 }
 const OGOLNE_PONAD = L("język polski|język angielski|język niemiecki|drugi język obcy|matematyka|historia|wiedza o społeczeństwie|edukacja obywatelska|geografia|biologia|chemia|fizyka|informatyka|biznes i zarządzanie|filozofia|plastyka|muzyka|edukacja dla bezpieczeństwa|edukacja zdrowotna|wychowanie fizyczne|etyka|godzina wychowawcza");
 
+// ukryty: true – typ nie pojawia się przy tworzeniu scenariusza (za wcześnie na AR), ale stare scenariusze dalej działają
 export const TYPY_SZKOL = [
-  { id: "przedszkole", nazwa: "Przedszkole", ikona: "🧸", klasy: ["3-latki", "4-latki", "5-latki", "6-latki"], etap: "wychowanie przedszkolne",
+  { id: "przedszkole", ukryty: true, nazwa: "Przedszkole", ikona: "🧸", klasy: ["3-latki", "4-latki", "5-latki", "6-latki"], etap: "wychowanie przedszkolne",
     przedmioty: () => L("rozwój fizyczny|rozwój emocjonalny|rozwój społeczny|rozwój poznawczy|język obcy|zajęcia umuzykalniające") },
-  { id: "sp13", nazwa: "Szkoła podstawowa, klasy 1–3", ikona: "✏️", klasy: [1, 2, 3], etap: "I etap edukacyjny (edukacja wczesnoszkolna)", przedmioty: (k, r) => przedmiotySP(+k, r) },
+  { id: "sp13", ukryty: true, nazwa: "Szkoła podstawowa, klasy 1–3", ikona: "✏️", klasy: [1, 2, 3], etap: "I etap edukacyjny (edukacja wczesnoszkolna)", przedmioty: (k, r) => przedmiotySP(+k, r) },
   { id: "sp48", nazwa: "Szkoła podstawowa, klasy 4–8", ikona: "🏫", klasy: [4, 5, 6, 7, 8], etap: "II etap edukacyjny", przedmioty: (k, r) => przedmiotySP(+k, r) },
   { id: "lo", nazwa: "Liceum ogólnokształcące", ikona: "🎓", klasy: [1, 2, 3, 4], etap: "III etap edukacyjny", przedmioty: () => OGOLNE_PONAD, zakresy: true },
   { id: "tech", nazwa: "Technikum", ikona: "🛠️", klasy: [1, 2, 3, 4, 5], etap: "III etap edukacyjny + kształcenie zawodowe",

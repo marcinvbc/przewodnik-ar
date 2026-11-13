@@ -287,7 +287,7 @@ let K = null;
 function kreator() {
   K = { szkola: { typ: null, nazwa: ja?.profil?.szkola || "", klasa: null, rok: ROK_SZKOLNY }, przedmiot: "", temat: "", dzial: "", wymaganiaLista: [], szablon: "konspekt", czas: 45 };
   show("vKreator"); history.replaceState(null, "", "?nowy");
-  $("#typy").innerHTML = TYPY_SZKOL.map(t => `<button class="tile" data-t="${t.id}"><span class="ik">${t.ikona}</span><b>${t.nazwa}</b></button>`).join("");
+  $("#typy").innerHTML = TYPY_SZKOL.filter(t => !t.ukryty).map(t => `<button class="tile" data-t="${t.id}"><span class="ik">${t.ikona}</span><b>${t.nazwa}</b></button>`).join("");
   $("#szkolaPola").innerHTML = ""; $("#ramaInfo").hidden = true; $("#temat").value = ""; $("#przedmiotInny").value = "";
   $("#szablony").innerHTML = Object.entries(SZABLONY).map(([k, s]) => `<div class="szablon ${k === K.szablon ? "on" : ""}" data-sz="${k}"><b>${s.nazwa}</b><div class="small muted">${s.opis}</div></div>`).join("");
   ["#k2", "#k3"].forEach(x => $(x).classList.add("off")); $("#przedmioty").innerHTML = ""; $("#dzialy").innerHTML = ""; $("#tematyPropozycje").innerHTML = "";
