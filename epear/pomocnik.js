@@ -65,22 +65,23 @@
   const V3 = ([x, y, z]) => ({ $type: "Vobacom.ArPlus.Utils.SerializableVector3, Vobacom.Utils", x, y, z });
   const LISTA = (typ, values) => ({ $type: `System.Collections.Generic.List\`1[[${typ}]], mscorlib`, $values: values });
   const TYP_ASSET = { model: 0, obraz: 1, tekst: 2, pdf: 2, film: 3, awatar: 4 };
-  // Wzory obiektów zapisane przez aplikację mobilną e-peAR (format z 13.11.2026)
   function obiektSceny(o, plik) {
     const assetData = { $type: T("AssetData"), assetSource: 1, assetType: TYP_ASSET[o.rodzaj], isPrimitive: false, isLooping: false, isPlayOnAwake: false,
-      name: o.rodzaj === "awatar" ? "NewAvatarText" : plik.nazwa, pathOrUrl: plik.epearId, fileExtension: o.rodzaj === "awatar" ? "wav" : null, tagName: "", setActiveAfterSpawn: true };
-    const wspolne = { assetData, disassemblyAnimationTime: 1, priority: 0, disassembledType: 0, isTooltips: false, partTtScl: 0, partTtOffset: 0,
+      name: plik.nazwa, pathOrUrl: plik.epearId, tagName: "", setActiveAfterSpawn: true };
+    const wspolne = { assetData, disassemblyAnimationTime: 1, priority: 0, disassembledType: 0, isHaveObjectPartTooltips: false, objectPartTooltipsScale: 0, objectPartTooltipsOffset: 0,
       isMovableByStudents: false, isRotatableByStudents: false, isScalableByStudents: false, isDisassemblableByStudents: false, animationSpeed: 1,
-      objectPartsChanges: LISTA("Vobacom.ArPlus.Managers.ObjectPart, Assembly-CSharp", []),
-      position: V3(o.poz), rotation: V3([0, o.rotY, 0]), scale: V3([o.skala, o.skala, o.skala]), color: V3([1, 1, 1]),
-      BackgroundTransparecncy: 0, showInteractablePartsList: false, chosenAnimation: "", guid: crypto.randomUUID(),
-      positionSource: 2, objectId: "00000000-0000-0000-0000-000000000000", pinPointerPosition: V3([0, 0, 0]), IsControllableByStudents: false };
-    if (o.rodzaj === "awatar") return { $type: T("AvatarObjectData"), isHaveSpeech: true, isStartSpeechOnStart: o.mowiOdRazu === true, StartWithSlide: o.mowiOdRazu === true,
-      isChatAvailableForStudents: o.czat === true, thisAvatarGender: o.plec || 0, thisAvatarChatGPTObjective: 0, ...wspolne };
-    if (o.rodzaj === "tekst" || o.rodzaj === "pdf") return { $type: T("TextObjectData"), text: o.tekst || "", colorText: V3([0, 0, 0]),
+      objectPartsChanges: LISTA("Vobacom.ArPlus.Managers.ObjectPart, Assembly-CSharp", []), convertToMrtkShaders: false, showHierarchyToStudents: false, isPuzzle: false,
+      puzzlePrecisionNeeded: 0.3, position: V3(o.poz), rotation: V3([0, o.rotY, 0]), scale: V3([o.skala, o.skala, o.skala]), color: V3([1, 1, 1]),
+      BackgroundTransparecncy: 0, showInteractablePartsList: false, chosenAnimation: "", guid: crypto.randomUUID(), IsControllableByStudents: false };
+    if (o.rodzaj === "awatar") {
+      assetData.name = "NewAvatarText";
+      const { IsControllableByStudents, ...bez } = wspolne;
+      return { $type: T("AvatarObjectData"), isHaveSpeech: true, isStartSpeechOnStart: o.mowiOdRazu === true, thisAvatarGender: o.plec || 0, thisAvatarChatGPTObjective: 0, ...bez, IsControllableByStudents };
+    }
+    if (o.rodzaj === "tekst" || o.rodzaj === "pdf") return { $type: T("TextObjectData"), text: o.tekst || "", colorText: V3([0.227450982, 0.223529413, 0.215686277]),
       isCustomColor: false, isBold: false, isItalic: false, isUnderline: false, isStrikethrough: false, isLowercase: false, isUppercase: false, isSmallcaps: false,
-      isLeftAlignment: false, isMidleAlignment: true, isRightAlignment: false, isTransparentBackground: false, isAutoFontSize: false, fontSize: 24.41877, ...wspolne };
-    return { $type: T("AssetObjectData"), lodOverride: null, ...wspolne };
+      isLeftAlignment: false, isMidleAlignment: false, isRightAlignment: false, TransparentBackground: false, isAutoFontSize: false, fontSize: 24.41877, ...wspolne };
+    return { $type: T("AssetObjectData"), lodOverride: null, ...wspolne, isColorable: false };
   }
   function courseData(P) {
     return { $type: "Vobacom.ArPlus.Courses.CourseData, Assembly-CSharp", slides: LISTA("Slide, Assembly-CSharp", P.scena.slajdy.map((s, i) => ({
@@ -143,7 +144,7 @@
   root.querySelector("[data-x]").onclick = () => { if (!praca || confirm("Przerwać wysyłanie?")) zamknij(); };
   root.querySelector(".tlo").onclick = () => { if (!praca) zamknij(); };
   function zamknij() { host.remove(); }
-  window.__pomocnikEpear = { pokaz() { if (!host.isConnected) document.body.appendChild(host); }, wczytaj(P) { przygotuj(P, "plik"); }, async wczytajZip(f) { this.pokaz(); try { przygotuj(await czytajZip(f), "plik"); } catch (err) { alertKarta(err.message); } } };
+  window.__pomocnikEpear = { pokaz() { if (!host.isConnected) document.body.appendChild(host); }, wczytaj(P) { przygotuj(P, "plik"); } };
   document.body.appendChild(host);
 
   /* ------------------------------------------------------------ start */

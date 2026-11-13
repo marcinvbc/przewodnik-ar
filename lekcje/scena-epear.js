@@ -21,7 +21,7 @@ export const UKLAD_FABRYCZNY = {
   film: [[0.8, 1.7, 1.9, 0, 16], [2.4, 1.6, 0.4, 80, 16]],
   tekst: [[-0.78, 1.23, -0.2, 8, 1.71], [-1.6, 1.23, 1.0, -40, 1.71]],
   pdf: [[-0.75, 1.3, 1.9, 0, 1.71]],
-  awatar: [[-2.32, 1.15, -0.58, 253, 1.62], [-1.15, 0.85, 0.64, 253, 1.62]],
+  awatar: [[-1.15, 0.85, 0.64, 253, 1.62]],
 };
 const KLUCZ = "epearUkladBazowy";
 export function ukladBazowy() { try { return { ...UKLAD_FABRYCZNY, ...JSON.parse(localStorage.getItem(KLUCZ) || "{}") }; } catch { return { ...UKLAD_FABRYCZNY }; } }
@@ -240,9 +240,9 @@ export function oknoPlanera(P, scena, onGotowe) {
   };
   $("[data-lista]").addEventListener("click", e => {
     if (!e.target.closest("[data-awatar]")) return;
-    oknoGlosu(P, scena.slajdy[nr], (plikIdx, opcje) => {
+    oknoGlosu(P, scena.slajdy[nr], plikIdx => {
       const m = ukladBazowy().awatar[0];
-      const o = { id: crypto.randomUUID(), rodzaj: "awatar", plik: plikIdx, nazwa: "Awatar – " + scena.slajdy[nr].tytul, poz: m.slice(0, 3), rotY: m[3], skala: m[4], plec: 0, ...opcje };
+      const o = { id: crypto.randomUUID(), rodzaj: "awatar", plik: plikIdx, nazwa: "Awatar – " + scena.slajdy[nr].tytul, poz: m.slice(0, 3), rotY: m[3], skala: m[4], mowiOdRazu: false, plec: 0 };
       scena.slajdy[nr].obiekty.push(o); wybrany = o.id; rysuj();
     });
   });
@@ -288,8 +288,6 @@ function oknoGlosu(P, slajd, gotowe) {
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center">
       <button class="btn g" data-nagraj>🎙 Nagraj</button><button class="btn" data-plik>📁 Wybierz nagranie</button><span data-stan style="color:#6b6f66"></span></div>
     <audio controls data-odsluch style="width:100%;margin-top:10px" hidden></audio>
-    <label style="display:flex;gap:8px;margin-top:10px"><input type="checkbox" data-od> awatar mówi od razu po wejściu na ten slajd (inaczej – po dotknięciu)</label>
-    <label style="display:flex;gap:8px;margin-top:4px"><input type="checkbox" data-czat> uczniowie mogą rozmawiać z awatarem (czat w aplikacji e-peAR)</label>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn" data-anuluj>Anuluj</button><button class="btn g" data-ok disabled>Dodaj awatara</button></div></div>`;
   document.body.appendChild(el);
   const $ = s => el.querySelector(s); let wav = null, rec = null, t0 = 0, tim = null;
@@ -310,6 +308,6 @@ function oknoGlosu(P, slajd, gotowe) {
   $("[data-ok]").onclick = () => {
     const nr = String(P.scena?.slajdy?.indexOf(slajd) + 1 || 1).padStart(2, "0");
     P.pliki.push({ nazwa: `${nr} Głos awatara.wav`, typ: "audio/wav", rodzaj: "audio", blob: wav });
-    gotowe(P.pliki.length - 1, { mowiOdRazu: $("[data-od]").checked, czat: $("[data-czat]").checked }); el.remove();
+    gotowe(P.pliki.length - 1); el.remove();
   };
 }
