@@ -11,6 +11,7 @@
  */
 import { esc, toast, resolveUrl } from "./wspolne.js";
 import { wykresJpg, kartaPliku } from "./gen-media.js";
+import { ukladAuto, oknoPlanera } from "./scena-epear.js";
 
 export const EPEAR_URL = String((window.LEKCJE_CONFIG || {}).epearUrl || "https://arplus.test.dio.vobacom.org").replace(/\/+$/, "");
 const EPEAR_ORIGIN = new URL(EPEAR_URL).origin;
@@ -26,6 +27,20 @@ async function pobierz(url) {
   const r = await fetch(await resolveUrl(abs));
   if (!r.ok) throw new Error(`nie mogę pobrać ${String(url).split("/").pop()} (${r.status})`);
   return r.blob();
+}
+/** Strony PDF jako obrazy JPG (najwyżej 12 stron). */
+async function stronyPdf(blob, max = 12) {
+  const pdfjs = await import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs");
+  pdfjs.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs";
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise, out = [];
+  for (let i = 1; i <= Math.min(doc.numPages, max); i++) {
+    const p = await doc.getPage(i), v0 = p.getViewport({ scale: 1 }), v = p.getViewport({ scale: 1600 / Math.max(v0.width, v0.height) });
+    const c = document.createElement("canvas"); c.width = Math.round(v.width); c.height = Math.round(v.height);
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    await p.render({ canvasContext: g, viewport: v }).promise;
+    out.push(await new Promise(r => c.toBlob(r, "image/jpeg", 0.88)));
+  }
+  return out;
 }
 /** Czy GLB ma animacje (e-peAR pyta o to przy wgrywaniu). */
 async function maAnimacje(blob) {
@@ -109,7 +124,12 @@ async function zbuduj(kurs, sceny, postep) {
           pliki.push({ nazwa: baza + ".jpg", typ: TYPY.jpg, rodzaj: "obraz", blob });
         } else if (m.rodzaj === "plik") {
           const ext = (m.typPliku || rozszerzenie(m.nazwa || m.url));
-          if (ext === "pdf" || ext === "txt") pliki.push({ nazwa: `${baza}.${ext}`, typ: TYPY[ext], rodzaj: ext === "pdf" ? "pdf" : "tekst", blob: await pobierz(m.url) });
+          if (ext === "pdf") {
+            // aplikacja mobilna e-peAR nie obsługuje PDF na slajdach (błąd „Requested value 'pdf' was not found”) – wysyłamy strony jako obrazy
+            const strony = await stronyPdf(await pobierz(m.url));
+            strony.forEach((b, k) => pliki.push({ nazwa: `${baza} – str. ${k + 1}.jpg`, typ: TYPY.jpg, rodzaj: "obraz", blob: b }));
+            pominiete.push(`${m.nazwa} (wysłano jako ${strony.length} obrazów stron – aplikacja e-peAR nie wyświetla PDF)`);
+          } else if (ext === "txt") pliki.push({ nazwa: `${baza}.txt`, typ: TYPY.txt, rodzaj: "tekst", blob: await pobierz(m.url) });
           else {
             pominiete.push(`${m.nazwa} (wysłano jako obraz karty – e-peAR nie przyjmuje plików ${ext.toUpperCase()})`);
             const karta = m.karta ? await pobierz(m.karta) : (await kartaPliku(m.nazwa)).blob;
@@ -118,11 +138,11 @@ async function zbuduj(kurs, sceny, postep) {
         }
       } catch (e) { pominiete.push(`${m.nazwa} (${e.message})`); }
     }
-    if (s.narracja?.trim()) pliki.push({ nazwa: `${nr(i)} ${czystaNazwa(s.tytul)} – tekst.txt`, typ: TYPY.txt, rodzaj: "tekst", blob: new Blob([`${s.tytul}\n\n${s.narracja.trim()}\n`], { type: TYPY.txt }) });
+    if (s.narracja?.trim()) pliki.push({ nazwa: `${nr(i)} ${czystaNazwa(s.tytul)} – tekst.txt`, typ: TYPY.txt, rodzaj: "tekst", tekst: s.narracja.trim(), blob: new Blob([`${s.tytul}\n\n${s.narracja.trim()}\n`], { type: TYPY.txt }) });
     for (const q of s.quiz) if (q.pytanie?.trim() && (q.odpowiedzi || []).filter(Boolean).length >= 2) pytania.push({ pytanie: q.pytanie.trim(), odpowiedzi: q.odpowiedzi.filter(Boolean), poprawna: q.poprawna || 0 });
   }
   return {
-    wersja: 1, kurs, pliki, galeria, pominiete,
+    wersja: 2, kurs, pliki, galeria, pominiete, sceny: sceny.map(s => s.tytul),
     quiz: pytania.length ? { tytul: `Quiz: ${kurs.tytul}`.slice(0, 120), opis: `Sprawdź, co pamiętasz z lekcji „${kurs.tytul}”.`, instrukcje: "Przy każdym pytaniu wybierz jedną poprawną odpowiedź.", czas: Math.max(5, pytania.length), pytania } : null,
   };
 }
@@ -179,10 +199,19 @@ export async function oknoEpear(zbudujPaczke) {
       <li>Na karcie e-peAR kliknij zakładkę <b>📤 Pomocnik e-peAR</b> na pasku zakładek.</li>
       <li>Pomocnik pokaże podsumowanie – wybierz kategorię i kliknij <b>Utwórz kurs</b>.</li></ol>
     <p class="small muted" style="margin:4px 0">Pierwszy raz? <a href="${POMOC_URL}" target="_blank">Zainstaluj pomocnika (1 minuta)</a>. Wysyłanie dużych modeli 3D może potrwać kilka minut.</p>
+    <div class="card" style="margin:10px 0;padding:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label style="display:flex;gap:8px;align-items:center;flex:1;min-width:220px"><input type="checkbox" data-scena-wl checked style="width:auto">
+        <span><b>🎬 Ułóż scenę w AR</b><br><span class="small muted" data-scena-opis></span></span></label>
+      <button class="btn" data-planer>Podgląd i ustawienia sceny</button></div>
     <div data-stan class="small" style="margin:10px 0;font-weight:600"></div>
     <div class="row" style="justify-content:flex-end;gap:8px;display:flex;flex-wrap:wrap">
       <button class="btn" data-zip>⬇ Pobierz paczkę .zip</button><button class="btn accent" data-otworz>Otwórz e-peAR</button></div>`;
   const stan = t => el.querySelector("[data-stan]").innerHTML = t;
+  P.scena = ukladAuto(P);
+  const opisSceny = () => el.querySelector("[data-scena-opis]").textContent = `${P.scena.slajdy.length} slajdów, ${P.scena.slajdy.reduce((a, s) => a + s.obiekty.length, 0)} obiektów – ułożone według układu bazowego`;
+  opisSceny();
+  el.querySelector("[data-planer]").onclick = () => oknoPlanera(P, P.scena, sc => { P.scena = sc; opisSceny(); });
+  const zScena = () => el.querySelector("[data-scena-wl]").checked ? P : { ...P, scena: null };
   let okno = null;
   el.querySelector("[data-otworz]").onclick = () => {
     okno = window.open(EPEAR_URL + "/my-courses", "epear");
@@ -191,14 +220,14 @@ export async function oknoEpear(zbudujPaczke) {
   };
   el.querySelector("[data-zip]").onclick = async () => {
     stan("⏳ Pakuję…");
-    const z = await paczkaZip(P), a = document.createElement("a");
+    const z = await paczkaZip(zScena()), a = document.createElement("a");
     a.href = URL.createObjectURL(z); a.download = czystaNazwa(P.kurs.tytul).slice(0, 60) + " – e-peAR.zip"; a.click();
     stan("✅ Paczka pobrana. W e-peAR kliknij zakładkę „Pomocnik e-peAR” i wybierz ten plik.");
   };
   sluchacz = e => {
     if (e.origin !== EPEAR_ORIGIN || !e.data?.typ) return;
     if (e.data.typ === "epear-gotowy") {
-      (e.source || okno)?.postMessage({ typ: "epear-paczka", paczka: P }, EPEAR_ORIGIN);
+      (e.source || okno)?.postMessage({ typ: "epear-paczka", paczka: zScena() }, EPEAR_ORIGIN);
       stan("✅ Pomocnik połączony – lekcja przekazana. Dokończ na karcie e-peAR („Utwórz kurs”).");
     }
     if (e.data.typ === "epear-wynik") {

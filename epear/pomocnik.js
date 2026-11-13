@@ -59,6 +59,31 @@
     throw new Error("plik nie pojawił się w kursie (sprawdź „Pliki kursu” w e-peAR)");
   }
 
+
+  /* ------------------------------------------------------------ scena dla aplikacji mobilnej e-peAR (courseData) */
+  const T = n => `Vobacom.ArPlus.Managers.${n}, Assembly-CSharp`;
+  const V3 = ([x, y, z]) => ({ $type: "Vobacom.ArPlus.Utils.SerializableVector3, Vobacom.Utils", x, y, z });
+  const LISTA = (typ, values) => ({ $type: `System.Collections.Generic.List\`1[[${typ}]], mscorlib`, $values: values });
+  const TYP_ASSET = { model: 0, obraz: 1, tekst: 2, pdf: 2, film: 3 };
+  function obiektSceny(o, plik) {
+    const assetData = { $type: T("AssetData"), assetSource: 1, assetType: TYP_ASSET[o.rodzaj], isPrimitive: false, isLooping: false, isPlayOnAwake: false,
+      name: plik.nazwa, pathOrUrl: plik.epearId, tagName: "", setActiveAfterSpawn: true };
+    const wspolne = { assetData, disassemblyAnimationTime: 1, priority: 0, disassembledType: 0, isHaveObjectPartTooltips: false, objectPartTooltipsScale: 0, objectPartTooltipsOffset: 0,
+      isMovableByStudents: false, isRotatableByStudents: false, isScalableByStudents: false, isDisassemblableByStudents: false, animationSpeed: 1,
+      objectPartsChanges: LISTA("Vobacom.ArPlus.Managers.ObjectPart, Assembly-CSharp", []), convertToMrtkShaders: false, showHierarchyToStudents: false, isPuzzle: false,
+      puzzlePrecisionNeeded: 0.3, position: V3(o.poz), rotation: V3([0, o.rotY, 0]), scale: V3([o.skala, o.skala, o.skala]), color: V3([1, 1, 1]),
+      BackgroundTransparecncy: 0, showInteractablePartsList: false, chosenAnimation: "", guid: crypto.randomUUID(), IsControllableByStudents: false };
+    if (o.rodzaj === "tekst" || o.rodzaj === "pdf") return { $type: T("TextObjectData"), text: o.tekst || "", colorText: V3([0.227450982, 0.223529413, 0.215686277]),
+      isCustomColor: false, isBold: false, isItalic: false, isUnderline: false, isStrikethrough: false, isLowercase: false, isUppercase: false, isSmallcaps: false,
+      isLeftAlignment: false, isMidleAlignment: false, isRightAlignment: false, TransparentBackground: false, isAutoFontSize: false, fontSize: 24.41877, ...wspolne };
+    return { $type: T("AssetObjectData"), lodOverride: null, ...wspolne, isColorable: false };
+  }
+  function courseData(P) {
+    return { $type: "Vobacom.ArPlus.Courses.CourseData, Assembly-CSharp", slides: LISTA("Slide, Assembly-CSharp", P.scena.slajdy.map((s, i) => ({
+      $type: "Slide, Assembly-CSharp", id: i, sceneData: { $type: T("SceneData"),
+        objectDatas: LISTA("Vobacom.ArPlus.Managers.ObjectData, Assembly-CSharp", s.obiekty.filter(o => P.pliki[o.plik]?.epearId && o.rodzaj !== "pdf" && !/\.pdf$/i.test(P.pliki[o.plik].nazwa)).map(o => obiektSceny(o, P.pliki[o.plik]))),
+        objectGroupDatas: LISTA("Vobacom.ArPlus.Managers.ObjectGroupData, Assembly-CSharp", []) } }))) };
+  }
   /* ------------------------------------------------------------ odczyt paczki .zip (bez kompresji) */
   async function czytajZip(file) {
     const buf = new Uint8Array(await file.arrayBuffer()), dv = new DataView(buf.buffer), pliki = {};
@@ -162,11 +187,12 @@
         ${pasujaca ? "" : `<p class="m">Nie ma kategorii „${esc(P.kurs.przedmiot)}” – wybierz najbliższą albo dodaj ją w e-peAR (Konfiguracja kursów → Kategorie kursów) i otwórz pomocnika ponownie.</p>`}
         <label><input type="checkbox" id="gal" ${P.galeria.length ? "checked" : "disabled"}> dodaj obrazy do galerii kursu</label>
         <label><input type="checkbox" id="qz" ${P.quiz?.pytania?.length ? "checked" : "disabled"}> utwórz quiz</label>
+        <label><input type="checkbox" id="scn" ${P.scena?.slajdy?.length ? "checked" : "disabled"}> ułóż scenę AR (${P.scena?.slajdy?.length || 0} slajdów) – gotowa do otwarcia w aplikacji e-peAR</label>
         <label><input type="checkbox" id="publ"> kurs publiczny (widoczny dla wszystkich w katalogu „Kursy”)</label></div>
       <div class="m">Nic nie zostanie wysłane, dopóki nie klikniesz „Utwórz kurs”. Pliki trafią też do Twoich „Zasobów”.</div>`,
       `<button data-anuluj>Anuluj</button><button class="g" data-start ${kategorie.length ? "" : "disabled"}>Utwórz kurs w e-peAR</button>`);
     $("[data-anuluj]").onclick = zamknij;
-    $("[data-start]").onclick = () => wyslij(P, { kategoria: $("#kat").value, galeria: $("#gal").checked, quiz: $("#qz").checked, publiczny: $("#publ").checked });
+    $("[data-start]").onclick = () => wyslij(P, { kategoria: $("#kat").value, galeria: $("#gal").checked, quiz: $("#qz").checked, scena: $("#scn").checked, publiczny: $("#publ").checked });
   }
 
   /* ------------------------------------------------------------ wysyłanie */
@@ -174,7 +200,7 @@
     praca = true;
     ekran(`<div class="pasek"><div id="pas"></div></div><div class="m">e-peAR przetwarza każdy plik na serwerze – przy dużych modelach 3D może to trwać 1–2 minuty na plik. Nie zamykaj tej karty.</div><div class="log" id="log"></div>`, `<button data-x3 disabled>Zamknij</button>`);
     const log = t => { const l = $("#log"); l.textContent += t + "\n"; l.scrollTop = l.scrollHeight; };
-    const kroki = 1 + P.pliki.length + (o.galeria ? P.galeria.length : 0) + (o.quiz ? 1 + P.quiz.pytania.length : 0);
+    const kroki = 1 + P.pliki.length + (o.galeria ? P.galeria.length : 0) + (o.quiz ? 1 + P.quiz.pytania.length : 0) + (o.scena ? 1 : 0);
     let zrobione = 0; const krok = () => { $("#pas").style.width = Math.round(++zrobione / kroki * 100) + "%"; };
     const bledy = [];
     let kurs = null;
@@ -198,6 +224,7 @@
         if (!z?.id) throw new Error("brak numeru pliku");
         await api("PUT", `/course/${z.id}/lod`, null, false, { bezPonowien: true, czas: 60000 }).catch(() => {});   // optymalizacja (jak w panelu e-peAR)
         await dolacz(kurs.id, z.id, log);
+        f.epearId = z.id;
         log("   ✅ dodano do kursu");
       } catch (e) { log("   ❌ " + e.message); bledy.push(f.nazwa); }
       krok();
@@ -228,6 +255,18 @@
           krok();
         }
       } catch (e) { log("   ❌ " + e.message); bledy.push("quiz"); }
+    }
+    if (o.scena && P.scena?.slajdy?.length) {
+      try {
+        log(`🎬 Zapisuję scenę AR: ${P.scena.slajdy.length} slajdów…`);
+        const pelny = await api("GET", `/course/${kurs.id}`);
+        // do sceny trafiają tylko pliki, które naprawdę są w kursie – brakujący plik psuje przełączanie slajdów w aplikacji
+        const wKursie = new Set((pelny.courseFiles || []).map(f => f.id));
+        P.pliki.forEach(f => { if (f.epearId && !wKursie.has(f.epearId)) { log(`   ⚠️ pomijam w scenie: ${f.nazwa} (brak w kursie)`); f.epearId = null; } });
+        await api("PUT", "/course", { ...pelny, courseData: JSON.stringify(courseData(P)), status: "MOBILE_INITIALIZED" });
+        log("   ✅ scena gotowa – otwórz kurs w aplikacji e-peAR");
+      } catch (e) { log("   ❌ scena: " + e.message); bledy.push("scena AR"); }
+      krok();
     }
     koniec(kurs, bledy);
   }
