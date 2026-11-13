@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Magazyn e-commerce – kompletacja i pakowanie · Lekcja AR</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script src="../wersja.js"></script>
+<script>window.WERSJA = window.WERSJA || ""; window.zWersja = window.zWersja || (u => u);</script>
+<script src="konfiguracja.js"></script>
+<link rel="stylesheet" href="styl.css">
+<style>
+  body { overflow-x: hidden; }
+  .uklad { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; padding: 14px; align-items: start; }
+  @media (max-width: 980px) { .uklad { grid-template-columns: 1fr; } }
+  .panel { display: grid; gap: 12px; position: sticky; top: 72px; }
+  @media (max-width: 980px) { .panel { position: static; } }
+  .warianty { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .warianty button { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 8px; font: 700 14px system-ui; cursor: pointer; color: var(--ink); text-align: left; }
+  .warianty button small { display: block; font-weight: 500; color: var(--muted); font-size: 12px; }
+  .warianty button.on[data-w=przed] { border-color: #6b6f66; background: #f3f1ec; }
+  .warianty button.on[data-w=po] { border-color: var(--accent); background: #fff4ef; }
+  .pole { display: grid; gap: 4px; margin-top: 10px; } .pole > span { font-size: 13px; font-weight: 700; }
+  .licznik { display: flex; align-items: center; gap: 8px; } .licznik button { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: #fff; font: 700 18px system-ui; cursor: pointer; }
+  .licznik b { min-width: 26px; text-align: center; font-size: 17px; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; } .seg button { flex: 1; border: 0; background: #fff; padding: 7px 4px; font: 600 12.5px system-ui; cursor: pointer; color: var(--ink); }
+  .seg button.on { background: var(--ink); color: #fff; }
+  .zablokowany .edyt { opacity: .5; pointer-events: none; }
+  .blokada { display: none; font-size: 12.5px; background: #f3f1ec; border-radius: 10px; padding: 8px 10px; margin-top: 8px; } .zablokowany .blokada { display: block; }
+  .scena { position: relative; height: min(62vh, 600px); min-height: 380px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: #e9e4da; }
+  .scena canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .scena.ciagnie { cursor: grabbing; }
+  .nakladka { position: absolute; left: 10px; top: 10px; display: flex; gap: 6px; flex-wrap: wrap; pointer-events: none; }
+  .nakladka > * { pointer-events: auto; }
+  .pig { background: rgba(255,253,248,.93); border: 1px solid var(--line); border-radius: 99px; padding: 5px 11px; font: 600 12.5px system-ui; }
+  .pig.w-przed { background: #4a5459; color: #fff; border-color: #4a5459; } .pig.w-po { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .widoki { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; }
+  .widoki button { background: rgba(255,253,248,.93); border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; font: 600 12.5px system-ui; cursor: pointer; }
+  .widoki button.on { background: var(--ink); color: #fff; }
+  .odtw { display: grid; grid-template-columns: auto auto 1fr auto; gap: 10px; align-items: center; margin-top: 10px; }
+  .odtw input[type=range] { width: 100%; accent-color: var(--accent); }
+  .zegar { font: 700 14px ui-monospace, monospace; white-space: nowrap; }
+  .predk { display: flex; gap: 4px; } .predk button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 4px 7px; font: 600 12px system-ui; cursor: pointer; } .predk button.on { background: var(--ink); color: #fff; }
+  .bpmn-k { overflow-x: auto; } .bpmn { width: 100%; min-width: 860px; height: auto; display: block; }
+  .bpmn .zad:hover .tlo, .bpmn .zad:focus .tlo, .bpmn .zad.wyb .tlo { stroke: var(--accent); stroke-width: 3; } .bpmn .zad:focus { outline: none; }
+  .siatka2 { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; } @media (max-width: 1200px) { .siatka2 { grid-template-columns: 1fr; } }
+  table.kpi { width: 100%; border-collapse: collapse; font-size: 13.5px; } .kpi th, .kpi td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; } .kpi th:first-child, .kpi td:first-child { text-align: left; }
+  .kpi td.lepiej { color: var(--ok); font-weight: 700; } .kpi td.gorzej { color: var(--bad); font-weight: 700; }
+  .kpi thead th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+  .pasek { display: flex; height: 26px; border-radius: 8px; overflow: hidden; background: #f1ebdd; margin: 4px 0 10px; }
+  .pasek div { height: 100%; display: grid; place-items: center; font: 600 11px system-ui; color: #fff; overflow: hidden; white-space: nowrap; min-width: 0; }
+  .legenda { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 12px; } .legenda i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .gardlo-box { background: #fbeaea; border: 1px solid #efc4c4; color: #7a1717; border-radius: 12px; padding: 8px 12px; font-size: 13px; margin-top: 8px; }
+  .info-zad { background: #fff4ef; border: 1px solid #f6d3c4; border-radius: 12px; padding: 10px 12px; font-size: 13.5px; margin-top: 10px; display: none; }
+  .obecni { display: flex; gap: 4px; align-items: center; } .obecni span { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 700 12px system-ui; border: 2px solid #fff; margin-left: -6px; }
+  .log { max-height: 220px; overflow: auto; font-size: 13px; display: grid; gap: 4px; } .log div { padding: 4px 8px; border-radius: 8px; background: #faf7f0; }
+  .log div b { font-weight: 700; }
+  .zadania ol { margin: 6px 0 0; padding-left: 20px; font-size: 13.5px; } .zadania li { margin-bottom: 5px; }
+  .koszt { font-size: 13px; margin-top: 8px; } .koszt b { font-size: 15px; }
+  .wyniki-gr { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+  .wyniki-gr .card { padding: 12px; } .wyniki-gr h4 { margin: 0 0 6px; }
+  dialog { border: 0; border-radius: 20px; padding: 0; max-width: 520px; width: 92vw; } dialog::backdrop { background: rgba(20,25,28,.5); }
+  dialog .box { padding: 22px; } dialog h3 { margin-top: 0; }
+  .kolory { display: flex; gap: 6px; } .kolory button { width: 28px; height: 28px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px var(--line); cursor: pointer; } .kolory button.on { box-shadow: 0 0 0 3px var(--ink); }
+  #arOkno model-viewer { width: 100%; height: 60vh; background: #e9e4da; border-radius: 14px; }
+  .maly { font-size: 12.5px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="nauczyciel.html" title="Panel nauczyciela">AR</a>
+  <div style="flex:1;min-width:0">
+    <b style="display:block;line-height:1.2">Magazyn e-commerce: kompletacja → pakowanie → wysyłka</b>
+    <span class="muted maly">Modelowanie i optymalizacja procesów · symulacja „przed/po”, BPMN, praca w grupach</span>
+  </div>
+  <div class="obecni" id="obecni" title="Kto pracuje teraz na tym modelu"></div>
+  <span class="badge" id="pokojBadge">praca indywidualna</span>
+  <button class="btn" id="bGrupa">👥 Praca w grupie</button>
+  <button class="btn" id="bAR">📱 AR / model 3D</button>
+</header>
+
+<main class="uklad">
+  <aside class="panel">
+    <div class="card" id="kartaParam">
+      <div class="warianty">
+        <button data-w="przed">A · Przed<small>układ wyjściowy</small></button>
+        <button data-w="po">B · Po zmianach<small>propozycja grupy</small></button>
+      </div>
+      <div class="blokada">🔒 Wariant A to stan wyjściowy magazynu – wspólny punkt odniesienia. <button class="btn" id="odblokuj" style="padding:3px 10px;font-size:12px">odblokuj</button></div>
+      <div class="edyt">
+        <label class="pole"><span>Kompletujący (osoby)</span><div class="licznik" data-p="kompletujacy"><button data-d="-1">−</button><b></b><button data-d="1">+</button></div></label>
+        <label class="pole"><span>Stanowiska pakowania</span><div class="licznik" data-p="stanowiska"><button data-d="-1">−</button><b></b><button data-d="1">+</button></div></label>
+        <div class="pole"><span>Strategia kompletacji</span><div class="seg" data-p="partia"><button data-v="1">po 1 zam.</button><button data-v="2">partie ×2</button><button data-v="3">×3</button><button data-v="4">×4</button></div></div>
+        <div class="pole"><span>Rozmieszczenie towaru</span><div class="seg" data-p="rozmieszczenie"><button data-v="losowe">losowe</button><button data-v="ABC">ABC (rotujące bliżej)</button></div></div>
+        <div class="pole"><span>Trasa kompletacji</span><div class="seg" data-p="trasa"><button data-v="powrotna">powrotna</button><button data-v="S">S (wężykiem)</button></div></div>
+        <div class="pole"><span>Transport paczek do wysyłki</span><div class="seg" data-p="przenosnik"><button data-v="false">pakujący odnosi</button><button data-v="true">przenośnik</button></div></div>
+        <label class="pole"><span>Zamówień na godzinę: <b id="zamH"></b></span><input type="range" min="40" max="180" step="10" data-p="zamowienNaGodz"></label>
+        <p class="muted maly" style="margin:10px 0 0">✋ Na planie przeciągnij <b>Start/WMS</b>, <b>stanowiska pakowania</b> i <b>wysyłkę</b>. Nie da się ich postawić między regałami.</p>
+      </div>
+      <div class="koszt" id="koszt"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+        <button class="btn" id="kopiujAB" title="Zacznij wariant B od układu A">A → B</button>
+        <button class="btn" id="resetB">↺ Propozycja wzorcowa</button>
+      </div>
+    </div>
+    <div class="card zadania">
+      <b>Zadania dla grupy</b>
+      <ol>
+        <li>Odtwórz wariant <b>A</b>. Śledź, gdzie rosną kolejki, i porównaj to z żetonami na diagramie BPMN.</li>
+        <li>Wskaż <b>wąskie gardło</b>: które zadanie BPMN trwa najdłużej i dlaczego?</li>
+        <li>W wariancie <b>B</b> zaproponuj zmiany: układ stanowisk, trasy, strategię, liczbę osób. Pilnuj kosztu.</li>
+        <li>Porównaj czasy A i B. Czy wąskie gardło przeniosło się gdzie indziej?</li>
+        <li>Wyślij wynik do prowadzącego i uzasadnij zmiany.</li>
+      </ol>
+      <button class="btn accent" id="bWyslij" style="margin-top:6px">📨 Wyślij wynik do prowadzącego</button>
+    </div>
+  </aside>
+
+  <section style="min-width:0">
+    <div class="scena" id="scena">
+      <div class="nakladka"><span class="pig" id="pigWariant"></span><span class="pig" id="pigStan"></span></div>
+      <div class="widoki"><button data-v="persp" class="on">Perspektywa</button><button data-v="gora">Z góry</button><button id="bSlady">Ślady tras</button></div>
+    </div>
+    <div class="odtw">
+      <button class="btn primary" id="bGraj" style="min-width:92px">▶ Start</button>
+      <div class="predk" id="predk"><button data-s="30">×30</button><button data-s="60" class="on">×60</button><button data-s="180">×180</button><button data-s="600">×600</button></div>
+      <input type="range" id="suwak" min="0" max="1000" value="0" aria-label="Czas symulacji">
+      <span class="zegar" id="zegar">00:00</span>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <b>Model procesu BPMN – powiązany z symulacją</b>
+        <span class="muted maly">żeton = zamówienia w danym zadaniu · kolor = udział w czasie realizacji · kliknij zadanie</span>
+      </div>
+      <div class="bpmn-k" id="bpmn" style="margin-top:8px"></div>
+      <div class="info-zad" id="infoZad"></div>
+    </div>
+
+    <div class="siatka2">
+      <div class="card">
+        <b>Porównanie: przed i po zmianach</b> <span class="muted maly">(te same zamówienia, to samo losowanie)</span>
+        <table class="kpi" id="kpi" style="margin-top:8px"></table>
+        <div id="gardla"></div>
+      </div>
+      <div class="card">
+        <b>Gdzie ucieka czas zamówienia?</b> <span class="muted maly">średnio, od przyjęcia do wydania kurierowi</span>
+        <div id="paski" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div class="siatka2">
+      <div class="card"><b>Historia zmian</b> <span class="muted maly" id="logInfo">– zapisuje się automatycznie</span><div class="log" id="log" style="margin-top:8px"></div></div>
+      <div class="card" id="kartaProw" style="display:none"><b>Wyniki grup (widok prowadzącego)</b><div class="wyniki-gr" id="wynikiGr" style="margin-top:8px"></div></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="dGrupa"><form method="dialog" class="box">
+  <h3>👥 Wspólna praca na jednym modelu</h3>
+  <p class="muted maly" style="margin-top:-6px">Każda osoba w grupie wpisuje ten sam <b>kod zajęć</b> i <b>numer grupy</b>. Wszyscy widzą zmiany i kursory innych na żywo. Prowadzący otwiera ten sam kod w trybie „prowadzący” i zbiera wyniki grup.</p>
+  <label class="pole"><span>Imię</span><input type="text" id="gImie" maxlength="20" placeholder="np. Ania" required></label>
+  <div class="pole"><span>Kolor</span><div class="kolory" id="gKolory"></div></div>
+  <div style="display:grid;grid-template-columns:1fr 110px;gap:10px">
+    <label class="pole"><span>Kod zajęć</span><input type="text" id="gKod" maxlength="12" placeholder="np. LOG3" style="text-transform:uppercase"></label>
+    <label class="pole"><span>Grupa</span><select id="gNr"></select></label>
+  </div>
+  <label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px"><input type="checkbox" id="gProw"> Jestem prowadzącym (zbieram wyniki grup)</label>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap">
+    <button class="btn" value="solo" id="gSolo">Pracuję sam(a)</button>
+    <button class="btn primary" value="ok" id="gOk">Dołącz</button>
+  </div>
+</form></dialog>
+
+<dialog id="dWynik"><form method="dialog" class="box">
+  <h3>📨 Wynik grupy</h3>
+  <div id="wPodsum" class="maly"></div>
+  <label class="pole"><span>Uzasadnienie zmian (co i dlaczego)</span><textarea id="wUzas" rows="4" placeholder="np. Pakowanie było wąskim gardłem – dodaliśmy stanowisko i przenośnik, a stanowiska przenieśliśmy bliżej regałów…"></textarea></label>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button class="btn" value="x">Anuluj</button><button class="btn accent" value="ok">Wyślij</button></div>
+</form></dialog>
+
+<dialog id="arOkno" style="max-width:820px"><div class="box">
+  <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">📱 Magazyn w AR</h3><button class="btn" onclick="this.closest('dialog').close()">Zamknij</button></div>
+  <p class="muted maly">Model bieżącego wariantu z animacją pracy (10 min zmiany w 60 s). Na telefonie: przycisk AR w rogu modelu stawia magazyn na stole. Ten sam plik GLB trafia do kursu w e-peAR.</p>
+  <div id="arMiejsce"></div>
+  <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><a class="btn" id="arPobierz" download>⬇ Pobierz GLB</a><span class="muted maly" id="arInfo"></span></div>
+</div></dialog>
+
+<script type="module">
+import { backend, esc, uid, toast } from "./wspolne.js";
+import { DOMYSLNE, STALE, ZADANIA, symuluj, stanW } from "./magazyn/sim.js";
+import { utworzScene } from "./magazyn/scena3d.js";
+import { utworzBPMN } from "./magazyn/bpmn.js";
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const kopia = o => JSON.parse(JSON.stringify(o));
+const KOLORY = ["#c9562f", "#2f6b3a", "#3a6ea5", "#8e44ad", "#d4a017", "#16a085", "#c0392b", "#34495e"];
+const KOSZTY = { kompletujacy: 6200, stanowisko: 9000, przenosnik: 48000, ABC: 7500, partia: 4000, S: 1500 };   // zł (etat/mies. lub jednorazowo)
+const INFO = {
+  przyjecie: ["Zamówienie ze sklepu internetowego trafia do systemu WMS.", "Trwa sekundy. To zdarzenie startowe procesu."],
+  przydzial: ["WMS czeka na wolnego kompletującego i przydziela mu zadanie (1 zamówienie albo partię).", "Rośnie, gdy kompletujących jest za mało albo gdy długo chodzą. Wpływ mają: liczba osób, partie, rozmieszczenie ABC i trasa."],
+  kompletacja: ["Kompletujący chodzi z wózkiem między regałami i pobiera towar z lokalizacji.", "Zależy od długości trasy (ABC, trasa S, miejsce startu) i od liczby linii w partii."],
+  dostarczenie: ["Kompletujący zawozi towar do stanowiska pakowania z najkrótszą kolejką.", "Zależy od odległości między regałami a stanowiskami pakowania."],
+  pakowanie: ["Zamówienie czeka w kolejce, potem pakujący dobiera karton, pakuje i zakleja.", "Typowe wąskie gardło: za mało stanowisk albo pakujący sam odnosi paczki i w tym czasie nie pakuje."],
+  kontrola: ["Skan, kontrola zawartości i etykieta kurierska.", "Stały czas na paczkę."],
+  transport: ["Paczka jedzie do strefy wysyłki: przenośnikiem albo niesie ją pakujący.", "Bez przenośnika pakujący chodzi tam i z powrotem, więc stanowisko stoi. Ważna jest odległość od wysyłki."],
+  wysylka: ["Paczka czeka na najbliższy odbiór kuriera (co 30 min).", "Nie da się tego skrócić zmianami w magazynie. To czas zależny od harmonogramu kuriera."],
+};
+const KOL_ZAD = { przyjecie: "#9aa5ab", przydzial: "#3a6ea5", kompletacja: "#e07a2f", dostarczenie: "#d4a017", pakowanie: "#2f8f5a", kontrola: "#16a085", transport: "#8e44ad", wysylka: "#b9b0a0" };
+
+/* ------------------------------------------------------------ stan */
+const qs = new URLSearchParams(location.search);
+let ja = (() => { try { return JSON.parse(localStorage.getItem("magazyn-ja")) || null; } catch { return null; } })() || { uid: uid(), imie: "", kolor: KOLORY[Math.floor(Math.random() * KOLORY.length)] };
+let pokoj = null, kanal = null, kanalWynikow = null, prowadzacy = false;
+const kluczStanu = () => "magazyn-stan-" + (pokoj || "solo");
+function wczytajStan() { try { const s = JSON.parse(localStorage.getItem(kluczStanu())); if (s?.warianty?.przed && s?.warianty?.po) return s; } catch {} return { warianty: kopia(DOMYSLNE), wersja: 0, log: [] }; }
+let S = wczytajStan();
+if (!qs.has("wzor") && S.wersja === 0) { S.warianty.po = kopia(DOMYSLNE.przed); S.warianty.po.nazwa = "Po zmianach"; }   // grupy zaczynają od kopii A
+let aktywny = "przed", blokadaA = true;
+let wyniki = {}, t = 0, gra = false, predkosc = 60;
+
+/* ------------------------------------------------------------ 3D + BPMN */
+const sc = utworzScene($("#scena"), {
+  onPrzesun(rola, p) {
+    const w = S.warianty[aktywny];
+    if (rola.typ === "start") w.uklad.start = p; else if (rola.typ === "wysylka") w.uklad.wysylka = p; else w.uklad.pakowanie[rola.idx] = p;
+    zmiana(`przesunął(-ęła) ${rola.typ === "start" ? "start/WMS" : rola.typ === "wysylka" ? "strefę wysyłki" : "stanowisko pakowania " + (rola.idx + 1)}`);
+  },
+  onKursor: (() => { let ost = 0; return p => { if (!kanal) return; const n = performance.now(); if (n - ost < 90 && p) return; ost = n; kanal.send("mag", { typ: "kursor", od: ja.uid, imie: ja.imie, kolor: ja.kolor, wariant: aktywny, x: p?.x ?? null, z: p?.z ?? null }); }; })(),
+});
+const bp = utworzBPMN($("#bpmn"), { onKlik: pokazZadanie });
+
+function przelicz() {
+  for (const k of ["przed", "po"]) wyniki[k] = symuluj(S.warianty[k]);
+  sc.ustaw(S.warianty[aktywny], wyniki[aktywny]);
+  bp.wyniki(wyniki[aktywny], S.warianty[aktywny].param);
+  rysujKPI(); rysujPaski(); rysujPanel();
+  $("#suwak").max = Math.ceil(Math.max(wyniki.przed.kpi.czasKoncaMin, wyniki.po.kpi.czasKoncaMin) * 60);
+  klatka();
+}
+
+/* ------------------------------------------------------------ panel parametrów */
+function rysujPanel() {
+  const w = S.warianty[aktywny], p = w.param;
+  $$(".warianty button").forEach(b => b.classList.toggle("on", b.dataset.w === aktywny));
+  $("#kartaParam").classList.toggle("zablokowany", aktywny === "przed" && blokadaA);
+  $('[data-p=kompletujacy] b').textContent = p.kompletujacy;
+  $('[data-p=stanowiska] b').textContent = w.uklad.pakowanie.length;
+  for (const k of ["partia", "rozmieszczenie", "trasa", "przenosnik"]) $$(`[data-p=${k}] button`).forEach(b => b.classList.toggle("on", String(p[k]) === b.dataset.v));
+  $("[data-p=zamowienNaGodz]").value = p.zamowienNaGodz; $("#zamH").textContent = p.zamowienNaGodz;
+  $("#pigWariant").textContent = aktywny === "przed" ? "Wariant A · przed" : "Wariant B · po zmianach";
+  $("#pigWariant").className = "pig w-" + aktywny;
+  const k = koszt();
+  $("#koszt").innerHTML = `Koszt zmian B względem A: <b>${k.jedn.toLocaleString("pl-PL")} zł</b> jednorazowo` + (k.mies ? ` + <b>${k.mies.toLocaleString("pl-PL")} zł/mies.</b> (etaty)` : "") + (k.lista.length ? `<div class="muted">${k.lista.join(" · ")}</div>` : "");
+}
+function koszt() {
+  const a = S.warianty.przed, b = S.warianty.po, lista = []; let jedn = 0, mies = 0;
+  const dk = b.param.kompletujacy - a.param.kompletujacy; if (dk) { mies += dk * KOSZTY.kompletujacy; lista.push(`${dk > 0 ? "+" : ""}${dk} kompl.`); }
+  const ds = b.uklad.pakowanie.length - a.uklad.pakowanie.length; if (ds > 0) { jedn += ds * KOSZTY.stanowisko; mies += ds * KOSZTY.kompletujacy; lista.push(`+${ds} stanow. (i pakujący)`); } else if (ds < 0) { mies += ds * KOSZTY.kompletujacy; lista.push(`${ds} stanow.`); }
+  if (b.param.przenosnik && !a.param.przenosnik) { jedn += KOSZTY.przenosnik; lista.push("przenośnik"); }
+  if (b.param.rozmieszczenie === "ABC" && a.param.rozmieszczenie !== "ABC") { jedn += KOSZTY.ABC; lista.push("przełożenie towaru ABC"); }
+  if (b.param.partia > 1 && a.param.partia === 1) { jedn += KOSZTY.partia; lista.push("moduł partii w WMS"); }
+  if (b.param.trasa === "S" && a.param.trasa !== "S") { jedn += KOSZTY.S; lista.push("szkolenie trasy S"); }
+  const przes = JSON.stringify({ s: a.uklad.start, w: a.uklad.wysylka }) !== JSON.stringify({ s: b.uklad.start, w: b.uklad.wysylka }) || JSON.stringify(a.uklad.pakowanie.slice(0, b.uklad.pakowanie.length)) !== JSON.stringify(b.uklad.pakowanie.slice(0, a.uklad.pakowanie.length));
+  if (przes) { jedn += 3000; lista.push("przestawienie stref"); }
+  return { jedn, mies, lista };
+}
+$$(".warianty button").forEach(b => b.onclick = () => { aktywny = b.dataset.w; przelicz(); });
+$("#odblokuj").onclick = () => { blokadaA = false; rysujPanel(); };
+$$(".licznik button").forEach(b => b.onclick = e => {
+  e.preventDefault(); const w = S.warianty[aktywny], d = +b.dataset.d, co = b.parentElement.dataset.p;
+  if (co === "kompletujacy") { const n = Math.max(1, Math.min(10, w.param.kompletujacy + d)); if (n === w.param.kompletujacy) return; w.param.kompletujacy = n; zmiana(`ustawił(a) ${n} kompletujących`); }
+  else {
+    const P = w.uklad.pakowanie;
+    if (d > 0 && P.length < 6) { const ost = P[P.length - 1] || { x: 31, z: 6 }; P.push({ x: Math.min(34.5, ost.x + (ost.z > 19 ? -2.5 : 0)), z: ost.z > 19 ? ost.z : ost.z + 2.5 }); zmiana(`dodał(a) stanowisko pakowania ${P.length}`); }
+    else if (d < 0 && P.length > 1) { P.pop(); zmiana(`usunął(-ęła) stanowisko pakowania ${P.length + 1}`); }
+  }
+});
+$$(".seg").forEach(s => s.querySelectorAll("button").forEach(b => b.onclick = () => {
+  const w = S.warianty[aktywny], k = s.dataset.p; let v = b.dataset.v; v = k === "partia" ? +v : k === "przenosnik" ? v === "true" : v;
+  if (w.param[k] === v) return; w.param[k] = v;
+  const opis = { partia: v > 1 ? `włączył(a) kompletację partiami po ${v}` : "wrócił(a) do kompletacji po 1 zamówieniu", rozmieszczenie: `ustawił(a) rozmieszczenie: ${v}`, trasa: `ustawił(a) trasę: ${v === "S" ? "S (wężykiem)" : "powrotną"}`, przenosnik: v ? "dodał(a) przenośnik do wysyłki" : "usunął(-ęła) przenośnik" }[k];
+  zmiana(opis);
+}));
+$("[data-p=zamowienNaGodz]").oninput = e => { $("#zamH").textContent = e.target.value; };
+$("[data-p=zamowienNaGodz]").onchange = e => { const v = +e.target.value; for (const k of ["przed", "po"]) S.warianty[k].param.zamowienNaGodz = v; zmiana(`ustawił(a) popyt ${v} zamówień/h (oba warianty)`); };
+$("#kopiujAB").onclick = () => { S.warianty.po = { ...kopia(S.warianty.przed), nazwa: "Po zmianach" }; aktywny = "po"; zmiana("skopiował(a) układ A do B"); };
+$("#resetB").onclick = () => { if (!confirm("Wczytać do wariantu B propozycję wzorcową? Bieżące zmiany B zostaną zastąpione.")) return; S.warianty.po = kopia(DOMYSLNE.po); aktywny = "po"; zmiana("wczytał(a) propozycję wzorcową do B"); };
+
+/* ------------------------------------------------------------ zmiany + synchronizacja */
+function zmiana(opis, { zdalna = false, kto = ja } = {}) {
+  if (!zdalna) { S.wersja = Math.max(S.wersja, Date.now()); S.log = [{ t: Date.now(), kto: kto.imie || "Ja", kolor: kto.kolor, w: aktywny, opis }, ...(S.log || [])].slice(0, 80); }
+  try { localStorage.setItem(kluczStanu(), JSON.stringify(S)); } catch {}
+  if (!zdalna && kanal) kanal.send("mag", { typ: "stan", od: ja.uid, stan: S });
+  przelicz(); rysujLog();
+}
+function rysujLog() {
+  $("#log").innerHTML = (S.log || []).map(l => `<div><b style="color:${esc(l.kolor || "#1f2a2e")}">${esc(l.kto)}</b> ${esc(l.opis)} <span class="muted">· ${l.w === "przed" ? "A" : "B"} · ${new Date(l.t).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" })}</span></div>`).join("") || `<div class="muted">Brak zmian – zacznij od przeciągnięcia stanowiska albo zmiany parametru.</div>`;
+}
+const obecni = new Map();
+function rysujObecnych() {
+  const l = [...obecni.values()];
+  $("#obecni").innerHTML = l.map(o => `<span style="background:${esc(o.kolor)}" title="${esc(o.imie)}${o.prow ? " (prowadzący)" : ""}">${esc((o.imie || "?").slice(0, 2).toUpperCase())}</span>`).join("");
+  $("#pigStan").textContent = pokoj ? `${l.length} ${l.length === 1 ? "osoba" : l.length < 5 ? "osoby" : "osób"} na modelu` : "praca indywidualna";
+}
+async function dolacz({ kod, nr, prow }) {
+  kanal?.close(); kanalWynikow?.close(); obecni.clear();
+  prowadzacy = prow; pokoj = prow ? null : `mag-${kod}-g${nr}`;
+  const b = await backend();
+  S = wczytajStan(); if (S.wersja === 0) { S.warianty.po = kopia(DOMYSLNE.przed); S.warianty.po.nazwa = "Po zmianach"; }
+  const meInfo = { uid: ja.uid, imie: ja.imie, kolor: ja.kolor, prow };
+  if (pokoj) {
+    kanal = b.channel(pokoj, {
+      zdarzenia: ["mag"],
+      onReady() { kanal.send("mag", { typ: "hej", od: ja.uid }); toast(`Dołączono do grupy ${nr}`); },
+      onPresence(lista) { obecni.clear(); for (const m of lista) obecni.set(m.uid, m); rysujObecnych(); },
+      onMessage(ev, m) {
+        if (ev !== "mag" || !m || m.od === ja.uid) return;
+        if (m.typ === "hej") { if (S.wersja > 0) kanal.send("mag", { typ: "stan", od: ja.uid, stan: S }); }
+        else if (m.typ === "stan" && m.stan?.warianty && (m.stan.wersja || 0) > (S.wersja || 0)) {
+          S = m.stan; const ost = S.log?.[0]; zmiana(ost?.opis || "", { zdalna: true });
+          if (ost) toast(`${ost.kto}: ${ost.opis}`);
+        }
+        else if (m.typ === "kursor") { if (m.wariant === aktywny) sc.kursor(m.od, m); else sc.kursor(m.od, { ...m, x: null }); }
+      },
+      onError: () => toast("Brak połączenia z pokojem grupy"),
+    }, meInfo);
+    $("#pokojBadge").textContent = `${kod} · grupa ${nr}`; $("#pokojBadge").classList.add("on");
+    $("#logInfo").textContent = "– zmiany całej grupy na żywo";
+  } else { $("#pokojBadge").textContent = `${kod} · prowadzący`; $("#pokojBadge").classList.add("on"); }
+  kanalWynikow = b.channel(`mag-${kod}-wyniki`, {
+    zdarzenia: ["mag"],
+    onMessage(ev, m) { if (prowadzacy && m?.typ === "wynik") { zapiszWynik(kod, m); } },
+  }, { ...meInfo, uid: ja.uid + "-w" });
+  $("#kartaProw").style.display = prow ? "" : "none";
+  if (prow) rysujWynikiGrup(kod);
+  przelicz(); rysujLog(); rysujObecnych();
+  history.replaceState(null, "", `?kod=${encodeURIComponent(kod)}${prow ? "&prowadzacy=1" : `&grupa=${nr}`}`);
+}
+
+/* ------------------------------------------------------------ wyniki grup */
+const kluczW = kod => "magazyn-wyniki-" + kod;
+function zapiszWynik(kod, m) {
+  let l = []; try { l = JSON.parse(localStorage.getItem(kluczW(kod))) || []; } catch {}
+  l = [m, ...l.filter(x => x.grupa !== m.grupa)]; localStorage.setItem(kluczW(kod), JSON.stringify(l));
+  toast(`Nowy wynik: grupa ${m.grupa}`); rysujWynikiGrup(kod);
+}
+function rysujWynikiGrup(kod) {
+  let l = []; try { l = JSON.parse(localStorage.getItem(kluczW(kod))) || []; } catch {}
+  l.sort((a, b) => a.kpiB.sredniCzas - b.kpiB.sredniCzas);
+  $("#wynikiGr").innerHTML = l.map((w, i) => `<div class="card">
+    <h4>${i === 0 ? "🏆 " : ""}Grupa ${esc(w.grupa)} <span class="muted maly">${esc(w.czlonkowie.join(", "))}</span></h4>
+    <div class="maly">Średni czas: <b>${w.kpiA.sredniCzas.toFixed(1)} → ${w.kpiB.sredniCzas.toFixed(1)} min</b><br>Przepustowość: ${w.kpiA.przepustowosc.toFixed(0)} → <b>${w.kpiB.przepustowosc.toFixed(0)}</b> zam./h<br>
+    Koszt: ${w.koszt.jedn.toLocaleString("pl-PL")} zł + ${w.koszt.mies.toLocaleString("pl-PL")} zł/mies.<br>Wąskie gardło po zmianach: ${esc(w.gardloB)}</div>
+    <p class="maly" style="margin:6px 0">${esc(w.uzasadnienie || "–")}</p>
+    <button class="btn" data-wczytaj="${i}" style="font-size:12.5px;padding:4px 10px">Pokaż układ B tej grupy</button></div>`).join("") || `<div class="muted maly">Czekam na wyniki grup… Grupy wysyłają je przyciskiem „📨 Wyślij wynik do prowadzącego”.</div>`;
+  $$("[data-wczytaj]").forEach(b => b.onclick = () => { S.warianty.po = kopia(l[+b.dataset.wczytaj].wariantB); aktywny = "po"; przelicz(); toast(`Układ grupy ${l[+b.dataset.wczytaj].grupa}`); });
+}
+$("#bWyslij").onclick = () => {
+  if (!pokoj) { toast("Najpierw dołącz do grupy (👥 Praca w grupie)"); $("#bGrupa").click(); return; }
+  const A = wyniki.przed.kpi, B = wyniki.po.kpi;
+  $("#wPodsum").innerHTML = `Średni czas realizacji: <b>${A.sredniCzas.toFixed(1)} → ${B.sredniCzas.toFixed(1)} min</b> · przepustowość <b>${A.przepustowosc.toFixed(0)} → ${B.przepustowosc.toFixed(0)}</b> zam./h`;
+  $("#dWynik").showModal();
+};
+$("#dWynik").addEventListener("close", () => {
+  if ($("#dWynik").returnValue !== "ok") return;
+  const p = new URLSearchParams(location.search);
+  const m = { typ: "wynik", grupa: p.get("grupa"), czlonkowie: [...obecni.values()].filter(o => !o.prow).map(o => o.imie), kpiA: wyniki.przed.kpi, kpiB: wyniki.po.kpi, gardloB: wyniki.po.gardlo.opis, koszt: koszt(), wariantB: S.warianty.po, uzasadnienie: $("#wUzas").value.trim(), t: Date.now() };
+  if (!m.czlonkowie.length) m.czlonkowie = [ja.imie];
+  kanalWynikow.send("mag", m); toast("Wynik wysłany do prowadzącego ✔");
+  zmiana("wysłał(a) wynik grupy do prowadzącego");
+});
+
+/* ------------------------------------------------------------ dialog grupy */
+$("#gKolory").innerHTML = KOLORY.map(k => `<button type="button" style="background:${k}" data-k="${k}" aria-label="kolor"></button>`).join("");
+$("#gNr").innerHTML = Array.from({ length: 8 }, (_, i) => `<option>${i + 1}</option>`).join("");
+const zaznaczKolor = () => $$("#gKolory button").forEach(b => b.classList.toggle("on", b.dataset.k === ja.kolor));
+$$("#gKolory button").forEach(b => b.onclick = () => { ja.kolor = b.dataset.k; zaznaczKolor(); });
+$("#bGrupa").onclick = () => { $("#gImie").value = ja.imie; $("#gKod").value = qs.get("kod") || ""; $("#gNr").value = qs.get("grupa") || "1"; $("#gProw").checked = qs.has("prowadzacy"); zaznaczKolor(); $("#dGrupa").showModal(); };
+$("#gOk").onclick = e => { if (!$("#gImie").value.trim() || !$("#gKod").value.trim()) { e.preventDefault(); toast("Wpisz imię i kod zajęć"); } };
+$("#dGrupa").addEventListener("close", () => {
+  if ($("#dGrupa").returnValue !== "ok") return;
+  ja.imie = $("#gImie").value.trim(); localStorage.setItem("magazyn-ja", JSON.stringify(ja));
+  dolacz({ kod: $("#gKod").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""), nr: $("#gNr").value, prow: $("#gProw").checked });
+});
+
+/* ------------------------------------------------------------ KPI i wykresy */
+const KPI = [
+  ["sredniCzas", "Średni czas realizacji", "min", -1, 1], ["p90", "90% zamówień gotowe w", "min", -1, 1], ["przepustowosc", "Przepustowość", "zam./h", 1, 0],
+  ["czekPak", "Czekanie na pakowanie", "min", -1, 1], ["maxKolejka", "Najdłuższa kolejka do pakowania", "zam.", -1, 0],
+  ["dystansKm", "Dystans kompletujących", "km", -1, 1], ["wykKompl", "Wykorzystanie kompletujących", "%", 0, 0], ["wykStan", "Wykorzystanie stanowisk pakowania", "%", 0, 0],
+  ["naPierwszegoKuriera", "Zamówienia na najbliższego kuriera", "%", 1, 0],
+];
+function rysujKPI() {
+  const A = wyniki.przed.kpi, B = wyniki.po.kpi;
+  $("#kpi").innerHTML = `<thead><tr><th>Wskaźnik</th><th>A · przed</th><th>B · po</th><th>Zmiana</th></tr></thead><tbody>` + KPI.map(([k, n, j, kier, dp]) => {
+    const a = A[k], b = B[k], d = a ? (b - a) / a * 100 : 0, kl = !kier || Math.abs(d) < 1 ? "" : (d * kier > 0 ? "lepiej" : "gorzej");
+    return `<tr><td>${n}</td><td>${a.toFixed(dp)} ${j}</td><td>${b.toFixed(dp)} ${j}</td><td class="${kl}">${Math.abs(d) < 1 ? "≈" : (d > 0 ? "+" : "") + d.toFixed(0) + "%"}</td></tr>`;
+  }).join("") + "</tbody>";
+  $("#gardla").innerHTML = `<div class="gardlo-box"><b>Wąskie gardło A:</b> ${esc(wyniki.przed.gardlo.opis)}<br><b>Wąskie gardło B:</b> ${esc(wyniki.po.gardlo.opis)}</div>`;
+}
+function rysujPaski() {
+  const max = Math.max(...["przed", "po"].map(k => Object.values(wyniki[k].zadania).reduce((a, b) => a + b, 0)));
+  $("#paski").innerHTML = ["przed", "po"].map(k => {
+    const z = wyniki[k].zadania, suma = Object.values(z).reduce((a, b) => a + b, 0);
+    return `<div class="maly"><b>${k === "przed" ? "A · przed" : "B · po"}</b> – razem ${suma.toFixed(1)} min</div><div class="pasek" style="width:${Math.max(18, suma / max * 100)}%">` +
+      ZADANIA.map(t => { const v = z[t.id] || 0, pr = v / suma * 100; return pr < 0.3 ? "" : `<div style="width:${pr}%;background:${KOL_ZAD[t.id]}" title="${esc(t.nazwa)}: ${v.toFixed(1)} min">${pr > 9 ? v.toFixed(0) + "′" : ""}</div>`; }).join("") + `</div>`;
+  }).join("") + `<div class="legenda">${ZADANIA.map(t => `<span><i style="background:${KOL_ZAD[t.id]}"></i>${esc(t.nazwa)}</span>`).join("")}</div>`;
+}
+function pokazZadanie(id) {
+  bp.zaznacz(id); const z = ZADANIA.find(x => x.id === id), [co, wplyw] = INFO[id];
+  const a = wyniki.przed.zadania[id] || 0, b = wyniki.po.zadania[id] || 0;
+  $("#infoZad").style.display = "block";
+  $("#infoZad").innerHTML = `<b>${esc(z.nazwa)}</b> <span class="muted">(tor: ${esc(z.tor)})</span><br>${esc(co)}<br><span class="muted">Co wpływa:</span> ${esc(wplyw)}<br>Średnio: <b>A ${a.toFixed(1)} min</b> → <b>B ${b.toFixed(1)} min</b>`;
+  const w = S.warianty[aktywny], cel = { przyjecie: w.uklad.start, przydzial: w.uklad.start, kompletacja: { x: 15, z: 10 }, dostarczenie: { x: 26, z: 3 }, pakowanie: w.uklad.pakowanie[0], kontrola: w.uklad.pakowanie[0], transport: w.uklad.wysylka, wysylka: w.uklad.wysylka }[id];
+  sc.widok("cel", cel); $$(".widoki [data-v]").forEach(x => x.classList.remove("on"));
+}
+
+/* ------------------------------------------------------------ odtwarzanie */
+const hhmm = s => `${String(Math.floor(s / 3600)).padStart(2, "0")}:${String(Math.floor(s / 60) % 60).padStart(2, "0")}`;
+function klatka() {
+  const sim = wyniki[aktywny]; if (!sim) return;
+  sc.klatka(t); const s = stanW(sim, t); bp.zywo(s.aktywne);
+  $("#zegar").textContent = `${hhmm(t)} · przyjęte ${s.przyjete} · wysłane ${s.zrealizowane}`;
+  $("#suwak").value = t;
+}
+let ostT = performance.now();
+sc.naKlatke = () => {
+  const n = performance.now(), dt = Math.min(0.1, (n - ostT) / 1000); ostT = n;
+  if (!gra) return; t += dt * predkosc;
+  if (t >= +$("#suwak").max) { t = +$("#suwak").max; gra = false; $("#bGraj").textContent = "▶ Od nowa"; }
+  klatka();
+};
+$("#bGraj").onclick = () => { if (!gra && t >= +$("#suwak").max) t = 0; gra = !gra; $("#bGraj").textContent = gra ? "⏸ Pauza" : "▶ Dalej"; };
+$("#suwak").oninput = e => { t = +e.target.value; klatka(); };
+$$("#predk button").forEach(b => b.onclick = () => { predkosc = +b.dataset.s; $$("#predk button").forEach(x => x.classList.toggle("on", x === b)); });
+$$(".widoki [data-v]").forEach(b => b.onclick = () => { sc.widok(b.dataset.v); $$(".widoki [data-v]").forEach(x => x.classList.toggle("on", x === b)); });
+let slady = false; $("#bSlady").onclick = () => { slady = !slady; sc.slady = slady; $("#bSlady").classList.toggle("on", slady); };
+
+/* ------------------------------------------------------------ AR */
+$("#bAR").onclick = async () => {
+  $("#arOkno").showModal(); $("#arMiejsce").innerHTML = `<div class="empty">Przygotowuję model…</div>`;
+  if (!customElements.get("model-viewer")) await import("https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js");
+  const glb = await sc.eksportGLB({ animacja: true });
+  const url = URL.createObjectURL(new Blob([glb], { type: "model/gltf-binary" }));
+  $("#arMiejsce").innerHTML = `<model-viewer src="${url}" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" camera-controls autoplay shadow-intensity="1" camera-orbit="30deg 55deg auto" alt="Model magazynu"></model-viewer>`;
+  $("#arPobierz").href = url; $("#arPobierz").download = `magazyn-${aktywny === "przed" ? "A-przed" : "B-po"}.glb`;
+  $("#arInfo").textContent = `${(glb.byteLength / 1024).toFixed(0)} kB · wariant ${aktywny === "przed" ? "A" : "B"}`;
+};
+
+/* ------------------------------------------------------------ start */
+window.__magazyn = { S: () => S, wyniki: () => wyniki, sc, ustawT: v => { t = v; klatka(); }, ustawWariant: w => { aktywny = w; przelicz(); }, wczytajWzor: () => { S.warianty.po = kopia(DOMYSLNE.po); przelicz(); } };
+przelicz(); rysujLog(); rysujObecnych();
+if (qs.get("kod") && ja.imie) dolacz({ kod: qs.get("kod").toUpperCase(), nr: qs.get("grupa") || "1", prow: qs.has("prowadzacy") });
+if (qs.get("wariant") === "po") { aktywny = "po"; przelicz(); }
+</script>
+</body>
+</html>

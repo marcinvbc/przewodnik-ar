@@ -63,6 +63,11 @@ Pomocnik działa w Twojej zalogowanej sesji e-peAR – hasło nie trafia do apli
 pobierz **paczkę .zip** i wczytaj ją w pomocniku. Adres platformy ustawisz w `lekcje/konfiguracja.js` (`epearUrl`).
 e-peAR nie przyjmuje plików Word/Excel/PowerPoint – zamiast nich wysyłany jest obraz karty pliku.
 
+**🎬 Scena AR (wersja 16):** w oknie „Wyślij do e-peAR” kliknij **Podgląd i ustawienia sceny**. Każda scena lekcji to slajd w aplikacji mobilnej e-peAR;
+obiekty są ułożone według **układu bazowego** (tekst po lewej, model z przodu, zdjęcie po prawej). Przyciskami ➕ ➖ ⬅ ➡ ⬆ ⬇ ⏫ ⏬ ⟳ poprawisz każdy obiekt,
+możesz przenieść go na inny slajd albo dodać slajd. **⭐ Zapamiętaj jako układ bazowy** zapisuje ustawienie bieżącego slajdu dla kolejnych lekcji.
+Pomocnik zapisuje scenę w kursie – po otwarciu w aplikacji e-peAR slajdy są gotowe. Podgląd wielkości jest przybliżony.
+
 ## Szybki start: tryb demo (bez zakładania kont)
 
 Od razu po wgraniu na GitHub Pages wejdź na `…/lekcje/nauczyciel.html`. Na górze zobaczysz **TRYB DEMO**.
@@ -209,3 +214,16 @@ Przyciski ＋/－ zmieniają wielkość sceny, a przycisk **Znacznik: leży / wi
 | uczeń: „Nie ma lekcji o takim kodzie” | sprawdź kod; w trybie demo uczniowie muszą być w tej samej przeglądarce |
 | znacznik nie jest rozpoznawany | lepsze światło, matowy wydruk, cały znacznik w kadrze, A3 dla dużej klasy |
 | projekt Supabase „Paused” | panel Supabase → **Restore project** (darmowy plan usypia po tygodniu) |
+
+## Symulator magazynu e-commerce (v21) – `lekcje/magazyn.html`
+
+Lekcja z modelowania procesów: kompletacja → pakowanie → wysyłka.
+
+- **Warianty A (przed) i B (po)** liczone na tych samych zamówieniach (to samo losowanie). A jest zablokowany jako punkt odniesienia.
+- **Zmiany w B:** liczba kompletujących i stanowisk, partie, rozmieszczenie ABC, trasa S, przenośnik, popyt. Start/WMS, stanowiska i wysyłkę przeciąga się na planie 3D.
+- **BPMN na żywo:** żeton = zamówienia w zadaniu, kolor = udział w czasie realizacji, czerwona ramka = wąskie gardło. Kliknięcie zadania pokazuje miejsce w magazynie.
+- **Porównanie:** tabela wskaźników, „gdzie ucieka czas”, koszt zmian.
+- **Praca w grupie:** „👥 Praca w grupie” → imię, kod zajęć, numer grupy. Wszyscy w pokoju widzą zmiany, historię i kursory innych. Prowadzący zaznacza „Jestem prowadzącym” i dostaje wyniki grup.
+  W trybie pokazowym (bez Supabase) działa to tylko między kartami jednej przeglądarki; na różnych urządzeniach potrzebny jest Supabase (realtime).
+- **📱 AR / model 3D:** GLB bieżącego wariantu z animacją pracy (10 min zmiany w 60 s).
+- **Kurs e-peAR:** `lekcje/magazyn/magazyn-e-peAR.zip` (4 slajdy, 2 modele, BPMN, film, quiz). Wczytujesz go w Pomocniku e-peAR („wybierz plik .zip”).

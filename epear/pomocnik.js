@@ -143,7 +143,7 @@
   root.querySelector("[data-x]").onclick = () => { if (!praca || confirm("Przerwać wysyłanie?")) zamknij(); };
   root.querySelector(".tlo").onclick = () => { if (!praca) zamknij(); };
   function zamknij() { host.remove(); }
-  window.__pomocnikEpear = { pokaz() { if (!host.isConnected) document.body.appendChild(host); }, wczytaj(P) { przygotuj(P, "plik"); } };
+  window.__pomocnikEpear = { pokaz() { if (!host.isConnected) document.body.appendChild(host); }, wczytaj(P) { przygotuj(P, "plik"); }, async wczytajZip(f) { this.pokaz(); try { przygotuj(await czytajZip(f), "plik"); } catch (err) { alertKarta(err.message); } } };
   document.body.appendChild(host);
 
   /* ------------------------------------------------------------ start */

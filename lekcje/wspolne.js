@@ -192,7 +192,7 @@ async function supabaseBackend() {
     },
     channel(kod, h, meInfo) {
       const ch = sb.channel("lekcja-" + kod, { config: { broadcast: { self: false }, presence: { key: meInfo.uid } } });
-      for (const ev of ["stan", "hej", "odpowiedz", "reakcja"]) ch.on("broadcast", { event: ev }, ({ payload }) => h.onMessage && h.onMessage(ev, payload));
+      for (const ev of h.zdarzenia || ["stan", "hej", "odpowiedz", "reakcja"]) ch.on("broadcast", { event: ev }, ({ payload }) => h.onMessage && h.onMessage(ev, payload));
       ch.on("presence", { event: "sync" }, () => h.onPresence && h.onPresence(Object.values(ch.presenceState()).flat()));
       ch.subscribe(async status => {
         if (status === "SUBSCRIBED") { await ch.track(meInfo); h.onReady && h.onReady(); }
