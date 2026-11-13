@@ -29,19 +29,34 @@
     return `${location.protocol}//${location.host.replace(/^([^.]+)\./, "$1-console-proxy.")}/realm/${kc.realm}`;
   }
   let API = "", KC = null;
-  async function api(metoda, sciezka, cialo, formularz) {
-    for (let proba = 0; proba < 3; proba++) {
+  async function api(metoda, sciezka, cialo, formularz, opcje = {}) {
+    const proby = opcje.bezPonowien ? 1 : 3;
+    for (let proba = 0; proba < proby; proba++) {
       await KC.updateToken(30).catch(() => {});
       const h = { Authorization: "Bearer " + KC.token, Accept: "application/json, text/plain, */*" };
       if (cialo && !formularz) h["Content-Type"] = "application/json";
+      const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), opcje.czas || 180000);
       try {
-        const r = await fetch(API + sciezka, { method: metoda, headers: h, body: formularz ? cialo : (cialo ? JSON.stringify(cialo) : undefined) });
+        const r = await fetch(API + sciezka, { method: metoda, headers: h, body: formularz ? cialo : (cialo ? JSON.stringify(cialo) : undefined), signal: ctl.signal });
         const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch {}
         if (r.ok) return j;
-        if (r.status < 500 || proba === 2) throw new Error(`${metoda} ${sciezka.split("/").slice(0, 3).join("/")}: ${r.status}${t ? " – " + t.slice(0, 120) : ""}`);
-      } catch (e) { if (proba === 2 || /: [1-4]\d\d/.test(e.message)) throw e; }
+        if (r.status < 500 || proba === proby - 1) throw new Error(`${metoda} ${sciezka.split("/").slice(0, 3).join("/")}: ${r.status}${t ? " – " + t.slice(0, 120) : ""}`);
+      } catch (e) {
+        if (proba === proby - 1 || /: [1-4]\d\d/.test(e.message)) throw e.name === "AbortError" ? new Error("serwer nie odpowiedział w czasie") : e;
+      } finally { clearTimeout(to); }
       await new Promise(r => setTimeout(r, 1500 * (proba + 1)));
     }
+  }
+  /** Dołączenie pliku do kursu. Serwer e-peAR potrafi przetwarzać to długo i odpowiedzieć błędem 500 lub przekroczeniem
+   *  czasu, mimo że plik został dołączony – dlatego po błędzie sprawdzamy kurs, zamiast powtarzać. */
+  async function dolacz(kursId, plikId, log) {
+    try { await api("PUT", `/manage_file/add/${kursId}/${plikId}`, null, false, { bezPonowien: true, czas: 150000 }); return true; }
+    catch (e) { log("   ⏳ e-peAR jeszcze przetwarza plik – sprawdzam, czy jest w kursie…"); }
+    for (let i = 0; i < 30; i++) {
+      try { const k = await api("GET", `/course/${kursId}`); if ((k?.courseFiles || []).some(f => f.id === plikId)) return true; } catch {}
+      await new Promise(r => setTimeout(r, 10000));
+    }
+    throw new Error("plik nie pojawił się w kursie (sprawdź „Pliki kursu” w e-peAR)");
   }
 
   /* ------------------------------------------------------------ odczyt paczki .zip (bez kompresji) */
@@ -157,7 +172,7 @@
   /* ------------------------------------------------------------ wysyłanie */
   async function wyslij(P, o) {
     praca = true;
-    ekran(`<div class="pasek"><div id="pas"></div></div><div class="log" id="log"></div>`, `<button data-x3 disabled>Zamknij</button>`);
+    ekran(`<div class="pasek"><div id="pas"></div></div><div class="m">e-peAR przetwarza każdy plik na serwerze – przy dużych modelach 3D może to trwać 1–2 minuty na plik. Nie zamykaj tej karty.</div><div class="log" id="log"></div>`, `<button data-x3 disabled>Zamknij</button>`);
     const log = t => { const l = $("#log"); l.textContent += t + "\n"; l.scrollTop = l.scrollHeight; };
     const kroki = 1 + P.pliki.length + (o.galeria ? P.galeria.length : 0) + (o.quiz ? 1 + P.quiz.pytania.length : 0);
     let zrobione = 0; const krok = () => { $("#pas").style.width = Math.round(++zrobione / kroki * 100) + "%"; };
@@ -181,8 +196,8 @@
         fd.append("file", f.blob, f.nazwa); fd.append("fileName", f.nazwa); fd.append("contentType", f.typ); fd.append("animated", String(!!f.animowany));
         const z = await api("POST", "/manage_file/educator", fd, true);
         if (!z?.id) throw new Error("brak numeru pliku");
-        await api("PUT", `/course/${z.id}/lod`).catch(() => {});          // optymalizacja (jak w panelu e-peAR)
-        await api("PUT", `/manage_file/add/${kurs.id}/${z.id}`);
+        await api("PUT", `/course/${z.id}/lod`, null, false, { bezPonowien: true, czas: 60000 }).catch(() => {});   // optymalizacja (jak w panelu e-peAR)
+        await dolacz(kurs.id, z.id, log);
         log("   ✅ dodano do kursu");
       } catch (e) { log("   ❌ " + e.message); bledy.push(f.nazwa); }
       krok();
