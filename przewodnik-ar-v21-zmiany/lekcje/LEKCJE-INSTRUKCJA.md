@@ -1,0 +1,255 @@
+# Lekcja AR: instrukcja dla nauczyciela
+
+Lekcja AR to prezentacja w rozszerzonej rzeczywistości zamiast PowerPointa. Nauczyciel wgrywa slajdy (PDF), filmy,
+zdjęcia i modele 3D, AI układa z nich sceny, a uczniowie oglądają je na swoich telefonach. Każdy widzi wspólną
+scenę ze swojego miejsca w klasie.
+
+| Strona | Dla kogo | Co robi |
+|---|---|---|
+| `lekcje/nauczyciel.html` | nauczyciel | lekcje, wgrywanie plików, planowanie scen (AI/automatycznie), edycja, quizy |
+| `lekcje/prowadzenie.html` | nauczyciel (projektor) | prowadzenie na żywo: sceny, wyróżnianie, filmy, quiz z wynikami, zaproszenia |
+| `lekcje/uczen.html` | uczniowie | dołączanie kodem/QR, oglądanie: znacznik / ławka / 3D, quiz, reakcje, pytania do Bartka |
+| `lekcje/znacznik.html` | do druku | wspólny znacznik klasy (jeden na wszystkie lekcje) |
+
+---
+
+## 🔭 Lekcja pokazowa (Kopernik)
+W panelu nauczyciela kliknij **Wczytaj gotową lekcję**: „Mikołaj Kopernik – astronom z Torunia” (slajdy, film, 2 animowane modele 3D, quiz).
+Pliki do pokazania procesu wgrywania i scenariusz pokazu: `lekcje/pokazowa/pliki.html` i `lekcje/pokazowa/SCENARIUSZ-POKAZU.md`.
+
+## 🧭 Generator scenariuszy lekcji (nowość w wersji 13)
+
+Adres: `lekcje/generator.html` (albo w panelu nauczyciela: **➕ Dodaj lekcję → Utwórz z generatorem scenariuszy**).
+
+1. **Gdzie uczysz?** – wybierz typ szkoły (przedszkole, SP 1–3, SP 4–8, liceum, technikum, branżowa, uczelnia) albo
+   **Własną definicję szkoły** (np. szkoła językowa: poziomy, przedmioty i rama programowa – można zapisać w profilu).
+   Generator sam rozpoznaje, czy w danej klasie obowiązuje **nowa podstawa „Kompas Jutra” (2026)**, czy **podstawa z 2017 r.**
+   (w roku 2026/27 nowa podstawa obejmuje klasy 1 i 4; klasy 2–3 i 5–8 uczą się jeszcze według podstawy z 2017 r.).
+2. **Przedmiot** – lista dopasowana do klasy (np. w klasie 4 jest przyroda i zajęcia praktyczno-techniczne).
+3. **Temat** – z listy działów (dla biologii kl. 7 z wymaganiami z podstawy programowej), wpisany ręcznie albo
+   zaproponowany przez AI. Do tego szablon: scenariusz (konspekt), wykład akademicki albo krótki plan.
+
+W edytorze każda sekcja ma przyciski **✨ Napisz / Rozwiń / Uprość / Popraw język** i pole na własne polecenie.
+AI dostaje zawsze ramę: szkołę, klasę, przedmiot, dokument (podstawa / sylabus) i zaznaczone wymagania – i pisze tylko w ich zakresie.
+Jeśli poprosisz o coś spoza podstawy, zrobi wersję zgodną z podstawą i dopisze „Uwaga: …”.
+
+Etapy lekcji mają: przebieg dla nauczyciela, tekst dla uczniów (czyta go Bartek), materiały i pytania quizu.
+Materiały: 🖼 obraz, 🎬 film, 🧊 model 3D, 📊 wykres (z danych albo z pliku Excel/CSV), 📎 plik (Word, Excel, PowerPoint, PDF – w AR jako karta z podglądem).
+Obraz i model 3D możesz **wygenerować z AI**: otwiera się okno czatu z gotowym opisem dopasowanym do etapu;
+poprawiasz wynik wiadomościami („bez podpisów”, „większe napisy”), a **✅ Dodaj do lekcji** zamyka czat.
+Ilustracje AI powstają jako grafika wektorowa (SVG) z polskimi podpisami; modele 3D – z brył opisanych przez AI, zapisywane jako GLB.
+
+Na końcu: **🖨 Drukuj / PDF**, **⬇ Word** albo **🚀 Utwórz lekcję AR** – każdy etap staje się sceną, a tekst dla uczniów może pojawić się też jako tablica w AR.
+W panelu nauczyciela przy tekstach przewodnika też są przyciski AI (rozwijanie i upraszczanie „w locie”).
+
+**Przykład:** przycisk **Wczytaj przykład** – biologia kl. 7, „Budowa serca i układu krwionośnego. Krwiobieg mały i duży”
+(wymagania III.4.1, III.4.2, III.4.6): 4 modele 3D (bijące serce, przekrój z przepływem krwi, naczynia, składniki krwi),
+5 ilustracji, animacja „Jak pracuje serce?”, wykres tętna, arkusz pomiarów (xlsx), karta pracy (docx) i quiz. Pliki: `lekcje/pokazowa-biologia/`.
+
+**Tryb demo:** logowanie to makieta – wybierasz nauczyciela z listy (każdy ma swoje scenariusze i lekcje w tej przeglądarce),
+a AI działa jako **„AI pokazowe”**: gotowe treści dla lekcji o sercu, a dla innych tematów szablony i proste plansze.
+Pełne AI (Claude) i prawdziwe konta działają po podłączeniu Supabase – patrz krok 2 (tabela `scenariusze`) i krok 4 (funkcja `claude`).
+
+## 📤 Wysyłanie lekcji do e-peAR (nowość w wersji 14)
+
+Przycisk **📤 Wyślij do e-peAR** jest w generatorze scenariuszy (pasek u góry) i w panelu nauczyciela (edytor lekcji).
+Zakłada w e-peAR kurs: opis z podstawą programową, celami i przebiegiem, kategorię (dobiera się do przedmiotu),
+punkty „czego się nauczysz” (NaCoBeZu), pliki kursu w kolejności scen (modele GLB, obrazy, wykresy, filmy MP4, teksty przewodnika TXT, PDF),
+galerię (do 6 ilustracji) i quiz ze wszystkimi pytaniami lekcji.
+
+Jednorazowo zainstaluj zakładkę **Pomocnik e-peAR**: strona `epear/index.html` (przeciągnij przycisk na pasek zakładek).
+Potem: **Wyślij do e-peAR → Otwórz e-peAR → kliknij zakładkę „Pomocnik e-peAR” → Utwórz kurs**.
+Pomocnik działa w Twojej zalogowanej sesji e-peAR – hasło nie trafia do aplikacji. Gdy lekcja nie dotrze sama,
+pobierz **paczkę .zip** i wczytaj ją w pomocniku. Adres platformy ustawisz w `lekcje/konfiguracja.js` (`epearUrl`).
+e-peAR nie przyjmuje plików Word/Excel/PowerPoint – zamiast nich wysyłany jest obraz karty pliku.
+
+**🎬 Scena AR (wersja 16):** w oknie „Wyślij do e-peAR” kliknij **Podgląd i ustawienia sceny**. Każda scena lekcji to slajd w aplikacji mobilnej e-peAR;
+obiekty są ułożone według **układu bazowego** (tekst po lewej, model z przodu, zdjęcie po prawej). Przyciskami ➕ ➖ ⬅ ➡ ⬆ ⬇ ⏫ ⏬ ⟳ poprawisz każdy obiekt,
+możesz przenieść go na inny slajd albo dodać slajd. **⭐ Zapamiętaj jako układ bazowy** zapisuje ustawienie bieżącego slajdu dla kolejnych lekcji.
+Pomocnik zapisuje scenę w kursie – po otwarciu w aplikacji e-peAR slajdy są gotowe. Podgląd wielkości jest przybliżony.
+
+## Szybki start: tryb demo (bez zakładania kont)
+
+Od razu po wgraniu na GitHub Pages wejdź na `…/lekcje/nauczyciel.html`. Na górze zobaczysz **TRYB DEMO**.
+
+- Wszystko działa w **jednej przeglądarce**: lekcje i pliki zapisują się lokalnie.
+- „Uczniów” możesz symulować w kolejnych kartach tej samej przeglądarki (`uczen.html`).
+- Planowanie przez AI i „Zapytaj Bartka” są wyłączone, działa układ automatyczny.
+
+Żeby uczniowie łączyli się **ze swoich telefonów**, potrzebny jest Supabase (krok 1–4 poniżej, ok. 15 minut).
+
+---
+
+## Krok 1: projekt Supabase (darmowy)
+
+1. Wejdź na **supabase.com** → *Start your project* → zaloguj się (np. kontem GitHub).
+2. **New project**: nazwa np. `lekcja-ar`, ustaw hasło bazy (zapisz je), region **Central EU (Frankfurt)**.
+3. Poczekaj 1–2 minuty, aż projekt się utworzy.
+
+> Darmowy plan: ok. 1 GB na pliki, maksymalnie **50 MB na jeden plik**, do 200 jednoczesnych połączeń.
+> Projekt **usypia po tygodniu bez używania**. Budzisz go jednym kliknięciem w panelu Supabase („Restore”).
+
+## Krok 2: baza danych i miejsce na pliki
+
+1. W projekcie otwórz **SQL Editor** → **New query**.
+2. Wklej całą zawartość pliku `supabase/schema.sql` i kliknij **Run**. Powinno pojawić się „Success”.
+   Skrypt tworzy tabelę lekcji, zabezpieczenia (każdy nauczyciel widzi tylko swoje lekcje) i miejsce na pliki `lekcje`.
+3. **Authentication → Sign In / Providers → Email**: zostaw włączone.
+   Dla wygody możesz wyłączyć **Confirm email**, wtedy konto działa od razu, bez klikania linku w mailu.
+
+## Krok 3: połącz stronę z Supabase
+
+1. **Project Settings → API Keys**: skopiuj klucz **publishable** (`sb_publishable_…`) albo starszy **anon**.
+2. **Project Settings → Data API** (albo strona główna projektu): skopiuj **Project URL** (`https://xxxx.supabase.co`).
+3. Na GitHubie otwórz `lekcje/konfiguracja.js` → ✏️ Edit i wpisz:
+   ```js
+   supabaseUrl: "https://xxxx.supabase.co",
+   supabaseKey: "sb_publishable_xxxxxxxx",
+   ```
+   → **Commit changes**.
+
+⚠️ Wpisuj tylko klucz **publishable/anon**. Ten klucz jest jawny z założenia. **Nigdy** nie wpisuj tu klucza *secret / service_role*
+ani klucza Claude API.
+
+Od teraz `nauczyciel.html` pokazuje ekran logowania. **Załóż konto nauczyciela** i gotowe.
+
+## Krok 4: Claude (AI planuje sceny, pisze scenariusze, Bartek odpowiada na pytania)
+
+> **Aktualizacja do wersji 13:** jeśli masz już funkcję `claude`, wklej ponownie cały plik `supabase/functions/claude/index.ts` i kliknij **Deploy**
+> (dochodzi tryb „generator”). W SQL Editor uruchom końcowy fragment pliku `supabase/schema.sql` (tabela `scenariusze`).
+
+
+1. Klucz Claude API: wejdź na **console.anthropic.com** (Claude Console), załóż konto, w *Billing* doładuj konto
+   (np. 5 USD wystarcza na bardzo wiele lekcji), potem *API Keys* → **Create Key** i skopiuj klucz (`sk-ant-…`).
+2. W Supabase: **Edge Functions** → **Deploy a new function** → **Via Editor**.
+   - Nazwa funkcji: **`claude`** (dokładnie tak).
+   - Usuń przykładowy kod i wklej całą zawartość pliku `supabase/functions/claude/index.ts` → **Deploy**.
+3. **Edge Functions → Secrets** (albo *Manage secrets*) → dodaj sekret:
+   - `ANTHROPIC_API_KEY` = Twój klucz `sk-ant-…`
+4. W ustawieniach funkcji `claude` wyłącz **Verify JWT / Enforce JWT verification**. Uczniowie nie mają kont,
+   a funkcja sama sprawdza, czy planowanie zleca zalogowany nauczyciel.
+
+Opcjonalne sekrety: `CLAUDE_MODEL` (model do planowania lekcji, domyślnie `claude-sonnet-5-5`) i `CLAUDE_MODEL_SZYBKI`
+(model do szybkich odpowiedzi, domyślnie `claude-haiku-5-5`).
+
+Klucz Claude jest przechowywany tylko w Supabase, a przeglądarki uczniów nigdy go nie widzą. Koszty: płacisz za faktyczne użycie.
+Ułożenie lekcji to jedno zapytanie, a odpowiedź Bartka to ułamek centa. W Claude Console możesz ustawić **limit wydatków**.
+
+Po tym kroku przycisk **✨ Zaplanuj z AI** układa sceny, pisze tekst dla Bartka i quiz. W widoku ucznia oraz na
+stronach atrakcji przewodnika pojawia się **💬 Zapytaj Bartka**.
+
+---
+
+## Jak poprowadzić lekcję
+
+1. **Przygotowanie** (`nauczyciel.html`):
+   - Nowa lekcja → przeciągnij pliki. Prezentację PowerPoint zapisz jako **PDF** (*Plik → Zapisz jako → PDF*), wtedy każda strona stanie się slajdem.
+   - **✨ Zaplanuj z AI** (albo **⚡ Ułóż automatycznie**) → popraw tytuły, kolejność, układ sceny, tekst Bartka i quiz.
+   - Podgląd 3D po prawej pokazuje, jak będzie wyglądać scena.
+2. **Znacznik**: wydrukuj `znacznik.html` (A4/A3, w kolorze, matowy papier). Połóż na biurku albo przypnij do tablicy.
+   Znacznik jest wspólny dla wszystkich lekcji.
+3. **Start**: **▶ Rozpocznij lekcję** i wyświetl ekran na projektorze (klawisz **F** chowa panel boczny).
+4. **Zapraszanie**:
+   - **📲 Zaproś** pokazuje duży kod QR i kod lekcji. Uczniowie skanują, a Ty klikasz **← Wróć do prezentacji** (albo Esc).
+   - W tym samym oknie wpiszesz adresy e-mail. Otworzy się Twoja poczta (program, Gmail lub Outlook) z gotowym zaproszeniem, a adresy trafią do pola UDW.
+   - Kod lekcji widać cały czas w rogu ekranu, więc spóźnialscy też dołączą.
+5. **Prowadzenie**:
+   - **← →** zmieniają sceny, a telefony uczniów przełączają się same.
+   - Kliknięcie elementu (na liście albo w scenie) **wyróżnia go**: strzałka nad nim, reszta przygasa, kamera podjeżdża.
+   - Film: ▶/⏸ w panelu, u uczniów odtwarza się zsynchronizowany (domyślnie bez dźwięku, bo dźwięk leci z projektora).
+   - **🔊 Przeczytaj tekst sceny**: Bartek czyta narrację, a na telefonach pojawiają się napisy.
+   - **Quiz**: kliknij pytanie, uczniowie odpowiadają na telefonach, Ty widzisz wyniki na żywo, potem **✔ Pokaż poprawną**.
+   - Uczniowie mogą podnieść rękę (✋), wysłać 👍/😮 albo zapytać Bartka (AI odpowiada na podstawie treści lekcji).
+
+### ✋ Gesty i 🎙 głos (nauczyciel)
+Na ekranie prowadzenia kliknij **✋ Gesty** (klawisz **G**). Kamera laptopa śledzi Twoją dłoń, a w rogu widać mały podgląd ze szkieletem dłoni.
+Obraz z kamery jest analizowany w przeglądarce i **nigdzie nie jest wysyłany**.
+
+| Gest | Działanie |
+|---|---|
+| 👋 machnięcie dłonią w lewo / w prawo | następna / poprzednia scena |
+| ☝️ wskazanie palcem (na ekranie pojawia się kursor), przytrzymaj ok. 1 s na elemencie | wyróżnienie elementu |
+| ✋ otwarta dłoń nieruchomo ok. 1 s | zdjęcie wyróżnienia |
+| 🤏 chwyt (kciuk + palec wskazujący) i ruch | obrót sceny; przybliżenie dłoni do kamery = zoom |
+| 👍 kciuk w górę | quiz: pokaż/ukryj odpowiedź; poza quizem Bartek czyta tekst sceny |
+| ✊ pięść | film start / pauza |
+| ✌️ znak V | okno zaproszenia (otwórz/zamknij) |
+
+**🎙 Głos** (klawisz **V**, najlepiej w Chrome lub Edge): „dalej”, „wstecz”, „scena trzy”, „pokaż model”, „pokaż slajd dwa”,
+„pokaż <nazwa>”, „odznacz”, „quiz”, „pokaż odpowiedź”, „przeczytaj”, „film start / stop”, „zaproś”, „zamknij”, „pełny ekran”.
+Rozpoznawaną komendę widać w lewym górnym rogu. Uwaga: w Chrome rozpoznawanie mowy korzysta z serwerów Google.
+
+Wskazówki: stań 1–2 m od kamery, dłoń trzymaj na wysokości klatki piersiowej i zadbaj o dobre światło.
+Machnięcie musi być wyraźne: około pół szerokości obrazu w mniej niż pół sekundy.
+
+### 🤏 Uczeń: „chwytanie” sceny
+W widoku ucznia przycisk **🤏 Chwyć** włącza gesty: w trybie znacznika używa tylnej kamery (druga ręka przed telefonem),
+w widoku 3D – przedniej. Chwyć i przesuń w bok = obrót, w górę/dół = powiększenie (w AR), ✋ = powrót do widoku nauczyciela.
+
+### Tryby oglądania u ucznia
+| Tryb | Jak działa | Wymagania |
+|---|---|---|
+| 🎯 **Wspólny znacznik** (zalecany) | wszyscy celują w znacznik na biurku, a scena stoi w klasie i każdy widzi ją ze swojej strony | kamera; Android i iPhone |
+| 🪑 **Na mojej ławce** | uczeń stawia scenę na swoim stole | Android z Chrome i ARCore (na iPhonie Safari nie obsługuje WebXR) |
+| 🧊 **Widok 3D** | obracanie palcem, bez kamery | każdy telefon |
+
+Przyciski ＋/－ zmieniają wielkość sceny, a przycisk **Znacznik: leży / wisi** służy do znacznika przypiętego do tablicy.
+
+---
+
+## Prywatność i bezpieczeństwo (szkoła)
+- Uczniowie **nie zakładają kont**. Podają tylko imię widoczne dla nauczyciela w czasie lekcji (nie jest nigdzie zapisywane).
+- Adresy e-mail z okna zaproszeń zostają w przeglądarce nauczyciela. Wiadomość wysyła Twoja własna poczta.
+- Pliki lekcji są publiczne pod trudnym do odgadnięcia adresem, a lekcję można otworzyć tylko znając jej kod.
+  Nie wgrywaj materiałów z danymi osobowymi uczniów.
+- Kanał na żywo jest otwarty dla każdego, kto zna kod lekcji. Po zajęciach możesz wygenerować nową lekcję (nowy kod).
+- Pytania do Bartka trafiają do Claude API (Anthropic) razem z treścią lekcji. Uprzedź o tym uczniów.
+
+## Najczęstsze problemy
+| Problem | Rozwiązanie |
+|---|---|
+| „plik ma XX MB, limit to 50 MB” | zmniejsz film (np. HandBrake, preset „Fast 720p30”) albo podziel go |
+| AI: „Brak sekretu ANTHROPIC_API_KEY” | dodaj sekret w Supabase (krok 4.3) |
+| AI: 401 / „Zaloguj się jako nauczyciel” | zaloguj się ponownie w panelu; sprawdź, czy wyłączyłeś Verify JWT (krok 4.4) |
+| uczeń: „Nie ma lekcji o takim kodzie” | sprawdź kod; w trybie demo uczniowie muszą być w tej samej przeglądarce |
+| znacznik nie jest rozpoznawany | lepsze światło, matowy wydruk, cały znacznik w kadrze, A3 dla dużej klasy |
+| projekt Supabase „Paused” | panel Supabase → **Restore project** (darmowy plan usypia po tygodniu) |
+
+## Symulator magazynu e-commerce (v21) – `lekcje/magazyn.html`
+
+Lekcja z modelowania procesów: kompletacja → pakowanie → wysyłka.
+
+- **Warianty A (przed) i B (po)** liczone na tych samych zamówieniach (to samo losowanie). A jest zablokowany jako punkt odniesienia.
+- **Zmiany w B:** liczba kompletujących i stanowisk, partie, rozmieszczenie ABC, trasa S, przenośnik, popyt. Start/WMS, stanowiska i wysyłkę przeciąga się na planie 3D.
+- **BPMN na żywo:** żeton = zamówienia w zadaniu, kolor = udział w czasie realizacji, czerwona ramka = wąskie gardło. Kliknięcie zadania pokazuje miejsce w magazynie.
+- **Porównanie:** tabela wskaźników, „gdzie ucieka czas”, koszt zmian.
+- **Praca w grupie:** „👥 Praca w grupie” → imię, kod zajęć, numer grupy. Wszyscy w pokoju widzą zmiany, historię i kursory innych. Prowadzący zaznacza „Jestem prowadzącym” i dostaje wyniki grup.
+  W trybie pokazowym (bez Supabase) działa to tylko między kartami jednej przeglądarki; na różnych urządzeniach potrzebny jest Supabase (realtime).
+- **📱 AR / model 3D:** GLB bieżącego wariantu z animacją pracy (10 min zmiany w 60 s).
+- **Kurs e-peAR:** `lekcje/magazyn/magazyn-e-peAR.zip` (4 slajdy, 2 modele, BPMN, film, quiz). Wczytujesz go w Pomocniku e-peAR („wybierz plik .zip”).
+
+## Aranżacja przestrzeni miejskiej (v21) – `lekcje/miasto.html`
+
+Zajęcia w terenie: nowy budynek w realnym miejscu, w skali 1:1.
+
+- **Projekt:** biblioteka modeli parametrycznych (plomba, kamienica, dom, szeregowiec, blok, biurowiec, pawilon) z kondygnacjami, wymiarami, dachem i kolorami. Do tego zieleń i mała architektura. Można też wczytać własny GLB z bazy.
+- **Teren:** kamera telefonu i model na obrazie na żywo. Orientację daje żyroskop i kompas.
+  - **📐 Dopasuj do budynku:** trzy stuknięcia na zamrożonym kadrze (lewy dolny róg, prawy dolny róg, gzyms). Model dostaje zmierzoną szerokość i wysokość i staje frontem w linii pierzei.
+  - **📍 Postaw tutaj:** model staje przed użytkownikiem, potem przesuwa się go palcem i obraca dwoma palcami.
+  - Cień liczony jest z położenia Słońca dla GPS i wybranej godziny. Figura człowieka 1,8 m służy do sprawdzenia skali. Kąt aparatu i wysokość oczu można skalibrować.
+- **Dane o miejscu:** numer działki i obręb (ULDK GUGiK), adres (OpenStreetMap), typowa liczba kondygnacji w okolicy (OpenStreetMap).
+- **📸 Zdjęcie:** karta projektu, czyli zdjęcie z paskiem opisu (nazwa, uzasadnienie, „jak pasuje do otoczenia”, autorzy, data, adres, działka). Można ją pobrać jako JPG, udostępnić albo wysłać do galerii zajęć.
+- **Galeria zajęć:** prowadzący zaznacza „Jestem prowadzącym” i widzi projekty zespołów na mapie oraz w pokazie slajdów.
+- **AR systemowe:** model-viewer (Quick Look na iPhonie, Scene Viewer na Androidzie) daje najstabilniejsze ustawienie. Zdjęcie z AR dodaje się potem do karty projektu.
+- **Kurs e-peAR:** `lekcje/miasto/miasto-e-peAR.zip` (7 slajdów, modele z punktem zaczepienia w środku frontu przy ziemi, sterowanie ucznia włączone).
+
+## Budujemy most razem (v21) – `lekcje/most.html`
+
+Most wantowy z 12 elementów: przyczółki, filary, przęsła, pylony, pomost, wanty. Zajęcia z budowy i ze współpracy w grupie.
+
+- **Dołączanie:** imię, kod zajęć, numer grupy. Każdy dostaje swoje elementy, oznaczone kolorową obwódką.
+- **Budowa:** element przeciąga się z placu budowy nad jego miejsce i obraca o 90°. Zatrzaśnie się, gdy jest blisko celu, dobrze obrócony i stoi już to, na czym się opiera. Inaczej pojawia się komunikat „za wcześnie” albo „obróć”.
+- **Synchronizacja:** wszyscy widzą na żywo, kto co trzyma i gdzie to niesie. Jest też czat zespołu.
+- **Ustawienia:** przydział „każdy swoje” albo „wszyscy wszystko”; plan widzą wszyscy, tylko kierownik budowy albo nikt.
+- **Panel wykładowcy** (zaznacz „Jestem wykładowcą”): postęp grup, czas, trafione i nietrafione próby każdej osoby, oś czasu budowy, pytania do omówienia.
+- **Kurs e-peAR:** `lekcje/most/most-e-peAR.zip`. Slajd 1 to wykład (model rozkładany na części, z dymkami). Slajd 2 to układanka, czyli włączony tryb układanki e-peAR, do sprawdzenia w aplikacji. Slajd 3 ma kod QR do wersji grupowej.

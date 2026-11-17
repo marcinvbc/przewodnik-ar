@@ -1,0 +1,5 @@
+WERSJA GRUPOWA
+
+W symulatorze Lekcja AR kilka osób buduje naraz, każda ze swoimi elementami, także zdalnie. Wykładowca widzi czas i oś budowy każdej grupy.
+
+Wariant trudny: plan zna tylko kierownik budowy.

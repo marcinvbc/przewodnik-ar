@@ -1,0 +1,5 @@
+BUDUJEMY MOST
+
+Wykładowca przekazuje sterowanie kolejnym osobom. Każda dokłada jeden element: najpierw fundamenty i filary, potem przęsła, pylony, pomost, na końcu wanty.
+
+Ustalcie kolejność, zanim zaczniecie!

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f2a2e">
+<title>Aranżacja przestrzeni miejskiej · Lekcja AR</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script src="../wersja.js"></script>
+<script>window.WERSJA = window.WERSJA || ""; window.zWersja = window.zWersja || (u => u);</script>
+<script src="konfiguracja.js"></script>
+<link rel="stylesheet" href="styl.css">
+<style>
+  [hidden] { display: none !important; }
+  #toast { pointer-events: none; z-index: 80; }
+  .widok { padding: 14px; max-width: 1200px; margin: 0 auto; }
+  .siatka { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 14px; align-items: start; } @media (max-width: 900px) { .siatka { grid-template-columns: 1fr; } }
+  .bib { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+  .bib button { border: 2px solid var(--line); background: #fff; border-radius: 14px; padding: 10px 6px; cursor: pointer; font: 600 13px system-ui; color: var(--ink); display: grid; gap: 2px; justify-items: center; }
+  .bib button b { font-size: 26px; } .bib button.on { border-color: var(--accent); background: #fff4ef; }
+  .podglad { height: min(52vh, 460px); min-height: 300px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); background: linear-gradient(#cfe0ea, #eef3f4 60%, #b9b5a8 60.2%); position: relative; }
+  .podglad canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+  .pole { display: grid; gap: 4px; margin-top: 10px; } .pole > span { font-size: 13px; font-weight: 700; }
+  .rzad { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; } .seg button { flex: 1; border: 0; background: #fff; padding: 7px 6px; font: 600 12.5px system-ui; cursor: pointer; color: var(--ink); } .seg button.on { background: var(--ink); color: #fff; }
+  .obiekty { display: grid; gap: 6px; margin-top: 8px; } .obiekty .o { display: flex; gap: 6px; align-items: center; background: #faf7f0; border-radius: 10px; padding: 6px 8px; font-size: 13px; } .obiekty .o.on { outline: 2px solid var(--accent); }
+  .obiekty .o b { flex: 1; } .mini { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 3px 7px; cursor: pointer; font: 600 12px system-ui; }
+  .wym { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  /* ---- teren: pełny ekran */
+  #vTeren { position: fixed; inset: 0; background: #111; z-index: 40; padding: 0; max-width: none; }
+  #teren { position: absolute; inset: 0; overflow: hidden; }
+  #teren video, #teren .t-stop { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  #teren .t-3d { position: absolute; inset: 0; } #teren .t-3d canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+  .t-gora { position: absolute; left: 0; right: 0; top: 0; padding: calc(env(safe-area-inset-top) + 8px) 10px 8px; display: flex; gap: 6px; align-items: flex-start; z-index: 5; pointer-events: none; }
+  .t-gora > * { pointer-events: auto; }
+  .t-info { flex: 1; background: rgba(20,26,28,.72); color: #fff; border-radius: 14px; padding: 8px 12px; font-size: 12.5px; line-height: 1.35; backdrop-filter: blur(6px); max-height: 30vh; overflow: auto; }
+  .t-info b { color: #ffd7c4; } .t-info.zwin { max-height: 2.8em; overflow: hidden; cursor: pointer; }
+  .t-btn { border: 0; border-radius: 12px; background: rgba(255,253,248,.93); color: var(--ink); font: 700 13px system-ui; padding: 9px 11px; cursor: pointer; min-height: 40px; }
+  .t-btn.on { background: var(--accent); color: #fff; }
+  .t-dol { position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 10px calc(env(safe-area-inset-bottom) + 10px); z-index: 5; display: grid; gap: 8px; background: linear-gradient(transparent, rgba(0,0,0,.45) 30%); }
+  .t-rzad { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .t-migawka { width: 70px; height: 70px; border-radius: 50%; border: 5px solid #fff; background: var(--accent); color: #fff; font-size: 26px; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,.4); }
+  .t-postaw { font-size: 16px; padding: 14px 20px; }
+  .t-ust { background: rgba(255,253,248,.95); border-radius: 14px; padding: 10px 12px; font-size: 13px; display: grid; gap: 6px; }
+  .t-ust label { display: grid; grid-template-columns: 120px 1fr 54px; gap: 8px; align-items: center; }
+  .t-celownik { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px; border: 2px dashed rgba(255,255,255,.9); border-radius: 50%; pointer-events: none; z-index: 3; }
+  .t-pomoc { position: absolute; left: 50%; top: 58%; transform: translateX(-50%); background: rgba(20,26,28,.75); color: #fff; padding: 8px 14px; border-radius: 12px; font-size: 13.5px; text-align: center; z-index: 4; pointer-events: none; max-width: 86vw; }
+  /* ---- karta i galeria */
+  .karta-img { width: 100%; border-radius: 14px; border: 1px solid var(--line); display: block; }
+  .galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .galeria .card img { width: 100%; border-radius: 10px; display: block; cursor: zoom-in; }
+  #mapa { height: 360px; border-radius: 16px; border: 1px solid var(--line); }
+  .chk { display: grid; gap: 4px; font-size: 13.5px; } .chk label { display: flex; gap: 8px; align-items: center; }
+  dialog { border: 0; border-radius: 20px; padding: 0; max-width: 520px; width: 92vw; } dialog::backdrop { background: rgba(20,25,28,.5); } dialog .box { padding: 20px; } dialog h3 { margin-top: 0; }
+  #arOkno model-viewer { width: 100%; height: 56vh; background: #e9e4da; border-radius: 14px; }
+  .pokaz { position: fixed; inset: 0; background: #000; z-index: 60; display: grid; place-items: center; } .pokaz img { max-width: 100vw; max-height: 100vh; }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="nauczyciel.html" title="Panel nauczyciela">AR</a>
+  <div style="flex:1;min-width:0"><b style="display:block;line-height:1.2">Aranżacja przestrzeni miejskiej</b><span class="muted" style="font-size:12.5px">model w skali 1:1 w realnym miejscu · działka · zdjęcie projektu</span></div>
+  <span class="badge" id="kto">—</span>
+  <button class="btn" id="bZespol">👥 Zespół</button>
+</header>
+
+<!-- ============================================================ PROJEKT -->
+<section class="widok" id="vProjekt">
+  <div class="siatka">
+    <div>
+      <div class="podglad" id="podglad"></div>
+      <div class="wym" id="wym"></div>
+      <div class="rzad" style="margin-top:12px">
+        <button class="btn primary t-postaw" id="doTerenu">📷 Idź w teren i postaw model</button>
+        <button class="btn" id="bAR">📱 AR systemowe (iPhone/Android)</button>
+        <button class="btn" id="bGLB">⬇ GLB (e-peAR)</button>
+      </div>
+    </div>
+    <div class="card">
+      <b>1. Wybierz model</b>
+      <div class="bib" id="bib" style="margin-top:8px"></div>
+      <label class="btn" style="margin-top:8px;display:inline-block;cursor:pointer">📂 Własny model GLB z bazy <input type="file" id="plikGLB" accept=".glb,.gltf" hidden></label>
+      <div id="param"></div>
+      <div style="margin-top:12px"><b>2. Otoczenie projektu</b> <span class="muted" style="font-size:12.5px">zieleń i mała architektura</span>
+        <div class="rzad" id="dodatki" style="margin-top:6px"></div>
+        <div class="obiekty" id="obiekty"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ TEREN -->
+<section class="widok" id="vTeren" hidden>
+  <div id="teren"></div>
+  <div class="t-celownik" id="celownik"></div>
+  <div class="t-pomoc" id="pomoc">Stań naprzeciw budynku. <b>📐 Dopasuj</b> – zmierzysz lukę/elewację trzema stuknięciami. <b>📍 Postaw</b> – model stanie przed Tobą.</div>
+  <div class="t-gora">
+    <button class="t-btn" id="tWroc">✕</button>
+    <div class="t-info zwin" id="tInfo" title="Dotknij, aby rozwinąć">Ustalam położenie…</div>
+    <button class="t-btn" id="tUst" title="Ustawienia">⚙</button>
+  </div>
+  <div class="t-dol">
+    <div class="t-ust" id="ust" hidden>
+      <label>Odległość <input type="range" id="uOdl" min="5" max="150" step="1"><span id="uOdlW"></span></label>
+      <label>Obrót <input type="range" id="uRot" min="0" max="359" step="1"><span id="uRotW"></span></label>
+      <label>Wysokość oczu <input type="range" id="uOko" min="1.0" max="2.2" step="0.05"><span id="uOkoW"></span></label>
+      <label>Kąt aparatu <input type="range" id="uFov" min="45" max="90" step="1"><span id="uFovW"></span></label>
+      <label>Godzina (cień) <input type="range" id="uCzas" min="5" max="21" step="0.25"><span id="uCzasW"></span></label>
+      <div class="rzad"><button class="mini" id="uCien">☀ cienie</button><button class="mini" id="uCzl">🧍 człowiek 1,8 m</button><button class="mini" id="uRozg" hidden>👀 rozglądaj się palcem</button><label class="mini" style="cursor:pointer">🖼 zdjęcie jako tło<input type="file" id="uTlo" accept="image/*" hidden></label></div>
+      <div class="muted" style="font-size:12px">Kąt aparatu: jeśli budynek „pływa” względem otoczenia przy obracaniu telefonu, zmień o kilka stopni. Typowy telefon: 65–75°.</div>
+    </div>
+    <div class="t-rzad" id="tPrzed"><button class="t-btn t-postaw on" id="tDopasuj">📐 Dopasuj do budynku</button><button class="t-btn t-postaw" id="tPostaw">📍 Postaw tutaj</button></div>
+    <div class="t-rzad" id="tPo" hidden>
+      <button class="t-btn" data-a="obrL">⟲</button><button class="t-btn" data-a="obrP">⟳</button>
+      <button class="t-btn" data-a="blizej">bliżej</button><button class="t-btn" data-a="dalej">dalej</button>
+      <button class="t-btn" data-a="lewo">◀</button><button class="t-btn" data-a="prawo">▶</button>
+      <button class="t-btn" id="tZamroz">❄ Zamroź kadr</button><button class="t-btn" id="tPonow">📐 Dopasuj od nowa</button>
+    </div>
+    <div class="t-rzad" id="tMig" hidden><button class="t-migawka" id="tFoto" title="Zrób zdjęcie projektu">📸</button></div>
+  </div>
+</section>
+
+<!-- ============================================================ KARTA PROJEKTU -->
+<section class="widok" id="vKarta" hidden>
+  <div class="siatka">
+    <div><img class="karta-img" id="kartaImg" alt="Zdjęcie projektu w przestrzeni miejskiej"></div>
+    <div class="card">
+      <b>Karta projektu</b>
+      <label class="pole"><span>Nazwa projektu</span><input id="kTytul" maxlength="60" placeholder="np. Kamienica narożna przy Rynku"></label>
+      <label class="pole"><span>Opis i uzasadnienie</span><textarea id="kOpis" rows="4" maxlength="400" placeholder="Co projektujemy, dla kogo i dlaczego tak?"></textarea></label>
+      <div class="pole"><span>Jak projekt pasuje do otoczenia?</span><div class="chk" id="kChk"></div></div>
+      <label class="pole"><span>Autorzy</span><input id="kAut" maxlength="80"></label>
+      <div class="muted" style="font-size:12.5px;margin-top:8px" id="kMeta"></div>
+      <div class="rzad" style="margin-top:12px">
+        <button class="btn primary" id="kZapisz">💾 Zapisz kartę</button>
+        <button class="btn" id="kPobierz">⬇ JPG</button>
+        <button class="btn" id="kUdostepnij">📤 Udostępnij</button>
+        <button class="btn accent" id="kWyslij">📨 Do galerii zajęć</button>
+      </div>
+      <div class="rzad" style="margin-top:10px"><button class="btn" id="kNowe">📷 Kolejne zdjęcie</button><button class="btn" id="kProjekt">✏️ Wróć do projektu</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ GALERIA (prowadzący i zespoły) -->
+<section class="widok" id="vGaleria" hidden>
+  <div class="rzad" style="justify-content:space-between;margin-bottom:10px"><h2 style="margin:0">🖼 Galeria projektów <span class="muted" id="gKod" style="font-size:15px"></span></h2>
+    <div class="rzad"><button class="btn" id="gPokaz">▶ Pokaz</button><button class="btn" id="gWroc">✏️ Mój projekt</button></div></div>
+  <div id="mapa"></div>
+  <div class="galeria" id="galeria" style="margin-top:12px"></div>
+</section>
+
+<dialog id="dZespol"><form method="dialog" class="box">
+  <h3>👥 Zespół i zajęcia</h3>
+  <label class="pole"><span>Imiona w zespole</span><input id="zImiona" maxlength="80" placeholder="np. Ania, Bartek, Ola" required></label>
+  <div style="display:grid;grid-template-columns:1fr 110px;gap:10px">
+    <label class="pole"><span>Kod zajęć</span><input id="zKod" maxlength="12" placeholder="np. URB2" style="text-transform:uppercase"></label>
+    <label class="pole"><span>Zespół</span><select id="zNr"></select></label>
+  </div>
+  <label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px"><input type="checkbox" id="zProw"> Jestem prowadzącym – pokaż galerię projektów</label>
+  <p class="muted" style="font-size:12.5px">Zdjęcia projektów trafiają do galerii zajęć na żywo. Prowadzący widzi je na mapie i może zrobić pokaz.</p>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn" value="x">Anuluj</button><button class="btn primary" value="ok">Zapisz</button></div>
+</form></dialog>
+
+<dialog id="arOkno" style="max-width:820px"><div class="box">
+  <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">📱 AR systemowe</h3><button class="btn" onclick="this.closest('dialog').close()">Zamknij</button></div>
+  <p class="muted" style="font-size:13px">Najstabilniejsze ustawienie w terenie: telefon sam znajduje podłoże, model ma skalę 1:1 (nie da się go pomniejszyć). Na iPhonie zdjęcie robisz przyciskiem migawki w AR, na Androidzie zrzutem ekranu. Potem dodaj je tutaj, żeby powstała karta projektu.</p>
+  <div id="arMiejsce"></div>
+  <div class="rzad" style="margin-top:10px"><label class="btn accent" style="cursor:pointer">🖼 Dodaj zdjęcie z AR → karta projektu<input type="file" id="arFoto" accept="image/*" hidden></label><a class="btn" id="arPobierz" download="projekt.glb">⬇ GLB</a></div>
+</div></dialog>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { backend, esc, uid, toast } from "./wspolne.js";
+import { TYPY, zbuduj, opisWymiarow } from "./miasto/budynki.js";
+import { utworzTeren } from "./miasto/teren.js";
+import { dzialka, adres, sasiedzi, slonce, kierunek, linkGeoportal, linkMapa } from "./miasto/geo.js";
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const qs = new URLSearchParams(location.search);
+const KOLORY = ["#d8bf96", "#ece6dc", "#c9a27e", "#b9c4c9", "#e6c9b5", "#9fb4c2", "#f2f0eb", "#8c6b5a", "#cfd8d4", "#3f4a52"];
+const KOL_DACH = ["#5d6670", "#3f3f42", "#7a3b2e", "#4d5a3e", "#8b8f93"];
+const DOPASOWANIE = ["wysokość podobna do sąsiednich budynków", "linia zabudowy (odległość od ulicy) zachowana", "kolorystyka i materiały pasują do otoczenia", "funkcja (mieszkanie / usługi) pasuje do miejsca", "nie zasłania ważnych widoków ani zabytków", "zostawia miejsce na zieleń i pieszych"];
+
+/* ------------------------------------------------------------ stan projektu */
+let zespol = (() => { try { return JSON.parse(localStorage.getItem("miasto-zespol")) || {}; } catch { return {}; } })();
+const kluczP = () => "miasto-projekt-" + (zespol.kod || "solo") + "-" + (zespol.nr || 0);
+let P = (() => { try { return JSON.parse(localStorage.getItem(kluczP())); } catch { return null; } })() || { obiekty: [{ id: uid(), typ: "plomba", param: {}, x: 0, z: 0, rot: 0 }], wybrany: 0 };
+const zapiszP = () => { try { localStorage.setItem(kluczP(), JSON.stringify({ ...P, obiekty: P.obiekty.filter(o => o.typ !== "glb") })); } catch {} };
+let info = { gps: null, dz: null, adr: null, sas: null };
+
+/* ------------------------------------------------------------ podgląd 3D projektu */
+const pv = (() => {
+  const el = $("#podglad"), r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); r.setPixelRatio(Math.min(2, devicePixelRatio)); r.shadowMap.enabled = true; r.outputColorSpace = THREE.SRGBColorSpace; el.appendChild(r.domElement);
+  const s = new THREE.Scene(), c = new THREE.PerspectiveCamera(40, 1, 0.5, 2000); c.position.set(38, 26, 48);
+  const ctl = new OrbitControls(c, r.domElement); ctl.target.set(0, 6, 0); ctl.maxPolarAngle = Math.PI * 0.49; ctl.enableDamping = true;
+  s.add(new THREE.HemisphereLight(0xffffff, 0x8a8a7a, 1.1)); const d = new THREE.DirectionalLight(0xffffff, 1.9); d.position.set(-30, 50, 40); d.castShadow = true; Object.assign(d.shadow.camera, { left: -60, right: 60, top: 60, bottom: -60, far: 200 }); d.shadow.mapSize.set(2048, 2048); s.add(d);
+  const z = new THREE.Mesh(new THREE.CircleGeometry(70, 48), new THREE.MeshStandardMaterial({ color: "#b9b5a8" })); z.rotation.x = -Math.PI / 2; z.receiveShadow = true; s.add(z);
+  const siatka = new THREE.GridHelper(140, 28, 0x8c877b, 0xa39f94); siatka.position.y = 0.02; s.add(siatka);
+  const g = new THREE.Group(); s.add(g);
+  const czl = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1.8, 10), new THREE.MeshStandardMaterial({ color: "#c9562f" })); czl.position.y = 0.9; s.add(czl);
+  new ResizeObserver(() => { const w = el.clientWidth, h = el.clientHeight; r.setSize(w, h, false); c.aspect = w / h; c.updateProjectionMatrix(); }).observe(el);
+  r.setAnimationLoop(() => { ctl.update(); r.render(s, c); });
+  return { g, czl, c, ctl, r };
+})();
+const glbLoader = new (await import("three/addons/loaders/GLTFLoader.js")).GLTFLoader();
+async function rysujPodglad() {
+  pv.g.clear();
+  const bb = new THREE.Box3();
+  for (const [i, o] of P.obiekty.entries()) {
+    let m; if (o.typ === "glb") { const x = await glbLoader.loadAsync(o.url); m = x.scene; if (o.skala) m.scale.setScalar(o.skala); m.traverse(q => { if (q.isMesh) q.castShadow = true; }); } else m = zbuduj(o);
+    m.position.set(o.x, 0, o.z); m.rotation.y = o.rot * Math.PI / 180; pv.g.add(m); if (i === 0) bb.setFromObject(m);
+  }
+  const r = bb.isEmpty() ? new THREE.Vector3(10, 10, 10) : bb.getSize(new THREE.Vector3());
+  pv.czl.position.set(r.x / 2 + 2.5, 0.9, r.z / 2 + 2);
+  const o = P.obiekty[0], T = TYPY[o.typ];
+  $("#wym").innerHTML = `<b>${esc(o.typ === "glb" ? o.nazwa : T.nazwa)}</b>: ${opisWymiarow({ szer: r.x, gleb: r.z, wys: r.y })}` + (o.typ !== "glb" && T.param.kondygnacje ? ` · ${(o.param.kondygnacje ?? T.param.kondygnacje)} kondygnacje` : "") + ` · 🧍 człowiek 1,8 m dla skali`;
+  zapiszP();
+}
+
+/* ------------------------------------------------------------ biblioteka i parametry */
+function rysujBib() {
+  $("#bib").innerHTML = Object.entries(TYPY).filter(([, t]) => !t.maly).map(([k, t]) => `<button data-t="${k}" class="${P.obiekty[0].typ === k ? "on" : ""}" title="${esc(t.opis)}"><b>${t.ikona}</b>${esc(t.nazwa)}</button>`).join("");
+  $$("#bib button").forEach(b => b.onclick = () => { P.obiekty[0] = { ...P.obiekty[0], typ: b.dataset.t, param: {} }; P.wybrany = 0; wszystko(); });
+  $("#dodatki").innerHTML = Object.entries(TYPY).filter(([, t]) => t.maly).map(([k, t]) => `<button class="mini" data-d="${k}">${t.ikona} + ${esc(t.nazwa)}</button>`).join("");
+  $$("#dodatki button").forEach(b => b.onclick = () => {
+    const w = P.obiekty[0], T = TYPY[w.typ], sz = (w.param?.szerokosc ?? T?.param?.szerokosc ?? 14) * (w.param?.segmenty ?? T?.param?.segmenty ?? 1), gl = w.param?.glebokosc ?? T?.param?.glebokosc ?? 12;
+    const n = P.obiekty.filter(o => o.typ === b.dataset.d).length, strona = n % 2 ? 1 : -1;
+    P.obiekty.push({ id: uid(), typ: b.dataset.d, param: {}, x: strona * (sz / 2 + 3 + Math.floor(n / 2) * 6), z: gl / 2 + 4, rot: 0 }); P.wybrany = P.obiekty.length - 1; wszystko();
+  });
+}
+function rysujParam() {
+  const o = P.obiekty[0];
+  if (o.typ === "glb") { $("#param").innerHTML = `<label class="pole"><span>Skala modelu z bazy</span><input type="number" step="0.01" min="0.001" value="${o.skala || 1}" id="pSk"></label>`; $("#pSk").onchange = e => { o.skala = +e.target.value || 1; rysujPodglad(); }; return; }
+  const T = TYPY[o.typ], p = { ...T.param, ...o.param }, op = T.opcje;
+  const suwak = (k, et, jedn = "") => op[k] ? `<label class="pole"><span>${et}: <b id="w_${k}">${p[k]}${jedn}</b></span><input type="range" data-k="${k}" min="${op[k][0]}" max="${op[k][1]}" step="1" value="${p[k]}"></label>` : "";
+  const segm = (k, et) => op[k]?.length > 1 ? `<div class="pole"><span>${et}</span><div class="seg" data-k="${k}">${op[k].map(v => `<button data-v="${esc(v)}" class="${p[k] === v ? "on" : ""}">${esc(v)}</button>`).join("")}</div></div>` : "";
+  const kol = (k, et, lista) => p[k] ? `<div class="pole"><span>${et}</span><div class="rzad">${lista.map(c => `<button class="mini" data-kol="${k}" data-v="${c}" style="background:${c};width:28px;height:28px;border-radius:50%;${p[k] === c ? "outline:3px solid var(--ink)" : ""}"></button>`).join("")}<input type="color" data-kol="${k}" value="${p[k]}" style="width:36px;height:30px;border:0;background:none"></div></div>` : "";
+  $("#param").innerHTML = suwak("kondygnacje", "Kondygnacje") + suwak("segmenty", "Segmenty") + suwak("szerokosc", "Szerokość (front)", " m") + suwak("glebokosc", "Głębokość", " m") + suwak("wysokosc", "Wysokość", " m")
+    + segm("dach", "Dach") + segm("parter", "Parter") + kol("elewacja", "Kolor elewacji", KOLORY) + kol("kolorDachu", "Kolor dachu", KOL_DACH)
+    + (op.kondygnacje && T.param.balkony !== undefined ? `<label style="display:flex;gap:8px;margin-top:10px;font-size:13.5px"><input type="checkbox" id="pBalk" ${p.balkony ? "checked" : ""}> balkony</label>` : "");
+  let t; $$("#param input[type=range]").forEach(i => i.oninput = () => { o.param[i.dataset.k] = +i.value; $("#w_" + i.dataset.k).textContent = i.value + (/szer|gleb|wys/.test(i.dataset.k) ? " m" : ""); clearTimeout(t); t = setTimeout(rysujPodglad, 120); });
+  $$("#param .seg").forEach(s => s.querySelectorAll("button").forEach(b => b.onclick = () => { o.param[s.dataset.k] = b.dataset.v; rysujParam(); rysujPodglad(); }));
+  $$("#param [data-kol]").forEach(b => (b.tagName === "INPUT" ? b.oninput = () => { o.param[b.dataset.kol] = b.value; rysujPodglad(); } : b.onclick = () => { o.param[b.dataset.kol] = b.dataset.v; rysujParam(); rysujPodglad(); }));
+  $("#pBalk") && ($("#pBalk").onchange = e => { o.param.balkony = e.target.checked; rysujPodglad(); });
+}
+function rysujObiekty() {
+  $("#obiekty").innerHTML = P.obiekty.slice(1).map((o, j) => { const i = j + 1, T = TYPY[o.typ]; return `<div class="o ${P.wybrany === i ? "on" : ""}" data-i="${i}"><b>${T.ikona} ${esc(T.nazwa)}</b>
+    <button class="mini" data-m="lewo">◀</button><button class="mini" data-m="prawo">▶</button><button class="mini" data-m="przod">▼</button><button class="mini" data-m="tyl">▲</button><button class="mini" data-m="obr">⟳</button><button class="mini" data-m="usun">✕</button></div>`; }).join("");
+  $$("#obiekty .o").forEach(d => { const o = P.obiekty[+d.dataset.i]; d.onclick = () => { P.wybrany = +d.dataset.i; rysujObiekty(); };
+    d.querySelectorAll("[data-m]").forEach(b => b.onclick = e => { e.stopPropagation(); const m = b.dataset.m;
+      if (m === "usun") { P.obiekty.splice(+d.dataset.i, 1); } else if (m === "obr") o.rot = (o.rot + 45) % 360; else { o.x += m === "lewo" ? -2 : m === "prawo" ? 2 : 0; o.z += m === "przod" ? 2 : m === "tyl" ? -2 : 0; }
+      rysujObiekty(); rysujPodglad(); }); });
+}
+function wszystko() { rysujBib(); rysujParam(); rysujObiekty(); rysujPodglad(); }
+$("#plikGLB").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f);
+  const g = await glbLoader.loadAsync(url); const s = new THREE.Box3().setFromObject(g.scene).getSize(new THREE.Vector3());
+  const skala = Math.max(s.x, s.y, s.z) < 2 ? 50 : Math.max(s.x, s.y, s.z) > 400 ? 0.01 : 1;       // modele w cm / mm albo „na stół” – zgadujemy skalę, grupa poprawia
+  P.obiekty[0] = { id: uid(), typ: "glb", url, nazwa: f.name, skala, x: 0, z: 0, rot: 0 }; wszystko();
+  toast(skala !== 1 ? `Model wczytany – skala ×${skala}. Sprawdź wymiary obok człowieka 1,8 m.` : "Model wczytany");
+};
+
+/* ------------------------------------------------------------ eksport GLB */
+async function glbKompozycji() {
+  const { GLTFExporter } = await import("three/addons/exporters/GLTFExporter.js");
+  const sc = new THREE.Scene(); const g = pv.g.clone(true); g.name = "projekt"; sc.add(g);
+  return new GLTFExporter().parseAsync(sc, { binary: true });
+}
+$("#bGLB").onclick = async () => { const b = await glbKompozycji(); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([b], { type: "model/gltf-binary" })); a.download = (TYPY[P.obiekty[0].typ]?.nazwa || "projekt") + ".glb"; a.click(); };
+$("#bAR").onclick = async () => {
+  $("#arOkno").showModal(); $("#arMiejsce").innerHTML = `<div class="empty">Przygotowuję model…</div>`;
+  if (!customElements.get("model-viewer")) await import("https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js");
+  const url = URL.createObjectURL(new Blob([await glbKompozycji()], { type: "model/gltf-binary" }));
+  $("#arMiejsce").innerHTML = `<model-viewer src="${url}" ar ar-modes="webxr scene-viewer quick-look" ar-scale="fixed" ar-placement="floor" camera-controls shadow-intensity="1" alt="Projekt w skali 1:1"></model-viewer>`;
+  $("#arPobierz").href = url;
+};
+
+/* ------------------------------------------------------------ teren */
+const T3 = utworzTeren($("#teren"), { onStan: s => { if (s.dopasowanie) { const d = s.dopasowanie; if (d.blad) $("#pomoc").innerHTML = "⚠ " + d.blad; else if (d.krok < 3) $("#pomoc").innerHTML = KROKI[d.krok]; return; } stanTerenu = s; rysujInfo(); synchronizujSuwaki(); } });
+T3.slonceFn = slonce;
+let stanTerenu = {};
+function rysujInfo() {
+  const s = stanTerenu, g = info.gps, l = [];
+  if (g) l.push(`📍 ${g.lat.toFixed(5)}, ${g.lon.toFixed(5)} <span style="opacity:.7">±${Math.round(g.dokl)} m</span>`); else l.push("📍 czekam na GPS…");
+  if (info.adr) l.push(`🏠 ${esc(info.adr.tekst)}`);
+  if (info.dz) l.push(`🗺 działka <b>${esc(info.dz.numer)}</b>, obręb ${esc(info.dz.obreb)} (${esc(info.dz.id)})${info.dz.pole ? ` · ${Math.round(info.dz.pole)} m²` : ""}`);
+  else if (info.dzBlad) l.push(`🗺 <span style="opacity:.75">${esc(info.dzBlad)}</span>`);
+  if (info.sas?.liczba) l.push(`🏢 w promieniu 80 m: ${info.sas.liczba} bud.` + (info.sas.kondMediana ? `, zwykle <b>${info.sas.kondMediana} kond.</b> (max ${info.sas.kondMax})` : "") + (info.sas.wysMediana ? `, ok. ${Math.round(info.sas.wysMediana)} m` : ""));
+  if (s.postawiony) l.push(`🏗 model: <b>${Math.round(s.odleglosc)} m</b> ode mnie, kierunek ${kierunek(s.azymut)} (${Math.round(s.azymut)}°)` + (s.slonce ? ` · ☀ ${Math.round(s.slonce.wysokosc)}° nad horyzontem` : ""));
+  l.push(`<span style="opacity:.7">orientacja: ${esc(s.orientacja || "—")}${s.zamrozony ? " · kadr zamrożony" : ""}</span>`);
+  $("#tInfo").innerHTML = l.join("<br>");
+}
+let poGPS = false;
+async function pobierzInfo(g) {
+  info.gps = g; rysujInfo(); if (poGPS) return; poGPS = true;
+  const [dz, adr, sas] = await Promise.allSettled([dzialka(g.lat, g.lon), adres(g.lat, g.lon), sasiedzi(g.lat, g.lon)]);
+  info.dz = dz.status === "fulfilled" ? dz.value : null; if (!info.dz) info.dzBlad = dz.status === "rejected" ? "brak połączenia z usługą działek (GUGiK)" : "nie znaleziono działki w tym miejscu";
+  info.adr = adr.status === "fulfilled" ? adr.value : null; info.sas = sas.status === "fulfilled" ? sas.value : null;
+  rysujInfo();
+}
+async function doTerenu() {
+  pokaz("vTeren"); document.documentElement.style.overflow = "hidden";
+  await T3.ustawKompozycje(P.obiekty);
+  const kam = await T3.startKamery();
+  const ori = await T3.startOrientacji();
+  setTimeout(() => { if (T3.S.orientacja === "brak") { $("#uRozg").hidden = false; T3.rozgladanie = true; $("#uRozg").classList.add("on"); $("#pomoc").textContent = kam ? "Brak żyroskopu – rozglądaj się, przeciągając palcem/myszą. Potem „Postaw tutaj”." : "Brak dostępu do kamery – możesz wczytać zdjęcie jako tło (⚙). Rozglądaj się, przeciągając palcem."; } }, 1500);
+  if (!kam) toast("Brak dostępu do kamery – zezwól na kamerę albo wczytaj zdjęcie jako tło (⚙)");
+  T3.startGPS(g => pobierzInfo(g));
+  const t = new Date(), sl = slonce(info.gps?.lat ?? 52, info.gps?.lon ?? 19.5, t);
+  if (sl.wysokosc < 8) { t.setHours(13, 0, 0, 0); T3.czas = t; toast("Teraz jest ciemno – światło i cień ustawione na 13:00 (zmienisz w ⚙)"); }
+  $("#uCzas").value = t.getHours() + t.getMinutes() / 60; T3.dopasujKamere(); synchronizujSuwaki();
+}
+$("#doTerenu").onclick = doTerenu;
+$("#tWroc").onclick = () => { T3.stopKamery(); document.documentElement.style.overflow = ""; pokaz("vProjekt"); };
+$("#tUst").onclick = () => { $("#ust").hidden = !$("#ust").hidden; $("#tUst").classList.toggle("on", !$("#ust").hidden); };
+$("#tPostaw").onclick = () => { T3.postaw(); $("#tPrzed").hidden = true; $("#tPo").hidden = false; $("#tMig").hidden = false; $("#celownik").hidden = true; $("#pomoc").textContent = "Przesuń budynek palcem po terenie, obróć dwoma palcami. Gdy pasuje – zamroź kadr i zrób zdjęcie."; setTimeout(() => $("#pomoc").hidden = true, 6000); };
+$("#tPonow").onclick = () => { $("#tDopasuj").click(); };
+$("#tInfo").onclick = () => $("#tInfo").classList.toggle("zwin");
+const KROKI = ["① Stuknij <b>lewy dolny róg</b> elewacji (gdzie ściana styka się z chodnikiem).", "② Stuknij <b>prawy dolny róg</b> elewacji.", "③ Stuknij <b>górną krawędź – gzyms</b> (nad tymi rogami).", ""];
+$("#tDopasuj").onclick = () => {
+  $("#pomoc").hidden = false; $("#pomoc").innerHTML = KROKI[0]; $("#celownik").hidden = true; $("#tPrzed").hidden = false; $("#tPo").hidden = true; $("#tMig").hidden = true;
+  if (!T3.S.zamrozony) { T3.zamroz(true); $("#tZamroz").classList.add("on"); $("#tZamroz").textContent = "▶ Odmroź"; }   // stukamy na nieruchomym kadrze
+  T3.startDopasuj(async w => {
+    const o = P.obiekty[0], T = TYPY[o.typ];
+    let wysScian = null, gleb = 12;
+    if (o.typ === "glb") { const sz = T3.glowny ? new THREE.Box3().setFromObject(T3.glowny).getSize(new THREE.Vector3()) : null; if (sz?.x) o.skala = (o.skala || 1) * w.szer / sz.x; gleb = sz ? sz.z * w.szer / sz.x : 12; }
+    else {
+      const p = { ...T.param, ...o.param }, seg = p.segmenty || 1, hk = o.typ === "biurowiec" ? 3.6 : 3.1;
+      if (T.opcje.szerokosc) o.param.szerokosc = Math.round(w.szer / seg * 10) / 10;
+      if (T.opcje.kondygnacje) { const [a, b] = T.opcje.kondygnacje; o.param.kondygnacje = Math.max(a, Math.min(b, Math.round(w.wys / hk))); }
+      wysScian = (o.param.kondygnacje ?? p.kondygnacje) * hk + (o.typ === "plomba" ? 0.4 : 0); gleb = p.glebokosc;
+    }
+    await T3.ustawKompozycje(P.obiekty); T3.ustawWgPomiaru(w, gleb, wysScian); wszystko();
+    $("#pomoc").innerHTML = `Zmierzone: szerokość <b>${w.szer.toFixed(1).replace(".", ",")} m</b>, wysokość do gzymsu <b>${w.wys.toFixed(1).replace(".", ",")} m</b>` + (o.param.kondygnacje ? ` → ${o.param.kondygnacje} kondygnacji` : "") + `, ${Math.round(w.odleglosc)} m ode mnie.`;
+    setTimeout(() => $("#pomoc").hidden = true, 7000);
+    $("#tPrzed").hidden = true; $("#tPo").hidden = false; $("#tMig").hidden = false;
+  });
+};
+$("#tZamroz").onclick = () => { const t = !T3.S.zamrozony; T3.zamroz(t); $("#tZamroz").classList.toggle("on", t); $("#tZamroz").textContent = t ? "▶ Odmroź" : "❄ Zamroź kadr"; };
+$$("#tPo [data-a]").forEach(b => b.onclick = () => ({ obrL: () => T3.obroc(-5), obrP: () => T3.obroc(5), blizej: () => T3.odsun(-2), dalej: () => T3.odsun(2), lewo: () => T3.przesunWBok(-1), prawo: () => T3.przesunWBok(1) })[b.dataset.a]());
+function synchronizujSuwaki() {
+  const s = stanTerenu; if (s.odleglosc != null) { $("#uOdl").value = Math.round(s.odleglosc); $("#uOdlW").textContent = Math.round(s.odleglosc) + " m"; $("#uRot").value = Math.round(s.obrot); $("#uRotW").textContent = Math.round(s.obrot) + "°"; }
+  $("#uOko").value = T3.S.oko; $("#uOkoW").textContent = T3.S.oko.toFixed(2) + " m"; $("#uFov").value = T3.S.fovDl; $("#uFovW").textContent = T3.S.fovDl + "°";
+  const h = +$("#uCzas").value; $("#uCzasW").textContent = `${Math.floor(h)}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
+}
+$("#uOdl").oninput = e => { const d = +e.target.value - (stanTerenu.odleglosc || 0); T3.odsun(d); };
+$("#uRot").oninput = e => T3.obroc(+e.target.value - (stanTerenu.obrot || 0));
+$("#uOko").oninput = e => { T3.oko = +e.target.value; synchronizujSuwaki(); };
+$("#uFov").oninput = e => { T3.fov = +e.target.value; synchronizujSuwaki(); };
+$("#uCzas").oninput = e => { const h = +e.target.value, d = new Date(); d.setHours(Math.floor(h), Math.round((h % 1) * 60), 0, 0); T3.czas = d; synchronizujSuwaki(); rysujInfo(); };
+$("#uCien").classList.add("on"); $("#uCien").onclick = () => { const v = !T3.S.cienie; T3.cienie = v; $("#uCien").classList.toggle("on", v); };
+$("#uCzl").onclick = () => { const v = !$("#uCzl").classList.contains("on"); T3.czlowiekWidoczny = v; $("#uCzl").classList.toggle("on", v); };
+$("#uRozg").onclick = () => { const v = !$("#uRozg").classList.contains("on"); T3.rozgladanie = v; $("#uRozg").classList.toggle("on", v); };
+$("#uTlo").onchange = e => { const f = e.target.files[0]; if (!f) return; const img = new Image(); img.onload = () => { T3.tloZPliku(img); $("#uRozg").hidden = false; $("#uRozg").classList.add("on"); }; img.src = URL.createObjectURL(f); };
+
+/* ------------------------------------------------------------ zdjęcie i karta projektu */
+let foto = null, karta = null;
+$("#tFoto").onclick = () => {
+  const c = T3.zdjecie(); foto = { canvas: c, t: new Date(), teren: { ...stanTerenu }, gps: info.gps, dz: info.dz, adr: info.adr, sas: info.sas };
+  const fl = document.createElement("div"); fl.style.cssText = "position:fixed;inset:0;background:#fff;z-index:99;opacity:.9;transition:opacity .4s"; document.body.appendChild(fl); setTimeout(() => fl.style.opacity = 0, 30); setTimeout(() => fl.remove(), 450);
+  T3.stopKamery(); document.documentElement.style.overflow = ""; otworzKarte();
+};
+$("#arFoto").onchange = e => { const f = e.target.files[0]; if (!f) return; const img = new Image(); img.onload = () => { const c = document.createElement("canvas"); const s = Math.min(1, 2048 / Math.max(img.width, img.height)); c.width = img.width * s; c.height = img.height * s; c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); foto = { canvas: c, t: new Date(), teren: {}, gps: info.gps, dz: info.dz, adr: info.adr, sas: info.sas }; $("#arOkno").close(); otworzKarte(); }; img.src = URL.createObjectURL(f); };
+function opisModelu() { const o = P.obiekty[0]; if (o.typ === "glb") return o.nazwa; const T = TYPY[o.typ], p = { ...T.param, ...o.param }; return `${T.nazwa}${p.kondygnacje ? `, ${p.kondygnacje} kond.` : ""}${p.dach ? `, dach ${p.dach}` : ""}`; }
+function otworzKarte() {
+  pokaz("vKarta");
+  $("#kTytul").value ||= opisModelu(); $("#kAut").value ||= zespol.imiona ? `${zespol.imiona}${zespol.nr ? ` (zespół ${zespol.nr})` : ""}` : "";
+  $("#kChk").innerHTML = DOPASOWANIE.map((d, i) => `<label><input type="checkbox" data-i="${i}"> ${esc(d)}</label>`).join("");
+  $$("#kChk input, #kTytul, #kOpis, #kAut").forEach(i => i.oninput = () => skladaj());
+  skladaj();
+}
+function metaLinie() {
+  const f = foto, l = [];
+  l.push(f.t.toLocaleString("pl-PL", { dateStyle: "medium", timeStyle: "short" }));
+  if (f.adr?.tekst) l.push(f.adr.tekst);
+  if (f.dz) l.push(`działka ${f.dz.numer}, obręb ${f.dz.obreb} (${f.dz.id})`);
+  if (f.gps) l.push(`${f.gps.lat.toFixed(5)}, ${f.gps.lon.toFixed(5)}`);
+  if (f.teren?.odleglosc) l.push(`model ${Math.round(f.teren.odleglosc)} m od obserwatora, kier. ${kierunek(f.teren.azymut)}`);
+  return l;
+}
+/** Składa zdjęcie z paskiem opisu projektu. */
+function skladaj() {
+  const src = foto.canvas, W = src.width, pad = Math.round(W * 0.03), fs = Math.max(16, Math.round(W * 0.026));
+  const g0 = document.createElement("canvas").getContext("2d");
+  const zawin = (t, font, max) => { g0.font = font; const out = []; for (const akapit of String(t).split("\n")) { let l = ""; for (const w of akapit.split(" ")) { const p = l ? l + " " + w : w; if (g0.measureText(p).width > max && l) { out.push(l); l = w; } else l = p; } out.push(l); } return out; };
+  const fT = `800 ${Math.round(fs * 1.45)}px system-ui`, fO = `400 ${fs}px system-ui`, fM = `500 ${Math.round(fs * 0.78)}px system-ui`;
+  const tyt = $("#kTytul").value.trim() || "Projekt", opis = $("#kOpis").value.trim(), aut = $("#kAut").value.trim();
+  const chk = $$("#kChk input:checked").map(i => "✓ " + DOPASOWANIE[+i.dataset.i]);
+  const lT = zawin(tyt, fT, W - 2 * pad), lO = opis ? zawin(opis, fO, W - 2 * pad).slice(0, 6) : [], lC = chk.length ? zawin(chk.join("   "), fM, W - 2 * pad) : [], lM = zawin([aut, ...metaLinie()].filter(Boolean).join("  ·  "), fM, W - 2 * pad);
+  const h = pad + lT.length * fs * 1.6 + (lO.length ? fs * 0.4 + lO.length * fs * 1.3 : 0) + (lC.length ? fs * 0.4 + lC.length * fs * 1.15 : 0) + fs * 0.5 + lM.length * fs * 1.05 + pad;
+  const c = document.createElement("canvas"); c.width = W; c.height = src.height + Math.round(h); const g = c.getContext("2d");
+  g.drawImage(src, 0, 0); g.fillStyle = "#1f2a2e"; g.fillRect(0, src.height, W, c.height - src.height); g.fillStyle = "#c9562f"; g.fillRect(0, src.height, W, Math.max(4, fs * 0.25));
+  let y = src.height + pad + fs * 1.2; g.textBaseline = "alphabetic";
+  g.fillStyle = "#fff"; g.font = fT; for (const l of lT) { g.fillText(l, pad, y); y += fs * 1.6; }
+  if (lO.length) { y += fs * 0.1; g.font = fO; g.fillStyle = "#e9e4da"; for (const l of lO) { g.fillText(l, pad, y); y += fs * 1.3; } }
+  if (lC.length) { y += fs * 0.3; g.font = fM; g.fillStyle = "#9fd8b0"; for (const l of lC) { g.fillText(l, pad, y); y += fs * 1.15; } }
+  y += fs * 0.3; g.font = fM; g.fillStyle = "#f6c9b5"; for (const l of lM) { g.fillText(l, pad, y); y += fs * 1.05; }
+  // znak w rogu
+  g.font = `700 ${Math.round(fs * 0.8)}px system-ui`; const zn = "Lekcja AR · skala 1:1"; const zw = g.measureText(zn).width; g.fillStyle = "rgba(31,42,46,.7)"; g.fillRect(W - zw - pad * 1.6, pad * 0.6, zw + pad, fs * 1.4); g.fillStyle = "#fff"; g.fillText(zn, W - zw - pad * 1.1, pad * 0.6 + fs);
+  karta = c; $("#kartaImg").src = c.toDataURL("image/jpeg", 0.9);
+  $("#kMeta").innerHTML = metaLinie().map(esc).join("<br>") + (foto.dz ? `<br><a href="${linkGeoportal(foto.dz.id)}" target="_blank" rel="noopener">działka w Geoportalu ↗</a>` : "") + (foto.gps ? ` · <a href="${linkMapa(foto.gps.lat, foto.gps.lon)}" target="_blank" rel="noopener">mapa ↗</a>` : "");
+}
+const jpg = (c, q = 0.9) => new Promise(r => c.toBlob(r, "image/jpeg", q));
+const nazwaPliku = () => ($("#kTytul").value.trim() || "projekt").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").slice(0, 40) + ".jpg";
+$("#kPobierz").onclick = async () => { const a = document.createElement("a"); a.href = URL.createObjectURL(await jpg(karta)); a.download = nazwaPliku(); a.click(); };
+$("#kUdostepnij").onclick = async () => { const f = new File([await jpg(karta)], nazwaPliku(), { type: "image/jpeg" }); if (navigator.canShare?.({ files: [f] })) navigator.share({ files: [f], title: $("#kTytul").value, text: $("#kOpis").value }).catch(() => {}); else $("#kPobierz").click(); };
+function wpisKarty() {
+  const m = document.createElement("canvas"), s = Math.min(1, 960 / karta.width); m.width = karta.width * s; m.height = karta.height * s; m.getContext("2d").drawImage(karta, 0, 0, m.width, m.height);
+  return { id: uid(), t: Date.now(), tytul: $("#kTytul").value.trim(), opis: $("#kOpis").value.trim(), autorzy: $("#kAut").value.trim(), zespol: zespol.nr || null, model: opisModelu(),
+    dopasowanie: $$("#kChk input:checked").map(i => DOPASOWANIE[+i.dataset.i]), gps: foto.gps, dzialka: foto.dz ? { id: foto.dz.id, numer: foto.dz.numer, obreb: foto.dz.obreb, gmina: foto.dz.gmina } : null, adres: foto.adr?.tekst || "", obraz: m.toDataURL("image/jpeg", 0.72) };
+}
+$("#kZapisz").onclick = () => { const w = wpisKarty(); zapiszWGalerii(zespol.kod || "solo", w); toast("Karta zapisana w galerii na tym telefonie ✔"); };
+$("#kWyslij").onclick = async () => {
+  if (!zespol.kod) { toast("Wpisz kod zajęć (👥 Zespół), żeby wysłać do galerii zajęć"); $("#bZespol").click(); return; }
+  const w = wpisKarty(); zapiszWGalerii(zespol.kod, w); await kanal(); kanalG.send("miasto", { typ: "karta", karta: w }); toast("Wysłano do galerii zajęć ✔");
+};
+$("#kNowe").onclick = () => doTerenu();
+$("#kProjekt").onclick = () => pokaz("vProjekt");
+
+/* ------------------------------------------------------------ galeria zajęć (prowadzący widzi zdjęcia wszystkich zespołów) */
+const kluczG = kod => "miasto-galeria-" + kod;
+function wczytajG(kod) { try { return JSON.parse(localStorage.getItem(kluczG(kod))) || []; } catch { return []; } }
+function zapiszWGalerii(kod, w) { let l = wczytajG(kod).filter(x => x.id !== w.id); l.unshift(w); while (l.length) { try { localStorage.setItem(kluczG(kod), JSON.stringify(l)); break; } catch { l.pop(); } } if (!$("#vGaleria").hidden) rysujGalerie(); }
+let kanalG = null;
+async function kanal() {
+  if (kanalG || !zespol.kod) return; const b = await backend();
+  kanalG = b.channel("miasto-" + zespol.kod, { zdarzenia: ["miasto"], onMessage(ev, m) { if (ev === "miasto" && m?.typ === "karta") { zapiszWGalerii(zespol.kod, m.karta); if (zespol.prow) toast(`Nowy projekt: ${m.karta.tytul || "bez nazwy"} (zespół ${m.karta.zespol || "?"})`); } } }, { uid: uid(), imie: zespol.imiona || "?", prow: !!zespol.prow });
+}
+let mapa = null, warstwa = null;
+async function rysujGalerie() {
+  const l = wczytajG(zespol.kod || "solo"); $("#gKod").textContent = zespol.kod ? `· zajęcia ${zespol.kod} · ${l.length} projektów` : `· ten telefon · ${l.length}`;
+  $("#galeria").innerHTML = l.map((w, i) => `<div class="card"><img src="${w.obraz}" data-i="${i}" alt=""><div style="margin-top:8px"><b>${esc(w.tytul || "Projekt")}</b> <span class="muted" style="font-size:12.5px">${w.zespol ? "zespół " + esc(w.zespol) + " · " : ""}${esc(w.autorzy)}</span></div>
+    <div style="font-size:13px;margin-top:4px">${esc(w.opis)}</div><div class="muted" style="font-size:12px;margin-top:4px">${esc(w.model)}${w.dzialka ? ` · działka ${esc(w.dzialka.numer)} (${esc(w.dzialka.obreb)})` : ""}${w.adres ? " · " + esc(w.adres) : ""}</div>
+    ${w.dopasowanie?.length ? `<div style="font-size:12px;color:var(--ok);margin-top:4px">${w.dopasowanie.map(d => "✓ " + esc(d)).join("<br>")}</div>` : ""}</div>`).join("") || `<div class="muted">Jeszcze nie ma projektów. Zespoły wysyłają je przyciskiem „📨 Do galerii zajęć” na karcie projektu.</div>`;
+  $$("#galeria img").forEach(im => im.onclick = () => pokazSlajdow(+im.dataset.i));
+  // mapa
+  if (!window.L) { const css = document.createElement("link"); css.rel = "stylesheet"; css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"; document.head.appendChild(css); await import("https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js").then(m => window.L = m).catch(() => {}); }
+  const L = window.L; if (!L) { $("#mapa").innerHTML = `<div class="empty">Mapa niedostępna offline</div>`; return; }
+  if (!mapa) { mapa = L.map("mapa"); L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(mapa); warstwa = L.layerGroup().addTo(mapa); }
+  warstwa.clearLayers(); const pkt = l.filter(w => w.gps).map(w => [w.gps.lat, w.gps.lon]);
+  l.filter(w => w.gps).forEach(w => L.marker([w.gps.lat, w.gps.lon]).bindPopup(`<b>${esc(w.tytul)}</b><br><img src="${w.obraz}" style="width:200px;border-radius:6px">`).addTo(warstwa));
+  if (pkt.length) mapa.fitBounds(pkt, { maxZoom: 18, padding: [30, 30] }); else mapa.setView([52.07, 19.48], 6);
+  setTimeout(() => mapa.invalidateSize(), 100);
+}
+function pokazSlajdow(i0 = 0) {
+  const l = wczytajG(zespol.kod || "solo"); if (!l.length) return; let i = i0;
+  const d = document.createElement("div"); d.className = "pokaz"; d.innerHTML = `<img alt="">`; document.body.appendChild(d);
+  const im = d.querySelector("img"), pok = () => im.src = l[i].obraz; pok();
+  const t = setInterval(() => { i = (i + 1) % l.length; pok(); }, 6000);
+  d.onclick = e => { if (e.clientX > innerWidth * 0.7) { i = (i + 1) % l.length; pok(); } else if (e.clientX < innerWidth * 0.3) { i = (i - 1 + l.length) % l.length; pok(); } else { clearInterval(t); d.remove(); } };
+}
+$("#gPokaz").onclick = () => pokazSlajdow(0);
+$("#gWroc").onclick = () => pokaz("vProjekt");
+
+/* ------------------------------------------------------------ zespół */
+$("#zNr").innerHTML = Array.from({ length: 10 }, (_, i) => `<option>${i + 1}</option>`).join("");
+function rysujKto() { $("#kto").textContent = zespol.prow ? `${zespol.kod} · prowadzący` : zespol.kod ? `${zespol.kod} · zespół ${zespol.nr}` : (zespol.imiona || "bez zespołu"); }
+$("#bZespol").onclick = () => { $("#zImiona").value = zespol.imiona || ""; $("#zKod").value = zespol.kod || ""; $("#zNr").value = zespol.nr || "1"; $("#zProw").checked = !!zespol.prow; $("#dZespol").showModal(); };
+$("#dZespol").addEventListener("close", () => {
+  if ($("#dZespol").returnValue !== "ok") return;
+  zespol = { imiona: $("#zImiona").value.trim(), kod: $("#zKod").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""), nr: $("#zNr").value, prow: $("#zProw").checked };
+  localStorage.setItem("miasto-zespol", JSON.stringify(zespol)); rysujKto(); kanalG?.close(); kanalG = null; kanal();
+  if (zespol.prow) { pokaz("vGaleria"); } else { P = (() => { try { return JSON.parse(localStorage.getItem(kluczP())); } catch { return null; } })() || P; wszystko(); }
+});
+
+/* ------------------------------------------------------------ widoki */
+function pokaz(id) { for (const v of ["vProjekt", "vTeren", "vKarta", "vGaleria"]) $("#" + v).hidden = v !== id; $("header.top").hidden = id === "vTeren"; if (id === "vGaleria") rysujGalerie(); if (id === "vProjekt") setTimeout(() => dispatchEvent(new Event("resize")), 50); }
+window.__miasto = { P: () => P, T3, info, pobierzInfo, skladaj, pokaz, doTerenu, wszystko };
+rysujKto(); wszystko(); kanal();
+if (qs.get("kod")) { zespol.kod = qs.get("kod").toUpperCase(); zespol.prow = qs.has("prowadzacy"); localStorage.setItem("miasto-zespol", JSON.stringify(zespol)); rysujKto(); kanal(); }
+if (zespol.prow || qs.has("galeria")) pokaz("vGaleria");
+</script>
+</body>
+</html>
