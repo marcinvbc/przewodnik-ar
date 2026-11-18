@@ -96,22 +96,22 @@
     return cd;
   }
 
-  /** ocena z zapisanej sceny: dopasowanie przesunięcia (mediana), potem odległość każdej kości od wzorca */
-  async function ocen(cd, nrSlajdu = 1) {
-    const meta = await (await fetch(BAZA + "szkielet.json")).json();
-    const obiekty = cd.slides.$values[nrSlajdu].sceneData.objectDatas.$values;
-    const poz = {};
-    for (const m of meta) { const o = obiekty.find(q => (q.assetData?.name || "").replace(/\.glb$/i, "") === m.nazwa); if (o) poz[m.id] = [(o.position.x - B.x) / K, (o.position.y - B.y) / K, (o.position.z - B.z) / K]; }
+  /** ocena z zapisanej sceny (slajd „Złóż szkielet z kości” z paczki szkielet-e-peAR.zip):
+      dopasowanie przesunięcia (mediana), potem odległość każdej kości od wzorca, w skali naturalnej */
+  async function ocen(cd, nrSlajdu = 1, dane = null) {
+    dane ??= await (await fetch("https://marcinvbc.github.io/przewodnik-ar/epear/szkielet-kosci.json")).json();
+    const { K: k, kosci } = dane, obiekty = cd.slides.$values[nrSlajdu].sceneData.objectDatas.$values, poz = {};
+    for (const m of kosci) { const o = obiekty.find(q => (q.assetData?.name || "").replace(/\.glb$/i, "") === m.plik.replace(/\.glb$/i, "")); if (o) poz[m.id] = [o.position.x / k, o.position.y / k, o.position.z / k]; }
     const med = a => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
-    const ids = Object.keys(poz), t = [0, 1, 2].map(k => med(ids.map(id => poz[id][k] - meta.find(m => m.id === id).srodek[k])));
-    const wiersze = meta.map(m => {
+    const ids = Object.keys(poz), t = [0, 1, 2].map(i => med(ids.map(id => poz[id][i] - kosci.find(m => m.id === id).srodek[i])));
+    const wiersze = kosci.map(m => {
       const p = poz[m.id]; if (!p) return { nazwa: m.nazwa, cm: null, st: "brak" };
       const d = Math.hypot(p[0] - t[0] - m.srodek[0], p[1] - t[1] - m.srodek[1], p[2] - t[2] - m.srodek[2]);
       return { nazwa: m.nazwa, cm: Math.round(d * 100), st: d <= DOBRZE ? "ok" : d <= PRAWIE ? "prawie" : "zle" };
     });
-    const pkt = wiersze.reduce((s, w) => s + (w.st === "ok" ? 1 : w.st === "prawie" ? 0.5 : 0), 0), proc = Math.round(pkt / meta.length * 100);
+    const pkt = wiersze.reduce((s, w) => s + (w.st === "ok" ? 1 : w.st === "prawie" ? 0.5 : 0), 0), proc = Math.round(pkt / kosci.length * 100);
     const ocena = proc >= 98 ? 6 : proc >= 88 ? 5 : proc >= 75 ? 4 : proc >= 60 ? 3 : proc >= 45 ? 2 : 1;
-    return { proc, pkt, ocena, zaliczone: proc >= 60, przesuniecie_m: t.map(v => +(v * K).toFixed(3)), wiersze };
+    return { proc, pkt, ocena, zaliczone: proc >= 60, wiersze };
   }
 
   window.__szkieletEpear = { utworz, flagi, ocen, rozsyp, K, B, C };

@@ -70,10 +70,11 @@
     const assetData = { $type: T("AssetData"), assetSource: 1, assetType: TYP_ASSET[o.rodzaj], isPrimitive: false, isLooping: false, isPlayOnAwake: false,
       name: o.rodzaj === "awatar" ? "NewAvatarText" : plik.nazwa, pathOrUrl: plik.epearId, fileExtension: o.rodzaj === "awatar" ? "wav" : null, tagName: "", setActiveAfterSpawn: true };
     const wspolne = { assetData, disassemblyAnimationTime: 1, priority: 0, disassembledType: 0, isTooltips: false, partTtScl: 0, partTtOffset: 0,
-      isMovableByStudents: !!o.uczen, isRotatableByStudents: !!o.uczen, isScalableByStudents: !!o.uczen, isDisassemblableByStudents: false, animationSpeed: 1,
+      isMovableByStudents: !!o.uczen, isRotatableByStudents: !!o.uczen && !o.bezObrotu, isScalableByStudents: !!o.uczen && !o.bezSkali, isDisassemblableByStudents: !!(o.rozklad || o.puzzle), animationSpeed: 1,
       objectPartsChanges: LISTA("Vobacom.ArPlus.Managers.ObjectPart, Assembly-CSharp", []),
+      convertToMrtkShaders: false, showHierarchyToStudents: !!o.czesci, isPuzzle: !!o.puzzle, puzzlePrecisionNeeded: o.precyzja ?? 0.3,
       position: V3(o.poz), rotation: V3([0, o.rotY, 0]), scale: V3([o.skala, o.skala, o.skala]), color: V3([1, 1, 1]),
-      BackgroundTransparecncy: 0, showInteractablePartsList: false, chosenAnimation: o.animacja || "", guid: crypto.randomUUID(),
+      BackgroundTransparecncy: 0, showInteractablePartsList: !!o.czesci, chosenAnimation: o.animacja || "", guid: crypto.randomUUID(),
       positionSource: 2, objectId: "00000000-0000-0000-0000-000000000000", pinPointerPosition: V3([0, 0, 0]), IsControllableByStudents: !!o.uczen };
     if (o.rodzaj === "awatar") return { $type: T("AvatarObjectData"), isHaveSpeech: true, isStartSpeechOnStart: o.mowiOdRazu === true, StartWithSlide: o.mowiOdRazu === true,
       isChatAvailableForStudents: o.czat === true, thisAvatarGender: o.plec || 0, thisAvatarChatGPTObjective: 0, ...wspolne };
