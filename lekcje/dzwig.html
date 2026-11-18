@@ -63,6 +63,19 @@
   #ramaKabiny { position: fixed; inset: 0 0 var(--ph) 0; pointer-events: none; z-index: 5; display: none; }
   body.wKabinie #ramaKabiny { display: block; }
   @media (max-width: 1250px) { .przelaczniki { grid-template-columns: repeat(5, 82px); } .prz { font-size: 10.5px; } .wsk { width: 280px; font-size: 12px; } .trz { min-width: 84px; font-size: 11px; } .pulpit { gap: 8px; padding: 10px; } .konsola { gap: 10px; padding: 8px; } }
+  /* tryb dłoni: duże, półprzezroczyste dźwignie wystające ponad kokpit (kokpit bez zmian) */
+  body.dlonie .konsola { position: relative; }
+  body.dlonie .konsola .przyciski { display: none; }
+  body.dlonie .konsola:last-child { justify-content: flex-end; padding-right: 18px; }
+  body.dlonie #joyL, body.dlonie #joyR { position: absolute; bottom: 8px; z-index: 46; font-size: 14px; text-shadow: 0 1px 3px #000; }
+  body.dlonie #joyL { left: 8px; } body.dlonie #joyR { right: 140px; }
+  body.dlonie .joy .baza { width: min(340px, 46vh) !important; height: min(340px, 46vh) !important; background: radial-gradient(rgba(70,80,90,.45), rgba(25,30,35,.72)); border: 5px solid rgba(242,183,5,.85); backdrop-filter: blur(2px); box-shadow: 0 0 0 3px rgba(0,0,0,.35), inset 0 8px 20px rgba(0,0,0,.5); }
+  body.dlonie .joy.pion .baza { width: 160px !important; height: min(360px, 48vh) !important; border-radius: 80px; }
+  body.dlonie .joy .galka { width: 104px !important; height: 104px !important; margin: -52px 0 0 -52px !important; }
+  body.dlonie .joy .kier { font-size: 14px; color: #fff; }
+  body.dlonie .joy .baza.nad { border-color: #ffd23f; box-shadow: 0 0 0 6px rgba(255,210,63,.45), inset 0 8px 20px rgba(0,0,0,.5); }
+  body.dlonie .joy .galka.trzym { box-shadow: 0 0 0 8px rgba(255,210,63,.4), 0 6px 14px rgba(0,0,0,.7); }
+  body.dlonie .stop { width: 104px; height: 104px; }
   @media (max-width: 1380px) { .przelaczniki { grid-template-columns: repeat(5, 90px); } .trz { min-width: 86px; } .konsola { gap: 10px; padding: 8px 10px; } .joy .baza { width: 132px; height: 132px; } .joy.pion .baza { width: 80px; height: 132px; } .stop { width: 84px; height: 84px; } .pulpit { padding: 10px 14px; gap: 10px; } }
   @media (max-height: 880px) { :root { --ph: 252px; } .wsk { height: 122px; font-size: 12.5px; padding: 6px 10px; } #radar { width: 122px; height: 122px; } .podpis { display: none; } .prz { height: 44px; } .przelaczniki { gap: 6px; } .srodek { gap: 8px; } .trz { height: 44px; } .joy .baza { width: 124px; height: 124px; } .joy.pion .baza { height: 124px; } .joy .galka { width: 54px; height: 54px; margin: -27px 0 0 -27px; } }
   @media (max-width: 1050px) { .zadania { display: none; } #radar { display: none; } }
@@ -362,8 +375,13 @@ function zrobJoystick(el, pion, onZmiana) {
       const r = baza.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = (pion ? r.height : r.width) / 2 - 30;
       let dx = pion ? 0 : (px - cx) / R, dy = (py - cy) / R; const d = Math.hypot(dx, dy); if (d > 1) { dx /= d; dy /= d; }
       this.x = dx; this.y = dy; this.rysuj(); onZmiana(this); },
-    pusc() { this.trzyma = null; this.x = this.y = 0; galka.classList.remove("trzym"); this.rysuj(); onZmiana(this); },
-    rysuj() { const r = baza.getBoundingClientRect(), R = (pion ? r.height : r.width) / 2 - 30; galka.style.transform = `translate(${this.x * R}px, ${this.y * R}px)`; },
+    chwyc(px, py) { this.kotwica = { x: px, y: py }; this.x = this.y = 0; this.rysuj(); onZmiana(this); },
+    ustawDlonia(px, py) {      // wychylenie liczone od miejsca chwytu – nie trzeba trafiać w gałkę
+      const r = baza.getBoundingClientRect(), R = ((pion ? r.height : r.width) / 2 - 40) * 0.8;
+      let dx = pion ? 0 : (px - this.kotwica.x) / R, dy = (py - this.kotwica.y) / R; const d = Math.hypot(dx, dy); if (d > 1) { dx /= d; dy /= d; }
+      this.x += (dx - this.x) * 0.5; this.y += (dy - this.y) * 0.5; this.rysuj(); onZmiana(this); },
+    pusc() { this.trzyma = null; this.kotwica = null; this.x = this.y = 0; galka.classList.remove("trzym"); this.rysuj(); onZmiana(this); },
+    rysuj() { const r = baza.getBoundingClientRect(), R = (pion ? r.height : r.width) / 2 - (document.body.classList.contains("dlonie") ? 52 : 30); galka.style.transform = `translate(${this.x * R}px, ${this.y * R}px)`; },
     el: baza, galka };
   baza.addEventListener("pointerdown", e => { j.trzyma = "mysz"; galka.classList.add("trzym"); baza.setPointerCapture(e.pointerId); j.ustaw(e.clientX, e.clientY); e.preventDefault(); });
   baza.addEventListener("pointermove", e => { if (j.trzyma === "mysz") j.ustaw(e.clientX, e.clientY); });
@@ -403,7 +421,7 @@ const wcisniete = new Set();
 addEventListener("keydown", e => {
   if (e.repeat) return; const k = e.key.toLowerCase(); wcisniete.add(k);
   if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(k)) e.preventDefault();
-  if (k === " ") hak(); else if (k === "p") $("#pBieg").click(); else if ("123".includes(k) && k.length === 1) { ustawBieg(+k); komunikat("Prędkość " + k); } else if (k === "l") $("#pLaser").click(); else if (k === "h") $("#pSygnal").click(); else if (k === "c") $("#pKamera").click(); else if (k === "escape") $("#pStop").click(); else if (k === "z") $("#pZasil").click();
+  if (k === " ") hak(); else if (k === "p") $("#pBieg").click(); else if ("123".includes(k) && k.length === 1) { ustawBieg(+k); komunikat("Prędkość " + k); } else if (k === "l") $("#pLaser").click(); else if (k === "g") { document.body.classList.toggle("dlonie"); joy.L.rysuj(); joy.R.rysuj(); } else if (k === "h") $("#pSygnal").click(); else if (k === "c") $("#pKamera").click(); else if (k === "escape") $("#pStop").click(); else if (k === "z") $("#pZasil").click();
   klawisze();
 });
 addEventListener("keyup", e => { wcisniete.delete(e.key.toLowerCase()); klawisze(); });
@@ -481,16 +499,17 @@ function ramka(dlonie) {
   const nad = new Set();
   for (const d of dlonie) {
     const P = d.punkty.map(naEkran), c = naEkran(d.chwyt), r = reka[d.strona] || (reka[d.strona] = { trzyma: null });
-    const el = document.elementFromPoint(c.x, c.y), baza = el?.closest(".baza"), trz = el?.closest(".trz"), btn = trz ? null : el?.closest(".prz, .stop, .btn-d");
+    const el = document.elementFromPoint(c.x, c.y), wPoblizu = j => { const q = j.el.getBoundingClientRect(), m = 45; return c.x > q.left - m && c.x < q.right + m && c.y > q.top - m && c.y < q.bottom + m; };
+    const baza = el?.closest(".baza") || (wPoblizu(joy.L) ? joy.L.el : wPoblizu(joy.R) ? joy.R.el : null), trz = el?.closest(".trz"), btn = trz ? null : el?.closest(".prz, .stop, .btn-d");
     if (trz) nad.add(trz);
-    if (baza) nad.add(baza.querySelector(".galka")); if (btn) nad.add(btn);
+    if (baza) { nad.add(baza); nad.add(baza.querySelector(".galka")); } if (btn) nad.add(btn);
     if (d.szczypie && !r.trzyma) {
-      if (baza) { const j = baza === joy.L.el ? joy.L : joy.R; j.trzyma = d.strona; j.galka.classList.add("trzym"); r.trzyma = j; j.ustaw(c.x, c.y); }
+      if (baza) { const j = baza === joy.L.el ? joy.L : joy.R; j.trzyma = d.strona; j.galka.classList.add("trzym"); r.trzyma = j; j.chwyc(c.x, c.y); }
       else if (trz) { trzymaj(trz, true); r.trzyma = { trzyma: d.strona, pusc: () => trzymaj(trz, false) }; }
       else if (btn) { btn.classList.add("klik"); setTimeout(() => btn.classList.remove("klik"), 140); btn.click(); r.trzyma = "przycisk"; }
       else r.trzyma = "nic";
     } else if (!d.szczypie && r.trzyma) { if (r.trzyma.pusc && r.trzyma.trzyma === d.strona) r.trzyma.pusc(); r.trzyma = null; }
-    else if (r.trzyma?.ustaw) r.trzyma.ustaw(c.x, c.y);
+    else if (r.trzyma?.ustawDlonia) r.trzyma.ustawDlonia(c.x, c.y);
     rysujDlon(g2, P, KOLOR[d.strona] || KOLOR.Prawa, { szczypie: d.szczypie, nadCzyms: !!(baza || btn || trz) });
   }
   for (const s of Object.keys(reka)) if (!dlonie.some(d => d.strona === s)) { if (reka[s].trzyma?.pusc) reka[s].trzyma.pusc(); delete reka[s]; }
@@ -501,6 +520,7 @@ function ramka(dlonie) {
 let tryb = "mysz";
 async function start(zKamera) {
   tryb = zKamera ? "dłonie" : "mysz/klawiatura";
+  document.body.classList.toggle("dlonie", zKamera); setTimeout(() => { joy.L.rysuj(); joy.R.rysuj(); }, 50);
   if (zKamera) {
     try { if (!window.__symulacjaDloni) { await kamera(wideo); document.body.classList.add("kamera"); }
       await uruchomDlonie({ video: wideo, onRamka: ramka, symulacja: window.__symulacjaDloni || null });
@@ -523,7 +543,7 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, cam);
 });
 window.__dzwigTest = { z, przel, ladunki: () => ladunki.map(L => ({ id: L.id, stan: L.stan, poz: L.mesh.position.toArray() })), zaczepiony: () => zaczepiony?.id || null, stat, wej, hak, pozycjaHaka: () => pozycjaHaka().toArray(), sztucznaDlon, wynikSymulacji,
-  przy, ustawBieg, stanCelu, ustaw: o => { Object.assign(z, o); z.o.set(0, 0); z.ov.set(0, 0); z.wozekPop = null; }, joyL: () => { const r = joy.L.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, joyR: () => { const r = joy.R.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; } };
+  przy, ustawBieg, joy, stanCelu, ustaw: o => { Object.assign(z, o); z.o.set(0, 0); z.ov.set(0, 0); z.wozekPop = null; }, joyL: () => { const r = joy.L.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, joyR: () => { const r = joy.R.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; } };
 window.__dzwigTest.podsumowanie = podsumowanie;
 window.__dzwigGotowy = true;
 </script>
