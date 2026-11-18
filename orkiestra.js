@@ -147,7 +147,7 @@ export class Orkiestra {
     this.szum = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const sz = this.szum.getChannelData(0); for (let i = 0; i < sz.length; i++) sz[i] = Math.random() * 2 - 1;
     // przester do gitary z syntezatora zastępczego
     this.przester = new Float32Array(1024).map((_, i) => { const x = i / 512 - 1; return Math.tanh(x * 6); });
-    await this.wczytajProbki(postep);
+    await Promise.race([this.wczytajProbki(postep), new Promise(r => setTimeout(r, 20000))]);
   }
   /** wczytuje brakujące instrumenty i nuty dla bieżącego utworu i stylu */
   async wczytajProbki(postep = () => {}) {
@@ -180,8 +180,8 @@ export class Orkiestra {
     this.utwor = utwor; this.styl = styl;
     ({ P: this.P, dlugosc: this.dlugosc } = partytura(utwor, styl));
     this.tempo = Math.round(utwor.tempo * (styl === "rock" ? 1.25 : 1));
+    if (gral) this.graj();                      // gramy od razu; brakujące próbki dojdą w tle (do tego czasu syntezator)
     if (this.ac) await this.wczytajProbki(postep);
-    if (gral) this.graj();
   }
   ustawPoziom(id, v) {               // 0..1 – sterowane przez dyrygenta
     this.poziom[id] = v;

@@ -173,9 +173,14 @@
   <div class="info" id="info"></div>
 </div></div>
 
+<script>
+  // gdy skrypt strony nie wystartuje (np. stara kopia plików w pamięci przeglądarki) – pokaż podpowiedź zamiast martwych przycisków
+  setTimeout(() => { if (!window.__dyrygentGotowy) { const i = document.getElementById("info"); if (i) { i.classList.add("blad"); i.textContent = "Strona nie wczytała się do końca. Odśwież ją z pominięciem pamięci podręcznej: Cmd+Shift+R (Mac) lub Ctrl+F5."; } } }, 4000);
+</script>
 <script type="module">
-import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "./dlonie.js";
-import { SEKCJE, UTWORY, sekcjeStylu, Orkiestra } from "./orkiestra.js";
+// wersja w adresie: przeglądarka nie weźmie starej kopii z pamięci podręcznej po aktualizacji
+import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "./dlonie.js?v=25";
+import { SEKCJE, UTWORY, sekcjeStylu, Orkiestra } from "./orkiestra.js?v=25";
 
 const $ = s => document.querySelector(s), NS = "http://www.w3.org/2000/svg";
 const svg = $("#scena"), orkiestra = new Orkiestra();
@@ -374,6 +379,7 @@ async function start(zKamera) {
 }
 $("#btnStart").onclick = () => start(true);
 $("#btnMysz").onclick = () => start(false);
+window.__dyrygentGotowy = true;
 window.__dyrygentTest = { sztucznaDlon, wynikSymulacji, orkiestra, zmienUtwor, stan: () => Object.fromEntries(Object.entries(stan).map(([k, S]) => [k, +S.poziom.toFixed(2)])) };
 addEventListener("pagehide", () => orkiestra.stop());
 </script>
