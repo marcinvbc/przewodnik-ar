@@ -126,11 +126,12 @@ export function zbudujLadunki(scene) {
     const brzeg = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(S.wym[0], S.wym[1])), new THREE.LineBasicMaterial({ color: S.kolor }));
     brzeg.rotation.x = -Math.PI / 2; brzeg.position.copy(pole.position).y += 0.01; scene.add(brzeg);
     // tabliczka z literą strefy
-    const c = document.createElement("canvas"); c.width = c.height = 128; const g = c.getContext("2d"); g.fillStyle = S.kolor; g.beginPath(); g.arc(64, 64, 60, 0, Math.PI * 2); g.fill(); g.fillStyle = "#fff"; g.font = "800 80px system-ui"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(L.cel, 64, 70);
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false })); sp.scale.set(2.2, 2.2, 1); sp.position.set(S.srodek[0], S.srodek[1] + 4, S.srodek[2]); sp.renderOrder = 5; scene.add(sp);
+    const c = document.createElement("canvas"); c.width = 256; c.height = 128; const g = c.getContext("2d"); g.fillStyle = S.kolor; g.beginPath(); g.roundRect(4, 14, 248, 84, 18); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 6; g.stroke();
+    g.beginPath(); g.moveTo(112, 98); g.lineTo(144, 98); g.lineTo(128, 124); g.fillStyle = S.kolor; g.fill(); g.fillStyle = "#fff"; g.font = "800 46px system-ui"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("STREFA " + L.cel, 128, 58);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false })); sp.scale.set(5, 2.5, 1); sp.position.set(S.srodek[0], S.srodek[1] + 3.2, S.srodek[2]); sp.renderOrder = 5; scene.add(sp);
     const c2 = document.createElement("canvas"); c2.width = c2.height = 128; const g2 = c2.getContext("2d"); g2.fillStyle = S.kolor; g2.beginPath(); g2.arc(64, 64, 60, 0, Math.PI * 2); g2.fill(); g2.fillStyle = "#fff"; g2.font = "800 80px system-ui"; g2.textAlign = "center"; g2.textBaseline = "middle"; g2.fillText(L.cel, 64, 70);
     const sp2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c2), depthTest: false, opacity: 0.85, transparent: true })); sp2.scale.set(1.3, 1.3, 1); sp2.position.y = L.wym[1] / 2 + 1.2; sp2.renderOrder = 5; m.add(sp2);
-    lista.push({ ...L, mesh: m, stan: "czeka", strefa: S });
+    lista.push({ ...L, mesh: m, stan: "czeka", strefa: S, tabliczka: sp, pole });
     ramka.geometry.dispose();
   }
   return lista;

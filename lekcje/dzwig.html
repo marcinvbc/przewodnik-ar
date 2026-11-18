@@ -57,9 +57,11 @@
   .wsk { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 14px; align-content: start; background: #0d1a14; border: 2px solid #3d4a44; border-radius: 12px; padding: 8px 12px; font: 600 13.5px ui-monospace, Menlo, monospace; color: #7dffa3; width: 330px; height: 142px; }
   .wsk b { color: #c7ffd8; font-weight: 700; } .wsk .alarm { color: #ff6b5b; } .wsk .ok { color: #4cff7a; animation: miga2 .6s infinite alternate; } @keyframes miga2 { to { opacity: .45; } }
   .wsk .pasek { grid-column: 1 / 3; height: 8px; background: #1f2b25; border-radius: 4px; overflow: hidden; } .wsk .pasek div { height: 100%; width: 0; background: #7dffa3; }
-  .wsk .wiersz { grid-column: 1 / 3; }
+  .wsk .wiersz { grid-column: 1 / 3; font-size: 11.5px; line-height: 1.25; }
   #radar { width: 142px; height: 142px; border-radius: 12px; border: 2px solid #3d4a44; background: #0d1a14; }
   .podpis { font: 700 10.5px system-ui; color: #8f9aa3; text-align: center; margin-top: 2px; }
+  #strzalkaCelu { position: fixed; z-index: 30; transform: translate(-50%, -50%); padding: 8px 14px; border-radius: 99px; font: 800 15px system-ui; color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.45); pointer-events: none; white-space: nowrap; animation: puls 1s infinite alternate; }
+  @keyframes puls { to { filter: brightness(1.25); transform: translate(-50%, -50%) scale(1.06); } }
   #ramaKabiny { position: fixed; inset: 0 0 var(--ph) 0; pointer-events: none; z-index: 5; display: none; }
   body.wKabinie #ramaKabiny { display: block; }
   @media (max-width: 1250px) { .przelaczniki { grid-template-columns: repeat(5, 82px); } .prz { font-size: 10.5px; } .wsk { width: 280px; font-size: 12px; } .trz { min-width: 84px; font-size: 11px; } .pulpit { gap: 8px; padding: 10px; } .konsola { gap: 10px; padding: 8px; } }
@@ -98,6 +100,7 @@
 <video id="podglad" autoplay muted playsinline></video>
 <canvas id="rece"></canvas>
 <div id="kom"></div>
+<div id="strzalkaCelu" hidden></div>
 
 <div class="hud">
   <span class="tytul">🏗 Operator żurawia wieżowego</span>
@@ -159,8 +162,8 @@
 <script type="module">
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=35";
-import { zbudujScene, zbudujLadunki, LADUNKI, STREFY, udzwig, WIEZA, WYSIEG, WYS_WYSIEGU, R_MIN } from "./dzwig/scena.js?v=35";
+import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=37";
+import { zbudujScene, zbudujLadunki, LADUNKI, STREFY, udzwig, WIEZA, WYSIEG, WYS_WYSIEGU, R_MIN } from "./dzwig/scena.js?v=37";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.shadowMap.enabled = true; renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -223,7 +226,8 @@ function krok(dt, teraz) {
   // kolizja ładunku: cofnij ruch i zalicz kolizję
   if (zaczepiony) {
     const b = boxLadunku(zaczepiony, srodekZawieszonego(pozycjaHaka()));
-    if (koliduje(b, zaczepiony)) {
+    const przed = (() => { const t = { theta: z.theta, r: z.r, hy: z.hy }; Object.assign(z, stary); const k = koliduje(boxLadunku(zaczepiony, srodekZawieszonego(pozycjaHaka())), zaczepiony); Object.assign(z, t); return k; })();
+    if (koliduje(b, zaczepiony) && !przed) {
       const tylkoOpuszczanie = (() => { const t = { ...z }; z.theta = stary.theta; z.r = stary.r; const bb = boxLadunku(zaczepiony, srodekZawieszonego(pozycjaHaka())); const k = koliduje(bb, zaczepiony); z.theta = t.theta; z.r = t.r; return k; })();
       Object.assign(z, stary); z.vT = z.vR = z.vH = 0;
       if (!tylkoOpuszczanie || b.min.y > podparcie(b, zaczepiony) + 0.3) {
@@ -240,7 +244,7 @@ function krok(dt, teraz) {
     z.o.x += z.ov.x * dt; z.o.y += z.ov.y * dt; z.o.clampLength(0, 4); }
   z.wozekPop = w;
   if (z.o.length() > 0.05 && zaczepiony) { const b = boxLadunku(zaczepiony, srodekZawieszonego(pozycjaHaka())); if (koliduje(b, zaczepiony)) { z.o.multiplyScalar(0.6); z.ov.multiplyScalar(-0.3); } }
-  rysujZuraw(); rysujLaser();
+  rysujZuraw(); rysujLaser(); rysujLatarnie(teraz);
   dzwiekSilnika(Math.abs(z.vT) * 5 + Math.abs(z.vR) / 2.4 + Math.abs(z.vH) / 2.6);
 }
 function rysujZuraw() {
@@ -274,6 +278,35 @@ const laser = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE
 const plamka = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.55, 32), new THREE.MeshBasicMaterial({ color: 0xff3b30, side: THREE.DoubleSide, depthTest: false, transparent: true, opacity: 0.9 }));
 plamka.rotation.x = -Math.PI / 2; plamka.renderOrder = 10; scene.add(laser, plamka);
 let stanCelu = { moznaZaczepic: null, moznaOdczepic: false };
+const latarnia = new THREE.Group(); {
+  const sl = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 40, 32, 1, true), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
+  sl.position.y = 20; latarnia.add(sl);
+  const pier = new THREE.Mesh(new THREE.RingGeometry(1.6, 2.2, 48), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, side: THREE.DoubleSide, depthWrite: false })); pier.rotation.x = -Math.PI / 2; pier.position.y = 0.08; latarnia.add(pier);
+  latarnia.visible = false; scene.add(latarnia); }
+function rysujLatarnie(t) {
+  const L = zaczepiony; latarnia.visible = !!L;
+  for (const q of ladunki) if (q.tabliczka) q.tabliczka.scale.setScalar(1).set(L && q === L ? 7 : 5, L && q === L ? 3.5 : 2.5, 1);
+  if (!L) return; const St = L.strefa, k = 1 + 0.25 * Math.sin(t / 220);
+  latarnia.position.set(St.srodek[0], St.srodek[1], St.srodek[2]); latarnia.children.forEach(m => m.material.color.set(St.kolor));
+  latarnia.children[0].scale.set(Math.max(St.wym[0], St.wym[1]) / 2.6, 1, Math.max(St.wym[0], St.wym[1]) / 2.6); latarnia.children[1].scale.set(k * Math.max(St.wym[0], St.wym[1]) / 3.4, k * Math.max(St.wym[0], St.wym[1]) / 3.4, 1);
+  L.pole.material.opacity = 0.35 + 0.3 * (0.5 + 0.5 * Math.sin(t / 220));
+}
+function strzalkaCelu() {      // gdy strefa docelowa jest poza kadrem – strzałka na krawędzi ekranu
+  const e = $("#strzalkaCelu"); if (!zaczepiony) { e.hidden = true; return; }
+  const St = zaczepiony.strefa, v = new THREE.Vector3(St.srodek[0], St.srodek[1] + 1, St.srodek[2]).project(cam), H = innerHeight - ($("#pulpit").offsetHeight || 0);
+  const za = v.z > 1, x = (v.x + 1) / 2 * innerWidth, y = (1 - v.y) / 2 * innerHeight, w = !za && x > 40 && x < innerWidth - 40 && y > 60 && y < H - 20;
+  if (w) { e.hidden = true; return; }
+  let dx = v.x, dy = -v.y; if (za) { dx = kierunekDo(St.srodek[0], St.srodek[2]).obr > 0 ? -1 : 1; dy = 0.15; }   // za plecami: w stronę krótszego obrotu
+  const k = Math.atan2(dy, dx), cx = innerWidth / 2, cy = 60 + (H - 60) / 2, rx = innerWidth / 2 - 110, ry = (H - 60) / 2 - 30;
+  const t = Math.min(rx / Math.abs(Math.cos(k) || 1e-6), ry / Math.abs(Math.sin(k) || 1e-6));
+  const strz = ["➡", "↘", "⬇", "↙", "⬅", "↖", "⬆", "↗"][((Math.round(k / (Math.PI / 4)) % 8) + 8) % 8], d = kierunekDo(St.srodek[0], St.srodek[2]);
+  e.style.left = cx + Math.cos(k) * t + "px"; e.style.top = cy + Math.sin(k) * t + "px"; e.style.background = St.kolor;
+  e.textContent = `${strz} STREFA ${zaczepiony.cel} · ${Math.abs(d.obr) < 2 ? "" : (d.obr > 0 ? "⟲ " : "⟳ ") + Math.abs(d.obr).toFixed(0) + "°"}`; e.hidden = false;
+}
+function kierunekDo(x, zz) {      // jak ustawić żuraw nad punktem: obrót [°] i wysięg [m]
+  const th = Math.atan2(-zz, x), d = Math.atan2(Math.sin(th - z.theta), Math.cos(th - z.theta)) * 180 / Math.PI, r = Math.hypot(x, zz);
+  return { obr: d, r, txt: `${Math.abs(d) < 2 ? "obrót OK" : (d > 0 ? "⟲ w lewo " : "⟳ w prawo ") + Math.abs(d).toFixed(0) + "°"} · wysięg ${r.toFixed(1)} m (${r - z.r > 0.3 ? "▲ od wieży" : r - z.r < -0.3 ? "▼ do wieży" : "OK"})` };
+}
 function rysujLaser() {
   const h = pozycjaHaka(), start = zaczepiony ? zaczepiony.mesh.position.clone().setY(zaczepiony.mesh.position.y - zaczepiony.wym[1] / 2) : h.clone().setY(h.y - 0.95);
   const y = powierzchniaPod(start.x, start.z, zaczepiony);
@@ -314,8 +347,10 @@ function hak() {
     let naj = null, nd = 1e9;
     for (const L of ladunki) { const top = L.mesh.position.y + L.wym[1] / 2, d = Math.hypot(L.mesh.position.x - h.x, L.mesh.position.z - h.z), v = h.y - 0.95 - top; if (d < 1.3 && v > -0.4 && v < 2.2 && d < nd) { nd = d; naj = L; } }
     if (!naj) { komunikat("Brak ładunku pod hakiem – opuść hak tuż nad środek ładunku (do ok. 2 m)."); dzwiek("blad"); return; }
-    zaczepiony = naj; dlZawiesi = Math.max(0.5, Math.min(2.2, h.y - 0.95 - (naj.mesh.position.y + naj.wym[1] / 2)));
-    naj.stan = "w powietrzu"; naj.t0 ??= performance.now(); naj.proby = (naj.proby || 0) + 1; komunikat(`🔗 Zaczepiono: ${naj.nazwa} (${naj.masa} t). Udźwig na tym wysięgu: ${udzwig(z.r).toFixed(1)} t.`, "dobrze"); dzwiek("klik");
+    zaczepiony = naj; { const v = h.y - 0.95 - (naj.mesh.position.y + naj.wym[1] / 2);
+      // zawiesia nie mogą wepchnąć ładunku w ziemię: przy bardzo małym odstępie hak lekko się podnosi
+      if (v < 0.3) { z.hy += 0.3 - v; z.vH = 0; } dlZawiesi = Math.max(0.3, Math.min(2.2, v)); rysujZuraw(); }
+    naj.stan = "w powietrzu"; naj.t0 ??= performance.now(); naj.proby = (naj.proby || 0) + 1; komunikat(`🔗 Zaczepiono: ${naj.nazwa} (${naj.masa} t). Podnieś hak ▲ i przenieś nad świecącą STREFĘ ${naj.cel} – ${naj.strefa.nazwa.split('–')[1]?.trim() || ''}.`, "dobrze"); dzwiek("klik");
     if (!stat.start) stat.start = performance.now();
   } else {
     const L = zaczepiony; L.mesh.position.copy(srodekZawieszonego(h)); const b = boxLadunku(L, L.mesh.position), pod = podparcie(b, L), nad = b.min.y - pod;
@@ -437,12 +472,12 @@ function rysujWskazniki() {
   rysujRadar(); const t = performance.now(); if (t - tWsk < 90) return; tWsk = t;
   const Q = udzwig(z.r), m = zaczepiony?.masa || 0, proc = Math.min(1, m / Q), stopnie = ((z.theta * 180 / Math.PI) % 360 + 360) % 360;
   const pod = zaczepiony ? Math.max(0, zaczepiony.mesh.position.y - zaczepiony.wym[1] / 2 - powierzchniaPod(zaczepiony.mesh.position.x, zaczepiony.mesh.position.z, zaczepiony)) : null;
-  const stanTxt = !przel.zasilanie ? '<b class="alarm">WYŁĄCZONY – wciśnij ZASILANIE</b>' : przel.stop ? '<b class="alarm">STOP AWARYJNY</b>' : stanCelu.moznaZaczepic ? `<b class="ok">✔ MOŻNA ZACZEPIĆ: ${stanCelu.moznaZaczepic.nazwa.toUpperCase()}</b>` : stanCelu.moznaOdczepic ? '<b class="ok">✔ STOI – MOŻNA ODCZEPIĆ</b>' : zaczepiony ? `ładunek ${pod.toFixed(1)} m nad podłożem` : "GOTOWY";
+  const stanTxt = !przel.zasilanie ? '<b class="alarm">WYŁĄCZONY – wciśnij ZASILANIE</b>' : przel.stop ? '<b class="alarm">STOP AWARYJNY</b>' : stanCelu.moznaZaczepic ? `<b class="ok">✔ MOŻNA ZACZEPIĆ: ${stanCelu.moznaZaczepic.nazwa.toUpperCase()}</b>` : stanCelu.moznaOdczepic ? '<b class="ok">✔ STOI – MOŻNA ODCZEPIĆ</b>' : zaczepiony ? `CEL STREFA ${zaczepiony.cel}: ${kierunekDo(zaczepiony.strefa.srodek[0], zaczepiony.strefa.srodek[2]).txt}` : (() => { const c = celTeraz(); return c ? `NAJBLIŻSZY ŁADUNEK ${c.lit}: ${kierunekDo(c.x, c.z).txt}` : "GOTOWY"; })();
   $("#wsk").innerHTML = `<span>OBRÓT <b>${stopnie.toFixed(0)}°</b></span><span>WYSIĘG <b>${z.r.toFixed(1)} m</b></span>
     <span>HAK <b>${Math.max(0, z.hy - 1).toFixed(1)} m</b></span><span>KOŁYS. <b class="${z.o.length() > 0.6 ? "alarm" : ""}">${z.o.length().toFixed(2)} m</b></span>
     <span class="${proc > 0.9 ? "alarm" : ""}">ŁAD. <b>${m.toFixed(1)} t</b></span><span>UDŹWIG <b>${Q.toFixed(1)} t</b></span>
     <div class="pasek"><div style="width:${proc * 100}%;background:${proc > 0.9 ? "#ff6b5b" : proc > 0.7 ? "#ffd23f" : "#7dffa3"}"></div></div>
-    <span>BIEG <b>${przel.bieg}</b></span><span>${przel.anty ? "antykołys. <b>ON</b>" : "antykołys. off"}</span>
+    <span>BIEG <b>${przel.bieg}</b></span><span>${zaczepiony ? `nad podł. <b>${pod.toFixed(1)} m</b>` : przel.anty ? "antykołys. <b>ON</b>" : "antykołys. off"}</span>
     <span class="wiersz">${stanTxt}</span>`;
 }
 function rysujListe() {
@@ -538,12 +573,12 @@ renderer.setAnimationLoop(() => {
   const t = performance.now(), dtc = Math.min(0.2, (t - poprz) / 1000); poprz = t;
   const n = Math.max(1, Math.ceil(dtc / 0.034)), dt = dtc / n;   // kroki fizyki niezależne od liczby klatek
   for (let i = 0; i < n; i++) krok(dt, t);
-  ustawKamere(dtc); rysujWskazniki();
+  ustawKamere(dtc); rysujWskazniki(); cam.updateMatrixWorld(); strzalkaCelu();
   if (stat.start && !stat.koniec) { const s = Math.round((t - stat.start) / 1000); $("#czas").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; }
   renderer.render(scene, cam);
 });
 window.__dzwigTest = { z, przel, ladunki: () => ladunki.map(L => ({ id: L.id, stan: L.stan, poz: L.mesh.position.toArray() })), zaczepiony: () => zaczepiony?.id || null, stat, wej, hak, pozycjaHaka: () => pozycjaHaka().toArray(), sztucznaDlon, wynikSymulacji,
-  przy, ustawBieg, joy, stanCelu, ustaw: o => { Object.assign(z, o); z.o.set(0, 0); z.ov.set(0, 0); z.wozekPop = null; }, joyL: () => { const r = joy.L.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, joyR: () => { const r = joy.R.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; } };
+  przy, ustawBieg, joy,  stanCelu, ustaw: o => { Object.assign(z, o); z.o.set(0, 0); z.ov.set(0, 0); z.wozekPop = null; }, joyL: () => { const r = joy.L.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, joyR: () => { const r = joy.R.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; } };
 window.__dzwigTest.podsumowanie = podsumowanie;
 window.__dzwigGotowy = true;
 </script>
