@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zwiedzaj z Aniołami – gra miejska w Toruniu</title>
+<meta name="theme-color" content="#6b3f1f">
+<meta name="description" content="Gra miejska śladem toruńskich aniołów: skanuj kody QR przy figurach, oglądaj anioły w 3D, rozwiązuj zagadki i zbieraj wirtualne pierniki.">
+<script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.min.js", "three/addons/": "../lib/three/examples/jsm/" } }</script>
+<script src="lib/jsQR.js"></script>
+<style>
+  :root { --piernik: #6b3f1f; --piernik2: #8a5630; --zloto: #d9a441; --cegla: #a8432f; --krem: #f7f0e3; --ink: #2a1d14; --sz: #7d6a5b; --ok: #2f7d4f; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--krem); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  [hidden] { display: none !important; }
+  button { font: inherit; }
+  .ekran { position: fixed; inset: 0; overflow: auto; padding: 0 0 calc(76px + env(safe-area-inset-bottom)); }
+  header.pasek { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: calc(10px + env(safe-area-inset-top)) 16px 10px; background: var(--piernik); color: #fff; }
+  header.pasek h1 { margin: 0; font-size: 18px; flex: 1; }
+  .pierniki { background: rgba(255,255,255,.15); border-radius: 99px; padding: 4px 12px; font-weight: 800; white-space: nowrap; }
+  .tresc { padding: 14px 16px; max-width: 640px; margin: 0 auto; }
+  .karta { background: #fff; border-radius: 18px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(80,50,20,.08); }
+  .karta h2 { margin: 0 0 6px; font-size: 19px; } .karta h3 { margin: 0 0 4px; font-size: 16px; }
+  .sz { color: var(--sz); font-size: 14px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 14px; padding: 12px 16px; background: var(--piernik); color: #fff; font-weight: 700; cursor: pointer; text-decoration: none; }
+  .btn.zloty { background: var(--zloto); color: var(--ink); } .btn.jasny { background: #fff; color: var(--piernik); border: 2px solid var(--piernik); } .btn.maly { padding: 7px 11px; font-size: 14px; border-radius: 10px; }
+  .btn.pelny { width: 100%; } .btn:disabled { opacity: .45; }
+  .rzad { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; } .rzad > .btn { flex: 1 1 auto; }
+  nav.dol { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: flex; background: #fff; border-top: 1px solid #e6dccb; padding-bottom: env(safe-area-inset-bottom); }
+  nav.dol button { flex: 1; border: 0; background: none; padding: 9px 0 10px; font-size: 12px; color: var(--sz); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
+  nav.dol button b { font-size: 22px; font-weight: 400; line-height: 1; } nav.dol button.akt { color: var(--piernik); font-weight: 800; }
+  nav.dol button.skan b { background: var(--zloto); border-radius: 50%; width: 46px; height: 46px; display: grid; place-items: center; margin-top: -22px; box-shadow: 0 3px 10px rgba(0,0,0,.2); }
+  /* start */
+  #start { background: radial-gradient(circle at 50% 0, #8a5630, #4a2a14 70%); color: #fff; display: grid; place-items: center; padding: 20px; }
+  #start .srodek { max-width: 520px; text-align: center; }
+  #start h1 { font-size: 34px; margin: 6px 0; letter-spacing: .5px; } #start p { color: #f1e2cc; }
+  #start .logo { font-size: 64px; } #start input { width: 100%; padding: 13px 14px; border-radius: 14px; border: 0; font: 17px system-ui; margin: 10px 0; }
+  #start .male { font-size: 12.5px; color: #d9c4a6; margin-top: 14px; }
+  /* trasa */
+  .postep { height: 10px; background: #eadfcc; border-radius: 99px; overflow: hidden; margin: 6px 0 2px; } .postep div { height: 100%; background: linear-gradient(90deg, var(--zloto), var(--cegla)); }
+  .etap { display: flex; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px dashed #eadfcc; } .etap:last-child { border: 0; }
+  .etap i { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-style: normal; background: #efe5d4; }
+  .etap.zal i { background: var(--ok); color: #fff; } .etap.biez i { background: var(--zloto); } .etap.biez b { color: var(--piernik); }
+  .cel { border: 3px solid var(--zloto); }
+  .cel .typ { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--cegla); font-weight: 800; }
+  .dystans { font-weight: 800; color: var(--piernik); }
+  .zagadka { background: #fbf4e6; border-left: 4px solid var(--zloto); padding: 10px 12px; border-radius: 0 10px 10px 0; font-style: italic; }
+  .podp { background: #fff7e0; border-radius: 10px; padding: 8px 10px; margin-top: 8px; font-size: 14.5px; }
+  #mapa svg { width: 100%; height: auto; display: block; border-radius: 14px; background: #efe6d4; }
+  /* skaner */
+  #skaner { background: #000; color: #fff; padding-bottom: 0; }
+  #skaner video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  #skaner .ramka { position: absolute; left: 50%; top: 45%; width: min(70vw, 300px); aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 22px; box-shadow: 0 0 0 9999px rgba(0,0,0,.45); border: 3px solid var(--zloto); }
+  #skaner .info { position: absolute; left: 0; right: 0; bottom: calc(90px + env(safe-area-inset-bottom)); text-align: center; padding: 0 20px; text-shadow: 0 1px 4px #000; }
+  #skaner .gora { position: absolute; top: calc(12px + env(safe-area-inset-top)); left: 12px; right: 12px; display: flex; justify-content: space-between; }
+  /* anioł */
+  #aniol { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  #widok3d { position: relative; height: 46vh; min-height: 280px; background: radial-gradient(circle at 50% 40%, #fff7e8, #ead9bd); overflow: hidden; }
+  #widok3d canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  #widok3d video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  #widok3d .narz { position: absolute; left: 10px; right: 10px; bottom: 10px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  #widok3d .narz .btn { background: rgba(255,255,255,.92); color: var(--piernik); }
+  .nagroda { position: fixed; left: 50%; top: 18%; transform: translate(-50%, 0) scale(.6); opacity: 0; z-index: 60; background: #fff; border-radius: 22px; padding: 18px 26px; text-align: center; box-shadow: 0 12px 40px rgba(60,30,10,.35); transition: .35s cubic-bezier(.2,1.4,.4,1); pointer-events: none; }
+  .nagroda.pokaz { opacity: 1; transform: translate(-50%, 0) scale(1); } .nagroda .ile { font-size: 34px; font-weight: 900; color: var(--piernik); }
+  .odp { display: grid; gap: 8px; margin-top: 8px; } .odp button { text-align: left; border: 2px solid #e6dccb; background: #fff; border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+  .odp button.dobra { border-color: var(--ok); background: #e7f5ec; } .odp button.zla { border-color: var(--cegla); background: #fbe9e5; }
+  /* paszport */
+  .stemple { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .stempel { border: 2px dashed #d8c9b0; border-radius: 16px; padding: 10px; text-align: center; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; background: #fff; }
+  .stempel.ma { border: 3px solid var(--cegla); background: #fff8ee; } .stempel .ikona { font-size: 36px; filter: grayscale(1) opacity(.35); } .stempel.ma .ikona { filter: none; transform: rotate(-8deg); }
+  .odznaki { display: flex; flex-wrap: wrap; gap: 8px; } .odznaka { border-radius: 99px; padding: 6px 12px; background: #efe5d4; color: var(--sz); font-size: 14px; } .odznaka.ma { background: var(--zloto); color: var(--ink); font-weight: 700; }
+  .modal { position: fixed; inset: 0; z-index: 70; background: rgba(30,18,8,.55); display: grid; place-items: center; padding: 18px; }
+  .modal .karta { max-width: 440px; width: 100%; }
+  #toast { position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 80; background: var(--ink); color: #fff; border-radius: 12px; padding: 10px 16px; max-width: 90vw; display: none; text-align: center; }
+  table.kal { width: 100%; font-size: 13px; border-collapse: collapse; } table.kal td { padding: 4px; border-bottom: 1px solid #eee; }
+  code { font-size: 12px; word-break: break-all; }
+</style>
+</head>
+<body>
+
+<!-- START -->
+<div class="ekran" id="start">
+  <div class="srodek">
+    <div class="logo">👼🍪</div>
+    <h1>Zwiedzaj z Aniołami</h1>
+    <p>Toruńska gra miejska śladem aniołów z brązu. Skanuj kody QR przy figurach, oglądaj anioły w 3D, rozwiązuj zagadki po drodze i zbieraj <b>wirtualne pierniki</b>.</p>
+    <input id="gracz" maxlength="30" placeholder="Twoje imię albo nazwa drużyny">
+    <button class="btn zloty pelny" id="bStart">Ruszam na szlak ➜</button>
+    <div class="male">Trasa „Od Ratusza nad Wisłę” · ok. 1 km · 5 aniołów i 2 ukryte atrakcje.<br>Gra korzysta z kamery (kody QR) i lokalizacji (czy jesteś na miejscu) – dane zostają w Twoim telefonie.<br>Anioły w aplikacji to stylizowane modele z atrybutami miejsc, nie kopie rzeźb. Prawdziwe figurki i filmy przewodników znajdziesz na szlaku i na torunskieanioly.pl.</div>
+  </div>
+</div>
+
+<!-- TRASA -->
+<div class="ekran" id="trasa" hidden>
+  <header class="pasek"><h1>👼 Zwiedzaj z Aniołami</h1><span class="pierniki" id="licznik1">🍪 0</span></header>
+  <div class="tresc">
+    <div class="karta"><div class="sz" id="trasaNazwa"></div><div class="postep"><div id="postep"></div></div><div class="sz" id="postepTxt"></div></div>
+    <div class="karta cel" id="celKarta"></div>
+    <div class="karta" id="mapa"><h3>Mapa trasy</h3><div id="mapaSvg"></div><div class="sz" id="gpsInfo">Lokalizacja: czekam…</div></div>
+    <div class="karta"><h3>Etapy</h3><div id="etapy"></div></div>
+  </div>
+</div>
+
+<!-- SKANER -->
+<div class="ekran" id="skaner" hidden>
+  <video id="kamera" playsinline muted></video>
+  <div class="ramka"></div>
+  <div class="gora"><button class="btn maly jasny" id="bSkanZamknij">✕ Zamknij</button><button class="btn maly jasny" id="bSkanReczny">Nie działa?</button></div>
+  <div class="info"><b>Nakieruj aparat na kod QR przy figurce anioła</b><div class="sz" style="color:#eee" id="skanStan">Uruchamiam aparat…</div></div>
+</div>
+
+<!-- ANIOŁ -->
+<div class="ekran" id="aniol" hidden>
+  <header class="pasek"><button class="btn maly jasny" id="bAniolWroc">←</button><h1 id="aniolTytul">Anioł</h1><span class="pierniki" id="licznik2">🍪 0</span></header>
+  <div id="widok3d"><video id="arWideo" playsinline muted hidden></video><div class="narz"><button class="btn maly" id="bAR">📷 Anioł obok mnie</button><button class="btn maly" id="bFoto" hidden>📸 Zrób zdjęcie</button><a class="btn maly" id="bFilm" target="_blank" rel="noopener">▶ Film przewodnika</a></div></div>
+  <div class="tresc" id="aniolTresc"></div>
+</div>
+
+<!-- PASZPORT -->
+<div class="ekran" id="paszport" hidden>
+  <header class="pasek"><h1>🪽 Anielski paszport</h1><span class="pierniki" id="licznik3">🍪 0</span></header>
+  <div class="tresc" id="paszportTresc"></div>
+</div>
+
+<!-- USTAWIENIA -->
+<div class="ekran" id="ustawienia" hidden>
+  <header class="pasek"><h1>⚙ Ustawienia</h1></header>
+  <div class="tresc" id="ustTresc"></div>
+</div>
+
+<nav class="dol" id="nav" hidden>
+  <button data-e="trasa" class="akt"><b>🗺</b>Trasa</button>
+  <button data-e="paszport"><b>🪽</b>Paszport</button>
+  <button data-e="skaner" class="skan"><b>📷</b>Skanuj</button>
+  <button data-e="ustawienia"><b>⚙</b>Więcej</button>
+</nav>
+<div class="nagroda" id="nagroda"><div class="ile" id="nagIle"></div><div id="nagTxt"></div></div>
+<div id="toast"></div>
+<div id="modal" class="modal" hidden><div class="karta" id="modalTresc"></div></div>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { PROJEKT, PIERNIKI, ANIOLY, ATRAKCJE, TRASA, ODZNAKI } from "./dane.js?v=38";
+import { zbudujAniola } from "./aniol3d.js?v=38";
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const KLUCZ = "zza-stan-v1", KLUCZ_KAL = "zza-kalibracja-v1";
+const aniol = id => ANIOLY.find(a => a.id === id), atrakcja = id => ATRAKCJE.find(a => a.id === id);
+// współrzędne z kalibracji (jeśli ktoś je zapisał w terenie) nadpisują przybliżone
+const kal = (() => { try { return JSON.parse(localStorage.getItem(KLUCZ_KAL) || "{}"); } catch { return {}; } })();
+for (const p of [...ANIOLY, ...ATRAKCJE]) if (kal.poz?.[p.id]) Object.assign(p, kal.poz[p.id]);
+
+/* ---------------- stan gry ---------------- */
+let S = (() => { try { return JSON.parse(localStorage.getItem(KLUCZ)) || null; } catch { return null; } })();
+const nowyStan = gracz => ({ gracz, start: Date.now(), pierniki: 0, anioly: {}, atrakcje: {}, pytania: {}, podpowiedzi: {}, filmy: {}, koniec: null });
+const zapisz = () => { try { localStorage.setItem(KLUCZ, JSON.stringify(S)); } catch {} };
+const zaliczony = e => e.typ === "aniol" ? !!S.anioly[e.id] : !!S.atrakcje[e.id];
+const biezacyEtap = () => TRASA.etapy.find(e => !zaliczony(e)) || null;
+function staty() { const a = Object.keys(S.anioly).length, t = Object.keys(S.atrakcje).length; return { anioly: a, atrakcje: t, pytania: Object.values(S.pytania).filter(Boolean).length, bezPodp: Object.values(S.atrakcje).filter(x => x.bezPodp).length, koniec: !!S.koniec }; }
+function dodajPierniki(n, txt) {
+  S.pierniki = Math.max(0, Math.round((S.pierniki + n) * 2) / 2); zapisz(); liczniki();
+  if (n > 0) { $("#nagIle").textContent = `+${n} 🍪`; $("#nagTxt").textContent = txt; const e = $("#nagroda"); e.classList.add("pokaz"); setTimeout(() => e.classList.remove("pokaz"), 1900); dzwiek(); try { navigator.vibrate?.(80); } catch {} }
+}
+const liczniki = () => $$(".pierniki").forEach(e => e.textContent = `🍪 ${S?.pierniki ?? 0}`);
+let tT; function toast(t, ms = 3200) { const e = $("#toast"); e.textContent = t; e.style.display = "block"; clearTimeout(tT); tT = setTimeout(() => e.style.display = "none", ms); }
+function modal(html) { $("#modalTresc").innerHTML = html; $("#modal").hidden = false; }
+const zamknijModal = () => { $("#modal").hidden = true; };
+$("#modal").addEventListener("click", e => { if (e.target.id === "modal") zamknijModal(); });
+let ac; function dzwiek() { try { ac ??= new AudioContext(); const t = ac.currentTime; [784, 988, 1319].forEach((f, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = "triangle"; o.frequency.value = f; o.connect(g); g.connect(ac.destination); g.gain.setValueAtTime(0.12, t + i * 0.09); g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.09 + 0.3); o.start(t + i * 0.09); o.stop(t + i * 0.09 + 0.32); }); } catch {} }
+
+/* ---------------- GPS ---------------- */
+let poz = null, symGps = null;
+const odl = (a, b) => { const R = 6371000, r = x => x * Math.PI / 180, dLa = r(b.lat - a.lat), dLo = r(b.lng - a.lng), h = Math.sin(dLa / 2) ** 2 + Math.cos(r(a.lat)) * Math.cos(r(b.lat)) * Math.sin(dLo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+const mojaPoz = () => symGps || poz;
+function startGps() {
+  if (!navigator.geolocation) { $("#gpsInfo").textContent = "Ten telefon nie udostępnia lokalizacji."; return; }
+  navigator.geolocation.watchPosition(p => { poz = { lat: p.coords.latitude, lng: p.coords.longitude, dok: p.coords.accuracy }; odswiezTrase(); },
+    e => { $("#gpsInfo").textContent = "Brak lokalizacji (" + (e.code === 1 ? "brak zgody" : "brak sygnału") + ") – możesz zaliczać punkty kodem QR."; }, { enableHighAccuracy: true, maximumAge: 5000 });
+}
+const blisko = p => { const m = mojaPoz(); return m ? odl(m, p) : null; };
+const fmtOdl = d => d == null ? "" : d < 1000 ? `${Math.round(d)} m` : `${(d / 1000).toFixed(1)} km`;
+const nawiguj = p => `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}&travelmode=walking`;
+
+/* ---------------- nawigacja ekranów ---------------- */
+let ekran = "start";
+function pokaz(id) {
+  if (ekran === "skaner" && id !== "skaner") stopSkaner();
+  if (ekran === "aniol" && id !== "aniol") stopAR();
+  $$(".ekran").forEach(e => e.hidden = e.id !== id); ekran = id;
+  $("#nav").hidden = id === "start" || id === "skaner";
+  $$("nav.dol button").forEach(b => b.classList.toggle("akt", b.dataset.e === id));
+  if (id === "trasa") odswiezTrase(); if (id === "paszport") rysujPaszport(); if (id === "ustawienia") rysujUstawienia(); if (id === "skaner") startSkaner();
+  window.scrollTo(0, 0);
+}
+$$("nav.dol button").forEach(b => b.onclick = () => pokaz(b.dataset.e));
+
+/* ---------------- TRASA ---------------- */
+function etapInfo(e) { const p = e.typ === "aniol" ? aniol(e.id) : atrakcja(e.id); return { p, nazwa: e.typ === "aniol" ? p.imie : (zaliczony(e) ? p.nazwa : "Ukryta atrakcja ❔"), ikona: e.typ === "aniol" ? "👼" : "🔎" }; }
+function odswiezTrase() {
+  if (!S) return; liczniki();
+  const n = TRASA.etapy.filter(zaliczony).length, all = TRASA.etapy.length;
+  $("#trasaNazwa").textContent = `Trasa: ${TRASA.nazwa} · gracz: ${S.gracz}`; $("#postep").style.width = (n / all * 100) + "%"; $("#postepTxt").textContent = `${n} z ${all} etapów · ${Object.keys(S.anioly).length}/${ANIOLY.length} aniołów`;
+  const e = biezacyEtap(), m = mojaPoz();
+  $("#gpsInfo").innerHTML = m ? `📍 Lokalizacja ${symGps ? "<b>symulowana</b>" : `±${Math.round(m.dok || 0)} m`}` : $("#gpsInfo").innerHTML;
+  if (!e) $("#celKarta").innerHTML = `<div class="typ">Koniec trasy</div><h2>🎉 Anielski Przewodnik!</h2><p>Zebrałeś <b>${S.pierniki} pierników</b>. Zajrzyj do paszportu po odznaki – i wymień pierniki na prawdziwe w toruńskiej piernikarni 😉</p><div class="rzad"><button class="btn" data-e2="paszport">🪽 Paszport</button></div>`;
+  else if (e.typ === "aniol") {
+    const a = aniol(e.id), d = blisko(a);
+    $("#celKarta").innerHTML = `<div class="typ">Etap ${TRASA.etapy.indexOf(e) + 1} · znajdź anioła</div><h2>👼 ${esc(a.imie)}</h2><div class="sz">${esc(a.miejsce)}</div>
+      <p>${esc(TRASA.dojscie[a.id] || "")}</p>${d != null ? `<div>Do celu: <span class="dystans">${fmtOdl(d)}</span></div>` : ""}
+      <div class="rzad"><button class="btn zloty" data-e2="skaner">📷 Skanuj kod QR przy figurze</button></div>
+      <div class="rzad"><button class="btn jasny maly" id="bJestem">📍 Jestem przy aniele</button><a class="btn jasny maly" href="${nawiguj(a)}" target="_blank" rel="noopener">🧭 Prowadź</a></div>`;
+    $("#bJestem").onclick = () => zaliczGps("aniol", a);
+  } else {
+    const t = atrakcja(e.id), d = blisko(t), uzyte = S.podpowiedzi[t.id] || 0;
+    $("#celKarta").innerHTML = `<div class="typ">Etap ${TRASA.etapy.indexOf(e) + 1} · zadanie terenowe</div><h2>🔎 Odnajdź ukrytą atrakcję</h2>
+      <div class="zagadka">${esc(t.zagadka)}</div>${t.podpowiedzi.slice(0, uzyte).map((p, i) => `<div class="podp">💡 ${i + 1}. ${esc(p)}</div>`).join("")}
+      ${d != null ? `<div style="margin-top:8px">${d < 150 ? "🔥 Jesteś bardzo blisko!" : d < 350 ? "🙂 Ciepło…" : "❄ Zimno…"} <span class="sz">(${fmtOdl(d)})</span></div>` : ""}
+      <div class="rzad"><button class="btn zloty" id="bZnalazlem">🎯 Znalazłem! (sprawdź lokalizację)</button></div>
+      <div class="rzad"><button class="btn jasny maly" id="bPodp" ${uzyte >= t.podpowiedzi.length ? "disabled" : ""}>💡 Podpowiedź (${PIERNIKI.podpowiedz} 🍪)</button><button class="btn jasny maly" id="bPomin">Pomiń</button></div>
+      <div class="sz" style="margin-top:6px">Za odnalezienie: +${PIERNIKI.atrakcja} 🍪, bez podpowiedzi dodatkowo +${PIERNIKI.bezPodpowiedzi} 🍪.</div>`;
+    $("#bZnalazlem").onclick = () => zaliczGps("atrakcja", t);
+    $("#bPodp").onclick = () => { S.podpowiedzi[t.id] = uzyte + 1; dodajPierniki(PIERNIKI.podpowiedz); toast("Podpowiedź odkryta"); odswiezTrase(); };
+    $("#bPomin").onclick = () => modal(`<h3>Pominąć atrakcję?</h3><p>Nie dostaniesz za nią pierników, ale pokażemy, czym była.</p><div class="rzad"><button class="btn jasny" onclick="document.querySelector('#modal').hidden=true">Szukam dalej</button><button class="btn" id="mPomin">Pomiń</button></div>`) || ($("#mPomin").onclick = () => { S.atrakcje[t.id] = { czas: Date.now(), pominieta: true }; zapisz(); zamknijModal(); pokazAtrakcje(t, false); });
+  }
+  $$("[data-e2]").forEach(b => b.onclick = () => pokaz(b.dataset.e2));
+  $("#etapy").innerHTML = TRASA.etapy.map((et, i) => { const { p, nazwa, ikona } = etapInfo(et), z = zaliczony(et), b = et === e; const d = blisko(p);
+    return `<div class="etap ${z ? "zal" : b ? "biez" : ""}" data-et="${i}"><i>${z ? "✓" : ikona}</i><div style="flex:1"><b>${esc(nazwa)}</b><div class="sz">${et.typ === "aniol" ? esc(p.miejsce) : z ? "zadanie zaliczone" : "zagadka terenowa"}</div></div><span class="sz">${d != null && !z ? fmtOdl(d) : ""}</span></div>`; }).join("");
+  $$("#etapy .etap.zal").forEach(el => el.onclick = () => { const et = TRASA.etapy[+el.dataset.et]; et.typ === "aniol" ? pokazAniola(et.id) : pokazAtrakcje(atrakcja(et.id), false); });
+  rysujMape(e);
+}
+function rysujMape(biez) {
+  const pkt = TRASA.etapy.map(e => ({ e, p: e.typ === "aniol" ? aniol(e.id) : atrakcja(e.id) })), m0 = mojaPoz(), m = m0 && Math.min(...pkt.map(x => odl(m0, x.p))) < 400 ? m0 : null;   // daleko od trasy – nie oddalaj mapy
+  const wszystkie = [...pkt.map(x => x.p), ...(m ? [m] : [])];
+  let la0 = Math.min(...wszystkie.map(p => p.lat)), la1 = Math.max(...wszystkie.map(p => p.lat)), lo0 = Math.min(...wszystkie.map(p => p.lng)), lo1 = Math.max(...wszystkie.map(p => p.lng));
+  const kx = Math.cos(53 * Math.PI / 180), W = 600, H = 380, pad = 46, sx = (lo1 - lo0) * kx, sy = la1 - la0, sk = Math.min((W - 2 * pad) / (sx || 1e-6), (H - 2 * pad) / (sy || 1e-6));
+  const X = p => pad + ((p.lng - lo0) * kx) * sk + ((W - 2 * pad) - sx * sk) / 2, Y = p => H - pad - (p.lat - la0) * sk - ((H - 2 * pad) - sy * sk) / 2;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Schemat trasy"><path d="M0,${H - 22} C ${W * 0.3},${H - 40} ${W * 0.6},${H - 5} ${W},${H - 30} L${W},${H} L0,${H}Z" fill="#b9d3dd" opacity=".7"/><text x="${W - 70}" y="${H - 8}" font-size="14" fill="#4f7584" font-style="italic">Wisła</text>`;
+  s += `<polyline points="${pkt.map(x => `${X(x.p)},${Y(x.p)}`).join(" ")}" fill="none" stroke="#a8432f" stroke-width="4" stroke-dasharray="2 9" stroke-linecap="round"/>`;
+  pkt.forEach((x, i) => { const z = zaliczony(x.e), b = x.e === biez, ukr = x.e.typ === "atrakcja" && !z, r = b ? 17 : 14;
+    s += `<g><circle cx="${X(x.p)}" cy="${Y(x.p)}" r="${r}" fill="${z ? "#2f7d4f" : b ? "#d9a441" : "#fff"}" stroke="#6b3f1f" stroke-width="3"/><text x="${X(x.p)}" y="${Y(x.p) + 6}" text-anchor="middle" font-size="16">${z ? "✓" : x.e.typ === "aniol" ? "👼" : "?"}</text>
+      <text x="${X(x.p) + r + 4}" y="${Y(x.p) + 5}" font-size="13" font-weight="700" fill="#2a1d14" stroke="#efe6d4" stroke-width="4" paint-order="stroke">${esc(ukr ? "?" : x.e.typ === "aniol" ? x.p.imie : x.p.nazwa)}</text></g>`; });
+  if (m) s += `<circle cx="${X(m)}" cy="${Y(m)}" r="9" fill="#2a7de1" stroke="#fff" stroke-width="3"><animate attributeName="r" values="8;11;8" dur="1.6s" repeatCount="indefinite"/></circle>`;
+  $("#mapaSvg").innerHTML = s + "</svg>";
+}
+function zaliczGps(typ, p) {
+  const d = blisko(p);
+  if (d == null) { toast("Nie znam Twojej lokalizacji – zezwól na nią albo zeskanuj kod QR przy figurze."); return; }
+  if (d > PROJEKT.promienGps) { toast(`Jeszcze nie tu – do celu ok. ${fmtOdl(d)}.`); return; }
+  if (typ === "aniol") odblokujAniola(p.id, "gps"); else odblokujAtrakcje(p);
+}
+function odblokujAtrakcje(t) {
+  if (S.atrakcje[t.id]) { pokazAtrakcje(t, false); return; }
+  const bez = !(S.podpowiedzi[t.id] > 0); S.atrakcje[t.id] = { czas: Date.now(), bezPodp: bez }; zapisz();
+  dodajPierniki(PIERNIKI.atrakcja + (bez ? PIERNIKI.bezPodpowiedzi : 0), `Odnaleziono: ${t.nazwa}${bez ? " – bez podpowiedzi!" : ""}`);
+  sprawdzKoniec(); pokazAtrakcje(t, true);
+}
+function pytanieHtml(klucz, q) {
+  const odp = q.odp.map((o, i) => ({ o, i })).sort((a, b) => ((a.i * 7 + klucz.length) % 5) - ((b.i * 7 + klucz.length) % 5));
+  const juz = S.pytania[klucz];
+  return `<div class="karta"><h3>❓ Pytanie za ${PIERNIKI.pytanie} 🍪</h3><div>${esc(q.tresc)}</div><div class="odp" data-pyt="${klucz}">${odp.map(({ o, i }) => `<button data-i="${i}" ${juz !== undefined ? "disabled" : ""} class="${juz !== undefined && i === q.ok ? "dobra" : ""}">${esc(o)}</button>`).join("")}</div></div>`;
+}
+function podepnijPytanie(klucz, q) {
+  $$(`[data-pyt="${klucz}"] button`).forEach(b => b.onclick = () => {
+    if (S.pytania[klucz] !== undefined) return; const ok = +b.dataset.i === q.ok; S.pytania[klucz] = ok; zapisz();
+    $$(`[data-pyt="${klucz}"] button`).forEach(x => { x.disabled = true; if (+x.dataset.i === q.ok) x.classList.add("dobra"); }); if (!ok) b.classList.add("zla");
+    if (ok) dodajPierniki(PIERNIKI.pytanie, "Dobra odpowiedź!"); else toast("Niestety nie – zaznaczyliśmy poprawną odpowiedź.");
+  });
+}
+function pokazAtrakcje(t, nowa) {
+  modal(`<div class="typ" style="color:#a8432f;font-weight:800;font-size:12px;text-transform:uppercase">${nowa ? "Odnaleziona atrakcja!" : "Atrakcja"}</div><h2>🔎 ${esc(t.nazwa)}</h2><p>${esc(t.ciekawostka)}</p>${pytanieHtml(t.id, t.pytanie)}<div class="rzad"><a class="btn jasny maly" href="${nawiguj(t)}" target="_blank" rel="noopener">🧭 Na mapie</a><button class="btn" id="mDalej">Dalej ➜</button></div>`);
+  podepnijPytanie(t.id, t.pytanie); $("#mDalej").onclick = () => { zamknijModal(); odswiezTrase(); };
+}
+function sprawdzKoniec() { if (!S.koniec && TRASA.etapy.every(zaliczony)) { S.koniec = Date.now(); zapisz(); setTimeout(() => toast("🎉 Cała trasa przebyta – jesteś Anielskim Przewodnikiem!", 5000), 2200); } }
+
+/* ---------------- ANIOŁ: odblokowanie i widok 3D ---------------- */
+function odblokujAniola(id, sposob, url) {
+  const a = aniol(id); if (url) S.filmy[id] = url;
+  if (!S.anioly[id]) { S.anioly[id] = { czas: Date.now(), sposob }; zapisz(); dodajPierniki(PIERNIKI.aniol, `Odnaleziony anioł: ${a.imie}`); sprawdzKoniec(); }
+  else zapisz();
+  pokazAniola(id);
+}
+let R3 = null;
+function init3d() {
+  const el = $("#widok3d"), r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); r.setPixelRatio(Math.min(2, devicePixelRatio)); r.shadowMap.enabled = true; r.outputColorSpace = THREE.SRGBColorSpace;
+  el.prepend(r.domElement);
+  const sc = new THREE.Scene(); sc.environment = new THREE.PMREMGenerator(r).fromScene(new RoomEnvironment(), 0.04).texture;
+  const sw = new THREE.DirectionalLight(0xffffff, 2.2); sw.position.set(1.5, 3, 2); sw.castShadow = true; sw.shadow.mapSize.set(1024, 1024); sc.add(sw);
+  const cien = new THREE.Mesh(new THREE.CircleGeometry(0.8, 48), new THREE.ShadowMaterial({ opacity: 0.25 })); cien.rotation.x = -Math.PI / 2; cien.receiveShadow = true; sc.add(cien);
+  const cam = new THREE.PerspectiveCamera(35, 1, 0.05, 50); cam.position.set(1.15, 1.15, 2.75);
+  const ctl = new OrbitControls(cam, r.domElement); ctl.target.set(0, 0.6, 0); ctl.enableDamping = true; ctl.autoRotate = true; ctl.autoRotateSpeed = 1.6; ctl.minDistance = 0.9; ctl.maxDistance = 4; ctl.enablePan = false;
+  ctl.addEventListener("start", () => ctl.autoRotate = false);
+  const rozm = () => { const w = el.clientWidth, h = el.clientHeight; r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); };
+  new ResizeObserver(rozm).observe(el); rozm();
+  R3 = { r, sc, cam, ctl, model: null, rozm };
+  r.setAnimationLoop(() => { if (ekran !== "aniol") return; if (R3.model) R3.model.rotation.y += 0; ctl.update(); r.render(sc, cam); });
+}
+function pokazAniola(id) {
+  const a = aniol(id); if (!R3) init3d();
+  if (R3.model) R3.sc.remove(R3.model); R3.model = zbudujAniola(a); R3.sc.add(R3.model); R3.ctl.autoRotate = true;
+  $("#aniolTytul").textContent = a.imie;
+  const url = S.filmy[id] || PROJEKT.stronaAniolow; $("#bFilm").href = url;
+  const nast = biezacyEtap();
+  $("#aniolTresc").innerHTML = `<div class="karta"><div class="sz">${a.nr}. anioł trasy · ${esc(a.miejsce)}</div><h2>👼 ${esc(a.imie)}</h2><p>${esc(a.opis)}</p>${a.uwaga ? `<div class="sz">ℹ ${esc(a.uwaga)}</div>` : ""}<div class="sz">Model 3D to stylizowany anioł z atrybutem miejsca. Prawdziwą figurkę z brązu zobaczysz na szlaku – a film przewodnika pod przyciskiem „Film przewodnika”.</div></div>
+    ${pytanieHtml(a.id, a.pytanie)}
+    <div class="karta"><h3>Co dalej?</h3>${nast ? (nast.typ === "aniol" ? `<p>Następny anioł: <b>${esc(aniol(nast.id).imie)}</b>. ${esc(TRASA.dojscie[nast.id] || "")}</p>` : `<p>Kolejne zadanie: <b>odnajdź ukrytą atrakcję</b> – zagadka czeka na ekranie Trasy.</p>`) : "<p>To już koniec trasy! 🎉</p>"}<button class="btn pelny" id="bDoTrasy">🗺 Do trasy</button></div>`;
+  podepnijPytanie(a.id, a.pytanie); $("#bDoTrasy").onclick = () => pokaz("trasa");
+  pokaz("aniol"); setTimeout(R3.rozm, 30);
+}
+$("#bAniolWroc").onclick = () => pokaz("trasa");
+// „Anioł obok mnie” – obraz z aparatu w tle, model na pierwszym planie, zdjęcie do zapisania
+let arStrumien = null;
+$("#bAR").onclick = async () => {
+  if (arStrumien) { stopAR(); return; }
+  try { arStrumien = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }); const v = $("#arWideo"); v.srcObject = arStrumien; v.hidden = false; await v.play();
+    $("#widok3d").style.background = "#000"; $("#bAR").textContent = "✕ Bez aparatu"; $("#bFoto").hidden = false; R3.ctl.autoRotate = false; toast("Obracaj anioła palcem i zrób zdjęcie!");
+  } catch { toast("Nie udało się włączyć aparatu."); }
+};
+function stopAR() { if (arStrumien) { arStrumien.getTracks().forEach(t => t.stop()); arStrumien = null; } const v = $("#arWideo"); v.hidden = true; $("#widok3d").style.background = ""; $("#bAR").textContent = "📷 Anioł obok mnie"; $("#bFoto").hidden = true; }
+$("#bFoto").onclick = async () => {
+  const v = $("#arWideo"), c = document.createElement("canvas"), w = R3.r.domElement.width, h = R3.r.domElement.height; c.width = w; c.height = h; const g = c.getContext("2d");
+  const s = Math.max(w / v.videoWidth, h / v.videoHeight); g.drawImage(v, (w - v.videoWidth * s) / 2, (h - v.videoHeight * s) / 2, v.videoWidth * s, v.videoHeight * s);
+  R3.r.render(R3.sc, R3.cam); g.drawImage(R3.r.domElement, 0, 0);
+  g.fillStyle = "rgba(107,63,31,.85)"; g.fillRect(0, h - 44 * devicePixelRatio, w, 44 * devicePixelRatio); g.fillStyle = "#fff"; g.font = `700 ${18 * devicePixelRatio}px system-ui`; g.fillText("👼 Zwiedzaj z Aniołami · Toruń", 14 * devicePixelRatio, h - 16 * devicePixelRatio);
+  c.toBlob(async b => { const f = new File([b], "anioł-toruń.jpg", { type: "image/jpeg" });
+    if (navigator.canShare?.({ files: [f] })) { try { await navigator.share({ files: [f], title: "Zwiedzaj z Aniołami" }); return; } catch {} }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "aniol-torun.jpg"; a.click(); }, "image/jpeg", 0.9);
+};
+
+/* ---------------- SKANER QR ---------------- */
+let strumien = null, petla = 0, detektor = null;
+async function startSkaner() {
+  $("#skanStan").textContent = "Uruchamiam aparat…";
+  try {
+    strumien = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 } }, audio: false });
+    const v = $("#kamera"); v.srcObject = strumien; await v.play(); $("#skanStan").textContent = "Szukam kodu…";
+    if ("BarcodeDetector" in window) { try { detektor = new BarcodeDetector({ formats: ["qr_code"] }); } catch { detektor = null; } }
+    const c = document.createElement("canvas"), g = c.getContext("2d", { willReadFrequently: true });
+    const krok = async () => {
+      if (!strumien) return;
+      if (v.readyState >= 2) {
+        let tekst = null;
+        if (detektor) { try { const k = await detektor.detect(v); if (k[0]) tekst = k[0].rawValue; } catch { detektor = null; } }
+        if (!tekst && window.jsQR) { const s = Math.min(1, 720 / Math.max(v.videoWidth, v.videoHeight)); c.width = v.videoWidth * s; c.height = v.videoHeight * s; g.drawImage(v, 0, 0, c.width, c.height); const d = g.getImageData(0, 0, c.width, c.height), k = jsQR(d.data, c.width, c.height, { inversionAttempts: "dontInvert" }); if (k) tekst = k.data; }
+        if (tekst) { stopSkaner(); obsluzKod(tekst); return; }
+      }
+      petla = requestAnimationFrame(krok);
+    };
+    krok();
+  } catch (e) { $("#skanStan").textContent = "Brak dostępu do aparatu. Zezwól na aparat albo użyj „Nie działa?”."; }
+}
+function stopSkaner() { cancelAnimationFrame(petla); if (strumien) { strumien.getTracks().forEach(t => t.stop()); strumien = null; } }
+$("#bSkanZamknij").onclick = () => pokaz("trasa");
+$("#bSkanReczny").onclick = () => { stopSkaner(); recznie(); };
+function recznie() {
+  pokaz("trasa");
+  modal(`<h3>Kod nie chce się zeskanować?</h3><p class="sz">Wybierz anioła, przy którym stoisz. Sprawdzimy Twoją lokalizację (musisz być w promieniu ${PROJEKT.promienGps} m).</p><div class="odp">${ANIOLY.map(a => `<button data-a="${a.id}">👼 ${esc(a.imie)} <span class="sz">· ${esc(a.miejsce)}</span></button>`).join("")}</div><div class="rzad"><button class="btn jasny" id="mAnuluj">Anuluj</button></div>`);
+  $$("[data-a]").forEach(b => b.onclick = () => { zamknijModal(); zaliczGps("aniol", aniol(b.dataset.a)); }); $("#mAnuluj").onclick = zamknijModal;
+}
+function rozpoznaj(tekst) {
+  const t = String(tekst).trim(), low = t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const m = /^zza:(aniol|atrakcja):([a-z0-9-]+)$/i.exec(t); if (m) return { typ: m[1].toLowerCase(), id: m[2].toLowerCase(), pewny: true };
+  if (kal.kody?.[t]) return { typ: "aniol", id: kal.kody[t], pewny: true };
+  if (low.includes("torunskieanioly")) {
+    const a = ANIOLY.find(a => a.aliasy.some(x => low.includes(x))); if (a) return { typ: "aniol", id: a.id, pewny: true, url: t };
+    const mp = mojaPoz(); if (mp) { const naj = ANIOLY.map(a => ({ a, d: odl(mp, a) })).sort((x, y) => x.d - y.d)[0]; if (naj.d < 150) return { typ: "aniol", id: naj.a.id, pewny: naj.d < 60, url: t }; }
+    return { typ: "aniol", id: null, url: t };
+  }
+  return null;
+}
+function obsluzKod(tekst) {
+  const w = rozpoznaj(tekst); pokaz("trasa");
+  if (!w) { modal(`<h3>To nie jest kod anioła</h3><p class="sz">Odczytano: <code>${esc(tekst.slice(0, 120))}</code></p><p>Kody QR szlaku są na tabliczkach przy figurkach aniołów.</p><div class="rzad"><button class="btn" id="mOk">OK</button></div>`); $("#mOk").onclick = zamknijModal; return; }
+  if (w.typ === "atrakcja") { const t = atrakcja(w.id); if (t) odblokujAtrakcje(t); return; }
+  if (w.id && w.pewny) { odblokujAniola(w.id, "qr", w.url); return; }
+  // kod z torunskieanioly.pl, ale nie wiemy którego anioła – zapytaj (domyślnie: bieżący cel)
+  const biez = biezacyEtap(), propozycja = w.id || (biez?.typ === "aniol" ? biez.id : null);
+  modal(`<h3>👼 Kod anioła odczytany!</h3><p>Przy którym aniele stoisz?</p><div class="odp">${ANIOLY.map(a => `<button data-a="${a.id}" class="${a.id === propozycja ? "dobra" : ""}">${esc(a.imie)} <span class="sz">· ${esc(a.miejsce)}</span></button>`).join("")}</div><p class="sz">Wybór zapamiętamy dla tego kodu.</p>`);
+  $$("[data-a]").forEach(b => b.onclick = () => { kal.kody = { ...(kal.kody || {}), [tekst]: b.dataset.a }; try { localStorage.setItem(KLUCZ_KAL, JSON.stringify(kal)); } catch {} zamknijModal(); odblokujAniola(b.dataset.a, "qr", w.url); });
+}
+
+/* ---------------- PASZPORT ---------------- */
+function rysujPaszport() {
+  liczniki(); const st = staty(), min = Math.round((((S.koniec || Date.now()) - S.start) / 60000));
+  $("#paszportTresc").innerHTML = `<div class="karta"><h2>${esc(S.gracz)}</h2><div class="sz">Na szlaku od ${new Date(S.start).toLocaleDateString("pl-PL")} · ${min} min · ${st.anioly}/${ANIOLY.length} aniołów · ${st.atrakcje}/${ATRAKCJE.length} atrakcji</div><div style="font-size:28px;font-weight:900;margin-top:6px">🍪 ${S.pierniki} pierników</div></div>
+    <div class="karta"><h3>Pieczątki aniołów</h3><div class="stemple">${ANIOLY.map(a => `<div class="stempel ${S.anioly[a.id] ? "ma" : ""}" data-a="${a.id}"><div class="ikona">👼</div><b>${esc(S.anioly[a.id] ? a.imie : "???")}</b><div class="sz">${S.anioly[a.id] ? new Date(S.anioly[a.id].czas).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" }) : esc(a.miejsce)}</div></div>`).join("")}
+      ${ATRAKCJE.map(t => `<div class="stempel ${S.atrakcje[t.id] && !S.atrakcje[t.id].pominieta ? "ma" : ""}" data-t="${t.id}"><div class="ikona">🔎</div><b>${esc(S.atrakcje[t.id] ? t.nazwa : "Ukryta atrakcja")}</b><div class="sz">${S.atrakcje[t.id]?.pominieta ? "pominięta" : S.atrakcje[t.id] ? "odnaleziona" : "zagadka"}</div></div>`).join("")}</div></div>
+    <div class="karta"><h3>Odznaki</h3><div class="odznaki">${ODZNAKI.map(o => `<span class="odznaka ${o.warunek(st) ? "ma" : ""}" title="${esc(o.opis)}">${o.warunek(st) ? "🏅" : "🔒"} ${esc(o.nazwa)}</span>`).join("")}</div></div>
+    <div class="karta"><h3>Pochwal się!</h3><button class="btn pelny" id="bUdostepnij">📤 Udostępnij wynik</button></div>`;
+  $$("#paszportTresc [data-a]").forEach(e => e.onclick = () => S.anioly[e.dataset.a] ? pokazAniola(e.dataset.a) : toast("Najpierw odnajdź tego anioła na szlaku!"));
+  $$("#paszportTresc [data-t]").forEach(e => e.onclick = () => S.atrakcje[e.dataset.t] ? pokazAtrakcje(atrakcja(e.dataset.t), false) : toast("To wciąż tajemnica 🤫"));
+  $("#bUdostepnij").onclick = async () => { const t = `👼 Zwiedzaj z Aniołami – Toruń: ${st.anioly}/${ANIOLY.length} aniołów, ${st.atrakcje} ukryte atrakcje i ${S.pierniki} wirtualnych pierników! 🍪`; try { if (navigator.share) await navigator.share({ text: t, url: location.href }); else { await navigator.clipboard.writeText(t); toast("Skopiowano do schowka"); } } catch {} };
+}
+
+/* ---------------- USTAWIENIA, kalibracja, tryb testowy ---------------- */
+function rysujUstawienia() {
+  $("#ustTresc").innerHTML = `<div class="karta"><h3>O grze</h3><p class="sz">„Zwiedzaj z Aniołami” prowadzi szlakiem miejskiego projektu „Śladem Toruńskich Aniołów” – figurek z brązu autorstwa Małgorzaty Więcławskiej-Furyk. Kody QR przy figurach prowadzą do strony <a href="${PROJEKT.stronaAniolow}" target="_blank" rel="noopener">torunskieanioly.pl</a> z filmami przewodników – gra je rozpoznaje i dolicza pierniki.</p>
+      <p class="sz">Punktacja: anioł +${PIERNIKI.aniol} 🍪 · atrakcja +${PIERNIKI.atrakcja} 🍪 (+${PIERNIKI.bezPodpowiedzi} bez podpowiedzi) · pytanie +${PIERNIKI.pytanie} 🍪 · podpowiedź ${PIERNIKI.podpowiedz} 🍪.</p></div>
+    <div class="karta"><h3>🧪 Tryb testowy (bez wychodzenia z domu)</h3><p class="sz">Udawaj, że stoisz przy wybranym punkcie – przydatne do pokazu gry. Kody testowe do wydruku: <a href="kody-testowe.html" target="_blank">kody-testowe.html</a>.</p>
+      <select id="symSel" style="width:100%;padding:10px;border-radius:10px;font:15px system-ui"><option value="">— prawdziwy GPS —</option>${[...ANIOLY.map(a => [a.id, "👼 " + a.imie]), ...ATRAKCJE.map(t => [t.id, "🔎 " + t.nazwa])].map(([v, n]) => `<option value="${v}" ${symGps?.id === v ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></div>
+    <div class="karta"><h3>📍 Kalibracja punktów (dla organizatora)</h3><p class="sz">Stań przy figurze i zapisz jej prawdziwe położenie. Zeskanowane kody QR przypisane do aniołów też tu widać. Wynik skopiuj do pliku <code>dane.js</code>.</p>
+      <table class="kal">${[...ANIOLY, ...ATRAKCJE].map(p => `<tr><td>${esc(p.imie || p.nazwa)}</td><td class="sz">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}${kal.poz?.[p.id] ? " ✔" : ""}</td><td><button class="btn maly jasny" data-kal="${p.id}">Tu stoję</button></td></tr>`).join("")}</table>
+      <div class="rzad"><button class="btn maly" id="bEksport">📋 Kopiuj dane kalibracji</button></div><div class="sz">${Object.keys(kal.kody || {}).length} kod(ów) QR przypisanych do aniołów.</div></div>
+    <div class="karta"><h3>Zacznij od nowa</h3><button class="btn jasny pelny" id="bReset">↺ Wyczyść postęp gry</button></div>`;
+  $("#symSel").onchange = e => { const id = e.target.value, p = aniol(id) || atrakcja(id); symGps = p ? { lat: p.lat + 0.00008, lng: p.lng + 0.00005, dok: 5, id } : null; toast(p ? `Symulujesz pozycję przy: ${p.imie || p.nazwa}` : "Używam prawdziwego GPS"); };
+  $$("[data-kal]").forEach(b => b.onclick = () => { const m = poz; if (!m) { toast("Brak prawdziwej lokalizacji GPS."); return; } kal.poz = { ...(kal.poz || {}), [b.dataset.kal]: { lat: +m.lat.toFixed(6), lng: +m.lng.toFixed(6) } }; localStorage.setItem(KLUCZ_KAL, JSON.stringify(kal)); const p = aniol(b.dataset.kal) || atrakcja(b.dataset.kal); Object.assign(p, kal.poz[b.dataset.kal]); toast(`Zapisano (±${Math.round(m.dok)} m)`); rysujUstawienia(); });
+  $("#bEksport").onclick = async () => { const t = JSON.stringify(kal, null, 1); try { await navigator.clipboard.writeText(t); toast("Skopiowano"); } catch { modal(`<h3>Dane kalibracji</h3><textarea style="width:100%;height:200px">${esc(t)}</textarea><div class="rzad"><button class="btn" onclick="document.querySelector('#modal').hidden=true">OK</button></div>`); } };
+  $("#bReset").onclick = () => modal(`<h3>Wyczyścić postęp?</h3><p>Stracisz zebrane pierniki i pieczątki. Tego nie da się cofnąć.</p><div class="rzad"><button class="btn jasny" id="mNie">Nie</button><button class="btn" id="mTak" style="background:#a8432f">Wyczyść</button></div>`) || ($("#mNie").onclick = zamknijModal, $("#mTak").onclick = () => { localStorage.removeItem(KLUCZ); location.reload(); });
+}
+
+/* ---------------- start ---------------- */
+function wejdz() { $("#start").hidden = true; startGps(); pokaz("trasa"); }
+if (S) { $("#gracz").value = S.gracz; $("#bStart").textContent = "Wracam na szlak ➜"; }
+$("#bStart").onclick = () => { const g = $("#gracz").value.trim() || "Anielski wędrowiec"; if (!S) S = nowyStan(g); else S.gracz = g; zapisz(); wejdz(); };
+// ?kod=... – można uruchomić grę linkiem z kodem (np. własne kody QR organizatora)
+const qp = new URLSearchParams(location.search);
+window.__zza = { stan: () => S, obsluzKod, ustawGps: (lat, lng) => { symGps = { lat, lng, dok: 5 }; odswiezTrase(); }, pokaz, rozpoznaj, ANIOLY, ATRAKCJE };
+if (qp.get("kod") && S) { wejdz(); obsluzKod(qp.get("kod")); }
+window.__zzaGotowa = true;
+</script>
+</body>
+</html>

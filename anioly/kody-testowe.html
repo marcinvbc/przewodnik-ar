@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kody testowe – Zwiedzaj z Aniołami</title>
+<script src="lib/qrcode.js"></script>
+<style>
+  body { font: 15px/1.4 system-ui, sans-serif; margin: 24px; color: #2a1d14; }
+  h1 { margin: 0 0 4px; } .sz { color: #7d6a5b; }
+  .siatka { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; margin-top: 16px; }
+  .kod { border: 2px dashed #d8c9b0; border-radius: 14px; padding: 12px; text-align: center; break-inside: avoid; }
+  .kod svg { width: 170px; height: 170px; } .kod b { display: block; margin-top: 4px; } .kod code { font-size: 11px; color: #7d6a5b; word-break: break-all; }
+  .gra { border-color: #a8432f; }
+  @media print { .bez-druku { display: none; } body { margin: 8mm; } }
+</style></head><body>
+<h1>👼 Zwiedzaj z Aniołami – kody testowe</h1>
+<p class="sz">Do pokazu i testów przy biurku: otwórz grę w telefonie, przejdź do „Skanuj” i zeskanuj kod z ekranu lub wydruku. W terenie gra rozpoznaje <b>oryginalne kody QR przy figurach</b> (strona torunskieanioly.pl) – tych kart nie trzeba nigdzie wieszać.
+<button class="bez-druku" onclick="print()">🖨 Drukuj</button></p>
+<div class="siatka" id="siatka"></div>
+<script type="module">
+import { ANIOLY, ATRAKCJE } from "./dane.js?v=38";
+const gra = new URL("./", location.href).href;
+const karty = [{ t: gra, n: "▶ Otwórz grę", o: "Kod do plakatu / informacji turystycznej", gra: true },
+  ...ANIOLY.map(a => ({ t: `ZZA:aniol:${a.id}`, n: "👼 " + a.imie, o: a.miejsce })),
+  ...ATRAKCJE.map(t => ({ t: `ZZA:atrakcja:${t.id}`, n: "🔎 " + t.nazwa, o: "tylko do testów – w grze atrakcję zalicza się lokalizacją" })),
+  { t: "https://torunskieanioly.pl/", n: "🌐 Kod jak przy figurze", o: "symuluje oryginalny kod – gra zapyta, przy którym aniele stoisz (albo rozpozna po GPS)" }];
+document.querySelector("#siatka").innerHTML = karty.map(k => { const q = qrcode(0, "M"); q.addData(k.t); q.make(); return `<div class="kod ${k.gra ? "gra" : ""}">${q.createSvgTag({ cellSize: 4, margin: 2, scalable: true })}<b>${k.n}</b><div class="sz">${k.o}</div><code>${k.t}</code></div>`; }).join("");
+window.__ok = true;
+</script></body></html>
