@@ -9,19 +9,19 @@
 export const SEKCJE = [
   { id: "skrzypce", nazwa: "Skrzypce", sf: "violin", ikona: "skrzypce", n: 6, g: 0.9, klasyka: [0.19, 0.72, 1.1], rock: [0.13, 0.72, 1.05] },
   { id: "altowki", nazwa: "Altówki", sf: "viola", ikona: "altowka", n: 4, g: 0.65, klasyka: [0.39, 0.75, 1.12], rock: null },
-  { id: "wiolonczele", nazwa: "Wiolonczele", sf: "cello", ikona: "wiolonczela", n: 4, g: 0.85, klasyka: [0.62, 0.73, 1.12], rock: [0.87, 0.72, 1.05] },
-  { id: "kontrabasy", nazwa: "Kontrabasy", sf: "contrabass", ikona: "kontrabas", n: 3, g: 0.8, klasyka: [0.83, 0.66, 1.05], rock: null },
-  { id: "gitara", nazwa: "Gitara elektryczna", sf: "overdriven_guitar", ikona: "gitara", n: 1, g: 0.75, klasyka: null, rock: [0.37, 0.72, 1.1] },
-  { id: "bas", nazwa: "Gitara basowa", sf: "electric_bass_finger", ikona: "bas", n: 1, g: 0.95, klasyka: null, rock: [0.63, 0.71, 1.1] },
+  { id: "wiolonczele", nazwa: "Wiolonczele", sf: "cello", ikona: "wiolonczela", n: 4, g: 0.85, klasyka: [0.62, 0.745, 1.12], rock: [0.87, 0.72, 1.05] },
+  { id: "kontrabasy", nazwa: "Kontrabasy", sf: "contrabass", ikona: "kontrabas", n: 3, g: 0.8, klasyka: [0.83, 0.685, 1.05], rock: null },
+  { id: "gitara", nazwa: "Gitara elektryczna", sf: "overdriven_guitar", ikona: "gitara", n: 1, g: 0.75, klasyka: null, rock: [0.37, 0.745, 1.1] },
+  { id: "bas", nazwa: "Gitara basowa", sf: "electric_bass_finger", ikona: "bas", n: 1, g: 0.95, klasyka: null, rock: [0.63, 0.745, 1.1] },
   { id: "fortepian", nazwa: "Fortepian", sf: "acoustic_grand_piano", ikona: "fortepian", n: 1, g: 0.7, klasyka: [0.12, 0.47, 0.95], rock: [0.12, 0.47, 0.95] },
   { id: "flety", nazwa: "Flety", sf: "flute", ikona: "flet", n: 3, g: 0.55, klasyka: [0.37, 0.52, 0.92], rock: [0.37, 0.52, 0.92] },
-  { id: "klarnety", nazwa: "Klarnety", sf: "clarinet", ikona: "klarnet", n: 3, g: 0.6, klasyka: [0.6, 0.49, 0.92], rock: [0.6, 0.49, 0.92] },
-  { id: "harfa", nazwa: "Harfa", sf: "orchestral_harp", ikona: "harfa", n: 1, g: 0.75, klasyka: [0.87, 0.41, 0.92], rock: null },
+  { id: "klarnety", nazwa: "Klarnety", sf: "clarinet", ikona: "klarnet", n: 3, g: 0.6, klasyka: [0.6, 0.465, 0.92], rock: [0.6, 0.45, 0.92] },
+  { id: "harfa", nazwa: "Harfa", sf: "orchestral_harp", ikona: "harfa", n: 1, g: 0.75, klasyka: [0.89, 0.4, 0.92], rock: null },
   { id: "perkusja", nazwa: "Perkusja", sf: null, ikona: "perkusja", n: 1, g: 0.85, klasyka: null, rock: [0.85, 0.43, 0.95] },
   { id: "waltornie", nazwa: "Waltornie", sf: "french_horn", ikona: "waltornia", n: 3, g: 0.55, klasyka: [0.27, 0.29, 0.78], rock: [0.27, 0.29, 0.78] },
   { id: "trabki", nazwa: "Trąbki", sf: "trumpet", ikona: "trabka", n: 3, g: 0.5, klasyka: [0.46, 0.27, 0.78], rock: [0.46, 0.27, 0.78] },
   { id: "kotly", nazwa: "Kotły (bębny)", sf: "timpani", ikona: "kotly", n: 2, g: 0.95, klasyka: [0.65, 0.27, 0.8], rock: [0.65, 0.27, 0.8] },
-  { id: "talerze", nazwa: "Talerze", sf: null, ikona: "talerze", n: 1, g: 0.6, klasyka: [0.83, 0.24, 0.78], rock: null },
+  { id: "talerze", nazwa: "Talerze", sf: null, ikona: "talerze", n: 1, g: 0.6, klasyka: [0.8, 0.24, 0.78], rock: null },
 ];
 export const sekcjeStylu = styl => SEKCJE.filter(s => s[styl]);
 
@@ -46,6 +46,11 @@ export const UTWORY = [
   { id: "kanon", nazwa: "Kanon D-dur", autor: "J. Pachelbel", tempo: 72, akordy: "D A Bm F#m G D G A D A Bm F#m G D G A",
     mel: [[66, 2], [64, 2], [62, 2], [61, 2], [59, 2], [57, 2], [59, 2], [61, 2],
       [62, 1], [61, 1], [59, 1], [57, 1], [55, 1], [54, 1], [55, 1], [52, 1], [50, 1], [54, 1], [57, 1], [55, 1], [54, 1], [50, 1], [54, 1], [52, 1]] },
+  { id: "zaratustra", nazwa: "Tako rzecze Zaratustra – wschód słońca", autor: "R. Strauss", tempo: 66, trabkiMelodia: true, kotlyOstinato: true, melOkt: -12,
+    akordy: "C C C Cm C C C C C C Cm C C C C C D D D G F G C C",
+    mel: [[60, 2], [67, 2], [72, 2], [76, .5], [75, 1.5], [72, 4], r(4),
+      [60, 2], [67, 2], [72, 2], [75, .5], [76, 1.5], [72, 4], r(4),
+      [62, 2], [69, 2], [74, 2], [78, .5], [79, 1.5], [76, 1], [77, 1], [79, 1], [81, 1], [84, 4]] },
   { id: "piata", nazwa: "V Symfonia – motyw losu", autor: "L. van Beethoven", tempo: 108, akordy: "Cm Cm G G Ab Ab Cm Cm Cm Cm G G Ab G Cm Cm",
     mel: [r(.5), [67, .5], [67, .5], [67, .5], [63, 2], r(.5), [65, .5], [65, .5], [65, .5], [62, 2], r(.5), [68, .5], [68, .5], [68, .5], [67, 2], r(.5), [63, .5], [63, .5], [63, .5], [60, 2],
       r(.5), [67, .5], [67, .5], [67, .5], [63, 2], r(.5), [65, .5], [65, .5], [65, .5], [62, 2], r(.5), [68, .5], [68, .5], [68, .5], [67, 1], [65, 1], [63, 2], [60, 2]] },
@@ -78,10 +83,11 @@ export function partytura(utwor, styl) {
   for (const [m, d] of utwor.mel) {
     if (m != null) {
       const A = akordW(t);
-      dodaj("skrzypce", t, m + 12, d, 0.9);
-      dodaj("flety", t, m + 24, d, 0.75);
-      dodaj("klarnety", t, podMelodia(m, A), d, 0.75);
-      if (t >= dlugosc / 2) dodaj("trabki", t, m, d, 0.8);
+      const okt = utwor.melOkt || 0;
+      dodaj("skrzypce", t, m + 12 + okt, d, 0.9);
+      dodaj("flety", t, m + 24 + okt, d, 0.75);
+      dodaj("klarnety", t, podMelodia(m, A) + okt, d, 0.75);
+      if (utwor.trabkiMelodia || t >= dlugosc / 2) dodaj("trabki", t, m, d, utwor.trabkiMelodia ? 1 : 0.8);
       if (rock) dodaj("gitara", t, m, d, 0.9);
     }
     t += d;
@@ -96,9 +102,10 @@ export function partytura(utwor, styl) {
     if (rock) for (let k = 0; k < 4; k++) A.tony.forEach(n => dodaj("fortepian", t0 + k * 0.5, n + 12, 0.45, k % 2 ? 0.5 : 0.7));
     else arp.forEach((m, k) => dodaj("fortepian", t0 + k * 0.5, m, 0.5, k ? 0.6 : 0.8));
     if (poczatek) [0, 1, 2, 0, 1, 2, 0, 1].forEach((k, j) => dodaj("harfa", t0 + j * 0.25, A.tony[k] + (j > 2 ? 12 : 0) + (j > 5 ? 12 : 0), 1, 0.6));
-    if (t0 < dlugosc / 2 && poczatek) dodaj("trabki", t0, A.tony[2], 0.75, 0.9);
-    dodaj("kotly", t0, A.pryma, 1, poczatek ? 1 : 0.7);
-    if (poczatek && takt % 4 === 3) for (let k = 0; k < 8; k++) dodaj("kotly", t0 + 2 + k * 0.125, A.pryma, 0.2, 0.35 + k * 0.06);
+    if (!utwor.trabkiMelodia && t0 < dlugosc / 2 && poczatek) dodaj("trabki", t0, A.tony[2], 0.75, 0.9);
+    if (utwor.kotlyOstinato) [A.pryma, A.pryma - 5, A.pryma, A.pryma - 5].forEach((m, k) => dodaj("kotly", t0 + k * 0.5, m, 0.5, k % 2 ? 0.7 : 1));   // słynne „pukanie” kotłów
+    else dodaj("kotly", t0, A.pryma, 1, poczatek ? 1 : 0.7);
+    if (!utwor.kotlyOstinato && poczatek && takt % 4 === 3) for (let k = 0; k < 8; k++) dodaj("kotly", t0 + 2 + k * 0.125, A.pryma, 0.2, 0.35 + k * 0.06);
     if (poczatek && takt % 4 === 0) dodaj("talerze", t0, 0, 3, 1);
     if (rock) {
       for (let k = 0; k < 4; k++) dodaj("bas", t0 + k * 0.5, A.pryma - 12 + (k === 3 ? 12 : 0), 0.45, k ? 0.75 : 0.95);   // ósemki na prymie

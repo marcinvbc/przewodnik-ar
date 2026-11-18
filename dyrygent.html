@@ -179,8 +179,8 @@
 </script>
 <script type="module">
 // wersja w adresie: przeglądarka nie weźmie starej kopii z pamięci podręcznej po aktualizacji
-import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "./dlonie.js?v=25";
-import { SEKCJE, UTWORY, sekcjeStylu, Orkiestra } from "./orkiestra.js?v=25";
+import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "./dlonie.js?v=26";
+import { SEKCJE, UTWORY, sekcjeStylu, Orkiestra } from "./orkiestra.js?v=26";
 
 const $ = s => document.querySelector(s), NS = "http://www.w3.org/2000/svg";
 const svg = $("#scena"), orkiestra = new Orkiestra();
@@ -194,6 +194,7 @@ function rysujScene(styl) {
   for (const S of Object.values(stan)) orkiestra.ustawPoziom(S.s.id, 0);
   $("#sekcje").replaceChildren(); stan = {};
   $("#reflektory").setAttribute("opacity", styl === "rock" ? 1 : 0);
+  requestAnimationFrame(polaTrafien);
   for (const s0 of sekcjeStylu(styl)) {
   const [x0, y0, sk] = s0[styl], s = { ...s0, x: x0, y: y0, s: sk };
   const cx = s.x * W, cy = s.y * H, g = el("g", { class: "sekcja", "data-id": s.id }, $("#sekcje"));
@@ -213,7 +214,8 @@ function rysujScene(styl) {
   const pasekTlo = el("rect", { x: cx - 50, y: cy + ih * sc * 0.5 + 50 * s.s, width: 100, height: 6, rx: 3, fill: "rgba(0,0,0,.5)" }, g);
   const pasek = el("rect", { x: cx - 50, y: cy + ih * sc * 0.5 + 50 * s.s, width: 0, height: 6, rx: 3, fill: "#f2c14e" }, g);
   const dyn = el("text", { x: cx, y: cy - ih * sc * 0.5 - (rzedy - 1) * dy - 14, "text-anchor": "middle", class: "dyn" }, g);
-  stan[s.id] = { s, cx, cy, r: 150 * s.s, g, podsw, ikony, pasek, dyn, poziom: 0, cel: 0, ostatnio: -1e9, ekspresja: 0 };
+  const ramka = el("rect", { class: "ramka", rx: 18, fill: "none", stroke: "#f2c14e", "stroke-width": 3, "stroke-dasharray": "10 8", opacity: 0 }, g);
+  stan[s.id] = { s, cx, cy, r: 150 * s.s, g, podsw, ikony, pasek, dyn, ramka, poziom: 0, cel: 0, ostatnio: -1e9, ekspresja: 0 };
   }
 }
 
@@ -231,12 +233,44 @@ orkiestra.naNute = (id) => {
 /* ---------------- dyrygowanie ---------------- */
 const DYN = [[0.85, "ff"], [0.68, "f"], [0.52, "mf"], [0.36, "mp"], [0.2, "p"], [0.04, "pp"]];
 let tlo = false, tutti = false, ciszaDo = 0;
-function sekcjaPod(x, y) {                       // x, y w pikselach ekranu → najbliższa sekcja
-  const p = svg.createSVGPoint(); p.x = x; p.y = y;
-  const q = p.matrixTransform(svg.getScreenCTM().inverse());
+/* pole trafienia = prostokąt wokół narysowanych instrumentów i podpisu sekcji (+ margines),
+   liczony z rysunku, więc zgadza się z tym, co widać na ekranie przy każdym rozmiarze okna */
+const MARGINES = 22;
+function polaTrafien() {
+  for (const S of Object.values(stan)) {
+    const b = S.ikony.getBBox(), t = S.g.querySelector("text").getBBox();
+    const x0 = Math.min(b.x, t.x) - MARGINES, y0 = Math.min(b.y, t.y) - MARGINES, x1 = Math.max(b.x + b.width, t.x + t.width) + MARGINES, y1 = Math.max(b.y + b.height, t.y + t.height + 12) + MARGINES;
+    S.pole = { x0, y0, x1, y1 };
+    S.rdzen = { x0: x0 + MARGINES, y0: y0 + MARGINES, x1: x1 - MARGINES, y1: y1 - MARGINES };   // sam rysunek, bez marginesu
+    Object.entries({ x: x0, y: y0, width: x1 - x0, height: y1 - y0 }).forEach(([k, v]) => S.ramka.setAttribute(k, v));
+  }
+}
+const naSvg = (x, y) => { const p = svg.createSVGPoint(); p.x = x; p.y = y; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+function sekcjaPod(x, y) {                       // x, y w pikselach ekranu → sekcja pod tym punktem
+  const q = naSvg(x, y);
   let best = null, bd = 1e9;
-  for (const S of Object.values(stan)) { const d = Math.hypot((q.x - S.cx) / S.r, (q.y - S.cy) / (S.r * 0.75)); if (d < bd) { bd = d; best = S; } }
-  return bd < 1.25 ? best : null;
+  for (const S of Object.values(stan)) {
+    const p = S.pole; if (!p) continue;
+    // 0 wewnątrz pola; poza polem – odległość od jego brzegu
+    const dx = Math.max(p.x0 - q.x, 0, q.x - p.x1), dy = Math.max(p.y0 - q.y, 0, q.y - p.y1), zew = Math.hypot(dx, dy);
+    if (zew > 0) continue;
+    // przy nachodzących polach: najpierw sekcja, na której rysunek wskazujemy, potem ta, której środek jest bliżej
+    const R = S.rdzen, wRdzeniu = q.x >= R.x0 && q.x <= R.x1 && q.y >= R.y0 && q.y <= R.y1;
+    const d = (wRdzeniu ? 0 : 10) + Math.hypot((q.x - (p.x0 + p.x1) / 2) / (p.x1 - p.x0), (q.y - (p.y0 + p.y1) / 2) / (p.y1 - p.y0));
+    if (d < bd) { bd = d; best = S; }
+  }
+  return best;
+}
+/* punkt celowania: środek dłoni przesunięty ku palcom wskazującemu i środkowemu – tam, gdzie „sięgamy” */
+const punktCelu = P => ({ x: P[9].x * 0.5 + P[8].x * 0.25 + P[12].x * 0.25, y: P[9].y * 0.5 + P[8].y * 0.25 + P[12].y * 0.25 });
+/* histereza: nowa sekcja przejmuje dłoń dopiero, gdy jest wskazywana przez ~120 ms – bez migotania na granicy */
+const celDloni = {};
+function stabilnyCel(strona, S, teraz) {
+  const c = celDloni[strona] || (celDloni[strona] = { S: null, kandydat: null, od: 0 });
+  if (S === c.S) { c.kandydat = null; return c.S; }
+  if (S !== c.kandydat) { c.kandydat = S; c.od = teraz; }
+  if (teraz - c.od >= 120 || !c.S) { c.S = S; c.kandydat = null; }
+  return c.S;
 }
 function aktualizuj(teraz, wskazania, piesc) {
   if (piesc) ciszaDo = teraz + 600;
@@ -252,6 +286,7 @@ function aktualizuj(teraz, wskazania, piesc) {
     if (S.poziom < 0.003) S.poziom = 0;
     orkiestra.ustawPoziom(S.s.id, S.poziom);
     S.podsw.setAttribute("opacity", Math.min(1, S.poziom * 1.4).toFixed(2));
+    S.ramka.setAttribute("opacity", wskazywane.has(S) ? 0.9 : 0);
     S.pasek.setAttribute("width", (100 * S.poziom).toFixed(1));
     S.dyn.textContent = S.poziom > 0.04 ? DYN.find(([p]) => S.poziom >= p)?.[1] || "pp" : "";
     S.g.style.filter = S.poziom > 0.05 ? `brightness(${1 + S.poziom * 0.5})` : "";
@@ -268,12 +303,13 @@ const KOLORY = { Prawa: [255, 214, 120], Lewa: [140, 220, 255] };
 const ruch = {};                                     // strona → { x, y, t, predkosc }
 const pinch = {};
 let otwarteObie = 0, nadPoprz = new Set();
+const wskazywane = new Set();
 
 function ramka(dlonie, teraz) {
   g.clearRect(0, 0, innerWidth, innerHeight);
   $("#stan").textContent = dlonie.length ? (dlonie.length === 2 ? "widzę dwie dłonie" : "widzę dłoń") : "pokaż dłonie do kamery";
   $("#stan").classList.toggle("ok", dlonie.length > 0);
-  const wskazania = [], nad = new Set(); let piesc = false;
+  const wskazania = [], nad = new Set(); let piesc = false; wskazywane.clear();
   for (const d of dlonie) {
     const P = d.punkty.map(naEkran), srodek = P[9];
     // prędkość dłoni (wygładzona) = energia gestu
@@ -290,10 +326,14 @@ function ramka(dlonie, teraz) {
     if (przycisk) nad.add(przycisk);
     if (d.szczypie && !pinch[d.strona]) { pinch[d.strona] = true; if (przycisk) { przycisk.classList.add("klik"); setTimeout(() => przycisk.classList.remove("klik"), 150); przycisk.click(); } }
     if (!d.szczypie) pinch[d.strona] = false;
-    const S = !przycisk && !piesc ? sekcjaPod(srodek.x, srodek.y) : null;
-    if (S && d.gest !== "Closed_Fist") wskazania.push({ S, e });
+    const cel = punktCelu(P);
+    const S = stabilnyCel(d.strona, !przycisk && !piesc ? sekcjaPod(cel.x, cel.y) : null, teraz);
+    if (S && d.gest !== "Closed_Fist") { wskazania.push({ S, e }); wskazywane.add(S); }
     rysujDlon(g, P, KOLORY[d.strona] || KOLORY.Prawa, { szczypie: d.szczypie, nadCzyms: !!S || !!przycisk });
-    if (S) { g.font = "italic 800 22px Georgia, serif"; g.fillStyle = "#f2c14e"; g.fillText(DYN.find(([p]) => e >= p)?.[1] || "pp", srodek.x + 40, srodek.y - 40); }
+    // celownik batuty
+    g.beginPath(); g.arc(cel.x, cel.y, S ? 11 : 8, 0, Math.PI * 2); g.fillStyle = S ? "#f2c14e" : "rgba(255,255,255,.7)"; g.fill();
+    g.lineWidth = 3; g.strokeStyle = "rgba(0,0,0,.6)"; g.stroke();
+    if (S) { g.font = "italic 800 22px Georgia, serif"; g.fillStyle = "#f2c14e"; g.fillText(DYN.find(([p]) => e >= p)?.[1] || "pp", cel.x + 18, cel.y - 16); }
   }
   // obie dłonie otwarte wysoko → tutti
   const wysoko = dlonie.length === 2 && dlonie.every(d => d.gest === "Open_Palm" && d.punkty[9].y < 0.4);
@@ -346,6 +386,7 @@ function trybMyszy() {
     const teraz = performance.now(), w = [];
     if (mysz && !document.elementFromPoint(mysz.x, mysz.y)?.closest(".btn-d,.hud,.pomoc")) {
       const S = sekcjaPod(mysz.x, mysz.y), wys = Math.min(1, Math.max(0, (0.9 - mysz.y / innerHeight) / 0.65));
+      wskazywane.clear(); if (S) wskazywane.add(S);
       if (S) w.push({ S, e: Math.min(1, 0.2 + Math.min(1, mysz.v / 0.9) * 0.45 + wys * 0.25 + (mysz.wcisniety ? 0.25 : 0)) });
       mysz.v *= 0.95;
     }
@@ -380,7 +421,9 @@ async function start(zKamera) {
 $("#btnStart").onclick = () => start(true);
 $("#btnMysz").onclick = () => start(false);
 window.__dyrygentGotowy = true;
-window.__dyrygentTest = { sztucznaDlon, wynikSymulacji, orkiestra, zmienUtwor, stan: () => Object.fromEntries(Object.entries(stan).map(([k, S]) => [k, +S.poziom.toFixed(2)])) };
+window.__dyrygentTest_pola = () => Object.fromEntries(Object.entries(stan).map(([k, S]) => { const a = svg.getScreenCTM(); const p0 = svg.createSVGPoint(); p0.x = S.pole.x0; p0.y = S.pole.y0; const p1 = svg.createSVGPoint(); p1.x = S.pole.x1; p1.y = S.pole.y1; const A = p0.matrixTransform(a), B = p1.matrixTransform(a); return [k, [A.x, A.y, B.x, B.y]]; }));
+window.__dyrygentTest_cel = (x, y) => sekcjaPod(x, y)?.s.id || null;
+window.__dyrygentTest = { sztucznaDlon, wynikSymulacji, orkiestra, zmienUtwor, cele: () => Object.fromEntries(Object.entries(celDloni).map(([k, c]) => [k, c.S?.s.id || null])), stan: () => Object.fromEntries(Object.entries(stan).map(([k, S]) => [k, +S.poziom.toFixed(2)])) };
 addEventListener("pagehide", () => orkiestra.stop());
 </script>
 </body>
