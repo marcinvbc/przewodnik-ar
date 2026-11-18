@@ -1,0 +1,65 @@
+/*
+ * MASAŻ – okolice ciała: nazwa, mięśnie pod spodem, częste dolegliwości, technika i ostrzeżenia.
+ * Treść edukacyjna (lekcja), nie porada medyczna.
+ */
+export const OKOLICE = {
+  twarz: { nazwa: "Twarz i skronie", strona: "przód", miesnie: ["żwacz", "skroniowy", "czołowy", "okrężny oka"],
+    dolegliwosci: "Napięciowe bóle głowy, zaciskanie zębów (bruksizm) i ból żuchwy po stresie.", technika: "Delikatne koliste rozcieranie opuszkami skroni i żwaczy.", uwaga: "Bardzo lekki nacisk; nie uciskać oczu." },
+  szyja: { nazwa: "Przednia część szyi", strona: "przód", miesnie: ["mostkowo-obojczykowo-sutkowy", "pochyłe", "szeroki szyi"],
+    dolegliwosci: "Sztywność szyi, ból przy długim pochylaniu głowy nad telefonem.", technika: "Tylko delikatne głaskanie wzdłuż mięśnia mostkowo-obojczykowo-sutkowego.", uwaga: "Nie uciskać przodu szyi – przebiegają tu tętnice szyjne i krtań." },
+  bark: { nazwa: "Bark", strona: "przód i tył", miesnie: ["naramienny", "nadgrzebieniowy (głębiej)", "czworoboczny (przyczep)"],
+    dolegliwosci: "Przeciążenie barku, zespół bolesnego barku (ciasnota podbarkowa).", technika: "Ugniatanie mięśnia naramiennego, rozcieranie wokół stawu.", uwaga: "Przy ostrym bólu lub ograniczeniu ruchu – najpierw lekarz lub fizjoterapeuta." },
+  klatka: { nazwa: "Klatka piersiowa", strona: "przód", miesnie: ["piersiowy większy", "piersiowy mniejszy (głębiej)", "międzyżebrowe", "zębaty przedni (boki)"],
+    dolegliwosci: "Skrócone mięśnie piersiowe przy zgarbionej postawie, płytki oddech.", technika: "Głaskanie od mostka w stronę barku, rozcieranie pod obojczykiem.", uwaga: "Masuje się okolicę pod obojczykiem i przy barku; omijać mostek przy bólu." },
+  brzuch: { nazwa: "Brzuch", strona: "przód", miesnie: ["prosty brzucha", "skośny zewnętrzny i wewnętrzny", "poprzeczny brzucha"],
+    dolegliwosci: "Wzdęcia i zaparcia, napięcie mięśni po wysiłku.", technika: "Powolne głaskanie zgodnie z ruchem wskazówek zegara wokół pępka.", uwaga: "Nie masować tuż po posiłku, w ciąży ani przy bólu brzucha o nieznanej przyczynie." },
+  pachwina: { nazwa: "Przód biodra i pachwina", strona: "przód", miesnie: ["biodrowo-lędźwiowy (głęboko)", "napinacz powięzi szerokiej", "krawiecki (początek)"],
+    dolegliwosci: "Przykurcz zginaczy biodra przy długim siedzeniu, który nasila ból krzyża.", technika: "Rozcieranie napinacza powięzi szerokiej z boku biodra.", uwaga: "W pachwinie biegną duże naczynia i nerwy – tylko lekki nacisk." },
+  ramiePrzod: { nazwa: "Przód ramienia", strona: "przód", miesnie: ["dwugłowy ramienia", "ramienny", "kruczo-ramienny"],
+    dolegliwosci: "Przeciążenie po dźwiganiu, ból ścięgna mięśnia dwugłowego.", technika: "Ugniatanie od łokcia w stronę barku." },
+  przedramiePrzod: { nazwa: "Przedramię – strona dłoniowa", strona: "przód", miesnie: ["zginacze nadgarstka i palców", "ramienno-promieniowy"],
+    dolegliwosci: "„Łokieć golfisty” (ból przyśrodkowej strony łokcia), przeciążenie od pisania.", technika: "Rozcieranie wzdłuż zginaczy od nadgarstka do łokcia.", uwaga: "Drętwienie palców może pochodzić od nerwu (cieśń nadgarstka) – warto to skonsultować." },
+  dlon: { nazwa: "Dłoń", strona: "przód i tył", miesnie: ["kłębu kciuka", "kłębika", "glistowate", "międzykostne"],
+    dolegliwosci: "Przeciążenie od myszki, klawiatury i telefonu.", technika: "Rozcieranie kciukiem wnętrza dłoni, rozciąganie palców." },
+  udoPrzod: { nazwa: "Przód uda", strona: "przód", miesnie: ["czworogłowy uda (prosty, obszerne)", "krawiecki", "przywodziciele (od środka)"],
+    dolegliwosci: "Przeciążenie po bieganiu i jeździe na rowerze, bolesność mięśni po treningu.", technika: "Ugniatanie i głaskanie od kolana w stronę biodra." },
+  kolano: { nazwa: "Okolica kolana", strona: "przód", miesnie: ["ścięgno mięśnia czworogłowego", "więzadło rzepki"],
+    dolegliwosci: "Ból przedniej części kolana (np. „kolano skoczka”).", technika: "Delikatne rozcieranie wokół rzepki.", uwaga: "Nie masować kolana obrzękniętego, gorącego albo tuż po urazie." },
+  golen: { nazwa: "Przód goleni", strona: "przód", miesnie: ["piszczelowy przedni", "prostowniki palców"],
+    dolegliwosci: "Zespół przeciążeniowy piszczeli („shin splints”) u biegaczy.", technika: "Rozcieranie wzdłuż mięśnia, obok kości piszczelowej.", uwaga: "Nie uciskać samej kości." },
+  stopaGrzbiet: { nazwa: "Grzbiet stopy", strona: "przód", miesnie: ["prostownik krótki palców", "ścięgna prostowników"],
+    dolegliwosci: "Ból i ucisk od zbyt ciasnych butów.", technika: "Głaskanie od palców w stronę kostki." },
+  potylica: { nazwa: "Tył głowy", strona: "tył", miesnie: ["potyliczny", "podpotyliczne"],
+    dolegliwosci: "Napięciowy ból głowy promieniujący od karku.", technika: "Koliste rozcieranie tuż pod potylicą." },
+  kark: { nazwa: "Kark", strona: "tył", miesnie: ["czworoboczny (część górna)", "dźwigacz łopatki", "płatowate"],
+    dolegliwosci: "Sztywny kark i bolesne punkty spustowe przy pracy przy komputerze i stresie.", technika: "Ugniatanie od głowy w stronę barków.", uwaga: "Przy zawrotach głowy albo drętwieniu rąk – najpierw lekarz." },
+  lopatki: { nazwa: "Okolica łopatek", strona: "tył", miesnie: ["równoległoboczne", "czworoboczny (część środkowa)", "podgrzebieniowy", "obły mniejszy"],
+    dolegliwosci: "Ból między łopatkami przy zgarbionej postawie i stresie.", technika: "Rozcieranie wzdłuż przyśrodkowego brzegu łopatki." },
+  plecy: { nazwa: "Środek pleców i boki", strona: "tył", miesnie: ["najszerszy grzbietu", "prostownik grzbietu (część piersiowa)", "zębate tylne"],
+    dolegliwosci: "Sztywność i napięcie pleców po wysiłku lub długim siedzeniu.", technika: "Głaskanie całymi dłońmi od dołu w górę, wzdłuż kręgosłupa.", uwaga: "Nie uciskać bezpośrednio kręgosłupa (wyrostków kręgów)." },
+  ledzwie: { nazwa: "Okolica lędźwiowa (krzyż)", strona: "tył", miesnie: ["prostownik grzbietu", "czworoboczny lędźwi", "wielodzielny"],
+    dolegliwosci: "Ból krzyża (lumbago) przy siedzeniu i dźwiganiu.", technika: "Głaskanie i ugniatanie obok kręgosłupa.", uwaga: "Ból promieniujący do nogi, drętwienie lub osłabienie nogi – najpierw lekarz." },
+  posladek: { nazwa: "Pośladek", strona: "tył", miesnie: ["pośladkowy wielki", "pośladkowy średni", "gruszkowaty (głęboko)"],
+    dolegliwosci: "Napięcie po bieganiu; zespół mięśnia gruszkowatego (ból pośladka promieniujący w dół nogi).", technika: "Ugniatanie i rozcieranie dłonią.", uwaga: "Przy objawach rwy kulszowej – konsultacja przed masażem." },
+  ramieTyl: { nazwa: "Tył ramienia", strona: "tył", miesnie: ["trójgłowy ramienia"],
+    dolegliwosci: "Przeciążenie po treningu (pompki, rzuty).", technika: "Ugniatanie od łokcia w górę." },
+  przedramieTyl: { nazwa: "Przedramię – strona grzbietowa", strona: "tył", miesnie: ["prostowniki nadgarstka i palców"],
+    dolegliwosci: "„Łokieć tenisisty” – ból bocznej strony łokcia.", technika: "Rozcieranie poprzeczne przy łokciu, potem głaskanie do nadgarstka." },
+  udoTyl: { nazwa: "Tył uda", strona: "tył", miesnie: ["dwugłowy uda", "półścięgnisty", "półbłoniasty"],
+    dolegliwosci: "Przykurcz przy długim siedzeniu, naciągnięcia u biegaczy.", technika: "Głaskanie i ugniatanie od kolana do pośladka." },
+  podkolanowy: { nazwa: "Dół podkolanowy", strona: "tył", miesnie: ["podkolanowy"],
+    dolegliwosci: "Obrzęk, torbiel Bakera.", technika: "Tylko bardzo delikatne głaskanie.", uwaga: "Nie uciskać – biegną tu tętnica i żyła podkolanowa oraz nerw." },
+  lydka: { nazwa: "Łydka", strona: "tył", miesnie: ["brzuchaty łydki", "płaszczkowaty", "ścięgno Achillesa"],
+    dolegliwosci: "Skurcze, przeciążenie, ból ścięgna Achillesa.", technika: "Ugniatanie od ścięgna Achillesa w stronę kolana.", uwaga: "Ból, obrzęk i zaczerwienienie łydki mogą oznaczać zakrzepicę – wtedy nie masować i iść do lekarza." },
+  podeszwa: { nazwa: "Pięta i podeszwa", strona: "tył", miesnie: ["rozcięgno podeszwowe", "mięśnie krótkie stopy"],
+    dolegliwosci: "Zapalenie rozcięgna podeszwowego („ostroga piętowa”) – ból pięty rano.", technika: "Rozcieranie kciukiem od pięty w stronę palców." },
+};
+
+export const PRZECIWWSKAZANIA = ["gorączka i ostre infekcje", "świeże urazy, siniaki, obrzęki", "podejrzenie zakrzepicy", "zmiany i choroby skóry w miejscu masażu", "nowotwory i ciąża – tylko za zgodą lekarza"];
+
+/** techniki rozpoznawane z ułożenia dłoni */
+export const TECHNIKI = {
+  glaskanie: { nazwa: "głaskanie", opis: "otwarta dłoń, płynny ruch – rozgrzewa i rozluźnia" },
+  rozcieranie: { nazwa: "rozcieranie", opis: "opuszki palców, małe koła – rozluźnia punktowo" },
+  ugniatanie: { nazwa: "ugniatanie", opis: "chwyt kciukiem i palcami – „ugniata” mięsień jak ciasto" },
+};

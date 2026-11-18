@@ -1,0 +1,3 @@
+Modele ciała: siatka bazowa i cele (targets) MakeHuman, licencja CC0 1.0 (domena publiczna),
+https://github.com/makehumancommunity/makehuman (LICENSE.md: base mesh, proxies, targets – CC0).
+Zmiany: cele „caucasian-female-young” / „caucasian-male-young”, jeden krok wygładzenia, gałki oczne, eksport GLB.

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Masaż – okolice ciała, mięśnie i dolegliwości · Lekcje AR</title>
+<meta name="theme-color" content="#1b2a30">
+<script type="importmap">
+{ "imports": { "three": "../lib/three/build/three.module.min.js", "three/addons/": "../lib/three/examples/jsm/" } }
+</script>
+<script src="../wersja.js"></script>
+<style>
+  :root { --ink: #1b2a30; --ok: #2f8f5a; --akcent: #c46a4a; --uwaga: #b3261e; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1b2a30; color: #fff; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #scena { position: fixed; inset: 0; }
+  #scena canvas { display: block; }
+  #rece { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 30; }
+  #podglad { position: fixed; left: 14px; bottom: 60px; width: 170px; border-radius: 12px; transform: scaleX(-1); opacity: .75; z-index: 25; border: 2px solid rgba(255,255,255,.3); display: none; }
+  body.kamera #podglad { display: block; }
+  [hidden] { display: none !important; }
+  .hud { position: fixed; left: 12px; right: 12px; top: 10px; z-index: 40; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .hud .tytul { font-weight: 800; font-size: 18px; margin-right: 6px; }
+  .pill { padding: 5px 12px; border-radius: 99px; background: rgba(0,0,0,.45); font-size: 13px; }
+  .btn-d { border: 0; border-radius: 99px; padding: 8px 14px; font: 700 13px system-ui; background: rgba(255,255,255,.93); color: var(--ink); cursor: pointer; text-decoration: none; transition: transform .1s, background .1s; }
+  .btn-d.nad { background: #ffd23f; transform: scale(1.06); } .btn-d.on { background: #ffd23f; } .btn-d.klik { transform: scale(.92); }
+  .hud .prawo { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .info { position: fixed; right: 12px; top: 60px; width: min(380px, 40vw); max-height: calc(100% - 130px); overflow: auto; z-index: 20; background: rgba(250,246,240,.96); color: var(--ink); border-radius: 16px; padding: 14px 16px; }
+  .info h2 { margin: 0 0 2px; font-size: 20px; } .info .str { color: #6b6f66; font-size: 13px; margin-bottom: 8px; }
+  .info h4 { margin: 10px 0 3px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #7a4e3c; }
+  .info ul { margin: 0; padding-left: 18px; } .info p { margin: 0; }
+  .info .uw { background: #fdecea; border-left: 4px solid var(--uwaga); padding: 6px 9px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
+  .info .pasek { height: 8px; background: #eadfd3; border-radius: 99px; overflow: hidden; margin-top: 4px; } .info .pasek div { height: 100%; background: var(--akcent); width: 0; transition: width .2s; }
+  .info .tech { display: inline-block; background: var(--ink); color: #fff; border-radius: 99px; padding: 2px 10px; font-size: 13px; font-weight: 700; }
+  .info .male { font-size: 12px; color: #6b6f66; margin-top: 12px; }
+  .lista { position: fixed; left: 12px; top: 60px; width: 220px; max-height: calc(100% - 140px); overflow: auto; z-index: 20; background: rgba(0,0,0,.42); border-radius: 14px; padding: 10px 12px; font-size: 13px; }
+  .lista b { display: block; margin-bottom: 4px; } .lista div { opacity: .75; } .lista div.ok { opacity: 1; color: #ffc9b3; } .lista div.ok::before { content: "✓ "; }
+  .pomoc { position: fixed; left: 12px; right: 12px; bottom: 10px; z-index: 40; background: rgba(0,0,0,.5); border-radius: 12px; padding: 6px 12px; font-size: 12px; display: flex; gap: 6px 16px; flex-wrap: wrap; }
+  .pomoc b { color: #ffd23f; }
+  #etykieta { position: fixed; z-index: 35; pointer-events: none; background: rgba(27,42,48,.92); border-radius: 10px; padding: 4px 10px; font-size: 13px; font-weight: 700; display: none; white-space: nowrap; }
+  .ekran { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: rgba(20,30,34,.9); }
+  .karta { width: min(600px, 94vw); background: #f6f1e7; color: var(--ink); border-radius: 22px; padding: 22px 26px; }
+  .karta h1 { margin: 0 0 8px; font-size: 25px; } .karta p { color: #444; margin: 6px 0 12px; }
+  .karta .rzad { display: flex; gap: 10px; flex-wrap: wrap; } .karta .btn-d { background: var(--ink); color: #fff; font-size: 15px; padding: 11px 18px; }
+  .karta .btn-d.jasny { background: #fff; color: var(--ink); border: 1px solid #ccc; }
+  .karta .male { font-size: 12.5px; color: #666; margin-top: 12px; }
+  @media (max-width: 900px) { .lista { display: none; } .info { width: 56vw; } }
+</style>
+</head>
+<body>
+<div id="scena"></div>
+<video id="podglad" autoplay muted playsinline></video>
+<canvas id="rece"></canvas>
+<div id="etykieta"></div>
+
+<div class="hud">
+  <span class="tytul">💆 Masaż – mapa ciała</span>
+  <span class="pill" id="stan">—</span>
+  <span class="prawo">
+    <button class="btn-d" id="bWidok">🔄 Pokaż tył</button>
+    <button class="btn-d" id="bPlec">♂ Ciało męskie</button>
+    <button class="btn-d" id="bMiesnie">🫀 Mięśnie: przy masażu</button>
+    <a class="btn-d" href="../">← Wróć</a>
+  </span>
+</div>
+<div class="lista" id="lista"></div>
+<aside class="info" id="info">
+  <h2>Wybierz okolicę</h2>
+  <p>Przesuń dłoń (przed kamerą) albo kursor nad ciało. Ruch dłoni nad okolicą to masaż: pokaże się jej nazwa, mięśnie pod spodem i częste dolegliwości.</p>
+  <div class="uw"><b>Przeciwwskazania do masażu:</b> <span id="przeciw"></span></div>
+  <div class="male">Lekcja edukacyjna – nie zastępuje porady lekarza ani fizjoterapeuty.</div>
+</aside>
+<div class="pomoc">
+  <span><b>✋ otwarta dłoń w ruchu</b> – głaskanie</span>
+  <span><b>☝ palce, małe koła</b> – rozcieranie</span>
+  <span><b>🤏 chwyt kciuk + palce</b> – ugniatanie</span>
+  <span><b>🔄</b> przód / tył · <b>♀/♂</b> zmiana płci · <b>🖱</b> lewy – masaż, prawy – obrót, kółko – zoom</span>
+</div>
+
+<div class="ekran" id="start"><div class="karta">
+  <h1>💆 Masaż – okolice ciała</h1>
+  <p>Na realistycznym modelu nagiego ciała dorosłej osoby (pełna postać, odwzorowanie anatomiczne) „masujesz” dłońmi kolejne okolice ciała – z przodu i z tyłu, na ciele kobiety albo mężczyzny. Przy każdej okolicy zobaczysz jej nazwę, mięśnie leżące pod skórą, typowe dolegliwości, zalecaną technikę i ostrzeżenia.</p>
+  <div class="rzad"><button class="btn-d" id="sKamera">🖐 Dłonie przed kamerą</button><button class="btn-d jasny" id="sMysz">🖱 Mysz / ekran dotykowy</button></div>
+  <div class="male">Model ciała: MakeHuman (CC0). Lekcja dla zajęć z biologii – ciało pokazane bez ubrania, jak w atlasie anatomicznym.</div>
+  <div class="male" id="startInfo">Obraz z kamery jest analizowany tylko na tym komputerze. Treść ma charakter edukacyjny i nie zastępuje porady lekarza ani fizjoterapeuty.</div>
+</div></div>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=32";
+import { zbudujCialo, okolicaZ, zbudujMiesnie, czescDla } from "./masaz/cialo.js?v=32";
+import { OKOLICE, PRZECIWWSKAZANIA, TECHNIKI } from "./masaz/okolice.js?v=32";
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+$("#przeciw").textContent = PRZECIWWSKAZANIA.join(", ") + ".";
+
+/* ------------------------------------------------------------ scena */
+const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+$("#scena").append(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color("#22343b");
+const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 30);
+const ctl = new OrbitControls(cam, renderer.domElement);
+ctl.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }; ctl.touches = { ONE: null, TWO: THREE.TOUCH.DOLLY_ROTATE };
+ctl.enablePan = false; ctl.enableDamping = true; ctl.minDistance = 0.8; ctl.maxDistance = 7;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x4a5a60, 1.15));
+const sw = new THREE.DirectionalLight(0xfff2e6, 1.6); sw.position.set(1.2, 2.5, 3); scene.add(sw);
+const sw2 = new THREE.DirectionalLight(0xdde8ff, 0.9); sw2.position.set(-1.5, 2, -3); scene.add(sw2);
+const podloga = new THREE.Mesh(new THREE.CircleGeometry(0.9, 64), new THREE.MeshStandardMaterial({ color: "#2c4048", roughness: 1 })); podloga.rotation.x = -Math.PI / 2; scene.add(podloga);
+let tyl = false, plec = "K", cialo = null, miesnie = null;
+function ustawKamere(natychmiast = true) {
+  const H = cialo.userData.wysokosc, a = innerWidth / innerHeight, fov = cam.fov * Math.PI / 180;
+  const d = Math.max((H + 0.25) / 2 / Math.tan(fov / 2), 1.0 / (Math.tan(fov / 2) * a)) * 1.02;
+  ctl.target.set(0, H / 2, 0); cam.position.set(innerWidth > 900 ? -0.0 : 0, H / 2, tyl ? -d : d); ctl.update();
+}
+function rozmiar() { renderer.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); }
+const pamiec = {};
+async function budujCialo() {
+  const nowe = pamiec[plec] ??= await (async () => { const c = await zbudujCialo(plec); return { c, m: zbudujMiesnie(c) }; })();
+  if (cialo) { scene.remove(cialo); scene.remove(miesnie); }
+  cialo = nowe.c; miesnie = nowe.m; scene.add(cialo); scene.add(miesnie);
+  // przesunięcie, żeby panel informacji nie zasłaniał ciała na szerokim ekranie
+  const dx = innerWidth > 900 ? 0.18 : 0; cialo.position.x = miesnie.position.x = tyl ? dx : -dx;
+  $("#bPlec").textContent = plec === "K" ? "♂ Ciało męskie" : "♀ Ciało kobiece";
+}
+rozmiar(); await budujCialo(); ustawKamere();
+addEventListener("resize", () => { rozmiar(); plotno(); ustawKamere(); });
+$("#bWidok").onclick = async () => { tyl = !tyl; await budujCialo(); ustawKamere(); rysujListe(); $("#bWidok").textContent = tyl ? "🔄 Pokaż przód" : "🔄 Pokaż tył"; };
+$("#bPlec").onclick = async () => { plec = plec === "K" ? "M" : "K"; $("#bPlec").textContent = "⏳ wczytuję…"; await budujCialo(); ustawKamere(); };
+let trybMiesni = "przy";                  // przy masażu | zawsze
+$("#bMiesnie").onclick = () => { trybMiesni = trybMiesni === "przy" ? "zawsze" : "przy"; $("#bMiesnie").textContent = trybMiesni === "przy" ? "🫀 Mięśnie: przy masażu" : "🫀 Mięśnie: zawsze"; $("#bMiesnie").classList.toggle("on", trybMiesni === "zawsze"); };
+
+/* ------------------------------------------------------------ masaż: stan okolic */
+const postep = {}, aktywnosc = {};       // okolica → 0..1 (ile wymasowano), okolica → ciepło (0..1, zanika)
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function okolicaPod(x, y) {
+  ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, cam);
+  const hit = ray.intersectObject(cialo.userData.kolizja, false)[0];
+  return hit ? okolicaZ(hit, cialo) : null;
+}
+let wybrana = null, techAktualna = null;
+function pokazInfo(id, technika) {
+  if (!id) return;
+  const o = OKOLICE[id]; if (!o) return;
+  if (id === wybrana && technika === techAktualna) { $("#infoPasek") && ($("#infoPasek").style.width = Math.round((postep[id] || 0) * 100) + "%"); return; }
+  wybrana = id; techAktualna = technika;
+  $("#info").innerHTML = `<h2>${esc(o.nazwa)}</h2><div class="str">strona: ${esc(o.strona)} · ${technika ? `teraz: <span class="tech">${esc(TECHNIKI[technika].nazwa)}</span>` : "najedź i poruszaj dłonią"}</div>
+    <div class="pasek"><div id="infoPasek" style="width:${Math.round((postep[id] || 0) * 100)}%"></div></div>
+    <h4>Mięśnie pod spodem</h4><ul>${o.miesnie.map(m => `<li>${esc(m)}</li>`).join("")}</ul>
+    <h4>Częste dolegliwości</h4><p>${esc(o.dolegliwosci)}</p>
+    <h4>Technika</h4><p>${esc(o.technika)}</p>
+    ${o.uwaga ? `<div class="uw">⚠ ${esc(o.uwaga)}</div>` : ""}
+    <div class="male">Przeciwwskazania: ${esc(PRZECIWWSKAZANIA.join(", "))}. Lekcja edukacyjna – nie zastępuje porady lekarza ani fizjoterapeuty.</div>`;
+}
+function masuj(id, sila, dt) {          // sila 0..1 z prędkości ruchu
+  if (!id) return;
+  aktywnosc[id] = Math.min(1, (aktywnosc[id] || 0) + sila * dt * 3);
+  postep[id] = Math.min(1, (postep[id] || 0) + sila * dt * 0.12);
+  rysujListe();
+}
+function rysujListe() {
+  const widoczne = Object.entries(OKOLICE).filter(([, o]) => o.strona.includes(tyl ? "tył" : "przód"));
+  const n = Object.keys(OKOLICE).filter(k => (postep[k] || 0) >= 0.99).length;
+  $("#stan").textContent = `wymasowane okolice: ${n} / ${Object.keys(OKOLICE).length}`;
+  $("#lista").innerHTML = `<b>${tyl ? "Tył ciała" : "Przód ciała"}</b>` + widoczne.map(([k, o]) => `<div class="${(postep[k] || 0) >= 0.99 ? "ok" : ""}">${esc(o.nazwa)} ${postep[k] ? `<small>${Math.round(postep[k] * 100)}%</small>` : ""}</div>`).join("");
+}
+rysujListe();
+let ostatniaKlatka = performance.now();
+function aktualizujMiesnie(teraz) {
+  const dt = Math.min(0.1, (teraz - ostatniaKlatka) / 1000); ostatniaKlatka = teraz;
+  for (const k in aktywnosc) aktywnosc[k] = Math.max(0, aktywnosc[k] - dt * 0.5);
+  miesnie.children.forEach(m => {
+    const a = trybMiesni === "zawsze" ? 0.55 : Math.min(0.8, (aktywnosc[m.userData.okolica] || 0) * 1.1);
+    m.material.opacity += (a - m.material.opacity) * 0.2; m.visible = m.material.opacity > 0.01;
+  });
+  // ciepło skóry: lekkie zaróżowienie wymasowanych okolic jest w liście i pasku; tu tylko mięśnie
+}
+
+/* ------------------------------------------------------------ mysz */
+let mysz = null;
+renderer.domElement.addEventListener("pointermove", e => {
+  const t = performance.now(), id = okolicaPod(e.clientX, e.clientY);
+  const v = mysz ? Math.hypot(e.clientX - mysz.x, e.clientY - mysz.y) / Math.max(8, t - mysz.t) : 0;
+  const wcisn = (e.buttons & 1) === 1;
+  if (id) { pokazInfo(id, wcisn ? (v > 0.6 ? "glaskanie" : "rozcieranie") : null); if (wcisn) masuj(id, Math.min(1, 0.3 + v), (t - (mysz?.t || t)) / 1000); }
+  etykieta(id, e.clientX, e.clientY);
+  mysz = { x: e.clientX, y: e.clientY, t };
+});
+renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
+function etykieta(id, x, y) {
+  const el = $("#etykieta");
+  if (!id) { el.style.display = "none"; return; }
+  el.textContent = OKOLICE[id].nazwa; el.style.display = "block"; el.style.left = x + 16 + "px"; el.style.top = y + 10 + "px";
+}
+
+/* ------------------------------------------------------------ dłonie */
+const cv = $("#rece"), g2 = cv.getContext("2d"), wideo = $("#podglad");
+function plotno() { const d = devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; g2.setTransform(d, 0, 0, d, 0, 0); }
+plotno();
+const naEkran = p => ({ x: p.x * innerWidth, y: p.y * innerHeight });
+const KOLOR = { Prawa: [255, 196, 160], Lewa: [255, 160, 130] };
+const ruch = {};
+let nadBtn = new Set(), pinchPoprz = {};
+function technikaDloni(d, P) {
+  if (d.szczypie) return "ugniatanie";
+  if (d.gest === "Open_Palm") return "glaskanie";
+  // palce zgięte / opuszki: wskazujący bliżej nadgarstka niż przy otwartej dłoni
+  const roz = Math.hypot(P[8].x - P[0].x, P[8].y - P[0].y) / Math.max(20, Math.hypot(P[9].x - P[0].x, P[9].y - P[0].y));
+  return roz < 1.55 ? "rozcieranie" : "glaskanie";
+}
+function ramka(dlonie, teraz) {
+  g2.clearRect(0, 0, innerWidth, innerHeight);
+  const nad = new Set(); let pokaz = null;
+  for (const d of dlonie) {
+    const P = d.punkty.map(naEkran), c = P[9], pc = naEkran(d.chwyt);
+    const r = ruch[d.strona] || (ruch[d.strona] = { x: c.x, y: c.y, t: teraz, v: 0 });
+    const dt = Math.max(0.016, (teraz - r.t) / 1000), v = Math.hypot(c.x - r.x, c.y - r.y) / dt / innerWidth;
+    r.v = r.v * 0.75 + v * 0.25; r.x = c.x; r.y = c.y; r.t = teraz;
+    const btn = document.elementFromPoint(pc.x, pc.y)?.closest(".btn-d"); if (btn) nad.add(btn);
+    if (d.szczypie && !pinchPoprz[d.strona] && btn) { btn.classList.add("klik"); setTimeout(() => btn.classList.remove("klik"), 150); btn.click(); }
+    pinchPoprz[d.strona] = d.szczypie;
+    const id = !btn ? okolicaPod(c.x, c.y) : null, tech = technikaDloni(d, P);
+    const ruchoma = r.v > 0.035 || d.szczypie;
+    if (id) { if (ruchoma) masuj(id, Math.min(1, 0.35 + r.v * 2), dt); pokaz = { id, tech: ruchoma ? tech : null, x: c.x, y: c.y }; }
+    rysujDlon(g2, P, KOLOR[d.strona] || KOLOR.Prawa, { szczypie: d.szczypie, nadCzyms: !!id || !!btn });
+    if (id && ruchoma) {   // „fala” masażu pod dłonią
+      const f = (teraz / 300) % 1; g2.beginPath(); g2.arc(c.x, c.y, 26 + f * 40, 0, Math.PI * 2); g2.strokeStyle = `rgba(255,170,120,${0.7 * (1 - f)})`; g2.lineWidth = 4; g2.stroke();
+    }
+  }
+  for (const b of nadBtn) if (!nad.has(b)) b.classList.remove("nad"); for (const b of nad) b.classList.add("nad"); nadBtn = nad;
+  if (pokaz) { pokazInfo(pokaz.id, pokaz.tech); etykieta(pokaz.id, pokaz.x + 30, pokaz.y - 40); } else if (dlonie.length) etykieta(null);
+}
+
+/* ------------------------------------------------------------ start */
+async function start(zKamera) {
+  if (zKamera) {
+    try {
+      $("#startInfo").textContent = "Uruchamiam kamerę i model dłoni…";
+      if (!window.__symulacjaDloni) { await kamera(wideo); document.body.classList.add("kamera"); }
+      await uruchomDlonie({ video: wideo, onRamka: ramka, symulacja: window.__symulacjaDloni || null });
+    } catch (e) { $("#startInfo").textContent = /Permission|NotAllowed/i.test(e.name + e.message) ? "Brak dostępu do kamery – zezwól na kamerę albo wybierz mysz." : "Nie udało się: " + e.message; return; }
+  }
+  $("#start").remove();
+}
+$("#sKamera").onclick = () => start(true);
+$("#sMysz").onclick = () => start(false);
+
+renderer.setAnimationLoop(t => { ctl.update(); aktualizujMiesnie(performance.now()); renderer.render(scene, cam); });
+window.__masazTest = { debug: (x, y) => { ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, cam); const h = ray.intersectObject(cialo.userData.kolizja, false)[0]; if (!h) return null; const p = cialo.worldToLocal(h.point.clone()); return { p: p.toArray(), c: czescDla(p, cialo), odc: cialo.userData.odc.slice(0, 2).map(o => [o[0], o[1].toArray(), o[2].toArray()]) }; }, st: () => Object.fromEntries(Object.entries(cialo.userData.st).map(([k, v]) => [k, v.toArray()])), sztucznaDlon, wynikSymulacji, okolicaPod, postep, ekranDla: v => { const p = new THREE.Vector3(...v).add(cialo.position).project(cam); return [(p.x + 1) / 2 * innerWidth, (1 - p.y) / 2 * innerHeight]; }, ustaw: async o => { if (o.tyl != null && o.tyl !== tyl) await $("#bWidok").onclick(); if (o.plec && o.plec !== plec) await $("#bPlec").onclick(); }, miesnieZawsze: () => $("#bMiesnie").click() };
+window.__masazGotowy = true;
+</script>
+</body>
+</html>
