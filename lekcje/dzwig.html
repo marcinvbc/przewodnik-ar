@@ -24,28 +24,49 @@
   .hud .prawo { margin-left: auto; display: flex; gap: 6px; }
   .btn-d { border: 0; border-radius: 10px; padding: 7px 12px; font: 700 13px system-ui; background: rgba(255,255,255,.92); color: var(--ink); cursor: pointer; text-decoration: none; transition: transform .08s, background .1s; }
   .btn-d.nad { outline: 3px solid #ffd23f; } .btn-d.klik { transform: scale(.93); }
-  /* pulpit sterowniczy */
-  .pulpit { position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 40; display: flex; gap: 14px; align-items: flex-end; background: linear-gradient(#2c3238, #1c2126); border: 2px solid #4a525a; border-radius: 18px; padding: 10px 14px; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
-  .joy { width: 128px; text-align: center; font-size: 11.5px; color: #c9d1d8; }
-  .joy .baza { position: relative; width: 116px; height: 116px; margin: 0 auto 4px; border-radius: 50%; background: radial-gradient(#3b434b, #22282d); border: 3px solid #555f68; touch-action: none; }
-  .joy .baza::before, .joy .baza::after { content: ""; position: absolute; background: rgba(255,255,255,.12); }
-  .joy .baza::before { left: 50%; top: 8px; bottom: 8px; width: 2px; } .joy .baza::after { top: 50%; left: 8px; right: 8px; height: 2px; }
-  .joy.pion .baza { width: 60px; border-radius: 30px; } .joy.pion .baza::after { display: none; }
-  .joy .galka { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #777, #222); border: 3px solid #111; box-shadow: 0 4px 10px rgba(0,0,0,.6); cursor: grab; z-index: 2; }
+  /* kokpit operatora – pełna szerokość dołu ekranu */
+  :root { --ph: clamp(250px, 34vh, 310px); }
+  .pulpit { position: fixed; left: 0; right: 0; bottom: 0; height: var(--ph); z-index: 40; display: grid; grid-template-columns: minmax(250px, 1fr) auto minmax(250px, 1fr); gap: 16px; align-items: center; padding: 12px 22px; background: linear-gradient(#3b434b, #1d2226 45%, #15191c); border-top: 5px solid #f2b705; box-shadow: 0 -12px 34px rgba(0,0,0,.5); }
+  .pulpit::before { content: ""; position: absolute; left: 0; right: 0; top: -22px; height: 18px; background: linear-gradient(transparent, rgba(0,0,0,.35)); pointer-events: none; }
+  .konsola { display: flex; gap: 16px; align-items: center; justify-content: center; height: 100%; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 20px; padding: 10px 14px; }
+  .joy { text-align: center; font: 700 12.5px system-ui; color: #c9d1d8; }
+  .joy .baza { position: relative; width: clamp(140px, 19vh, 180px); height: clamp(140px, 19vh, 180px); margin: 0 auto 6px; border-radius: 50%; background: radial-gradient(#424b54, #20262b); border: 4px solid #5d6872; touch-action: none; cursor: grab; box-shadow: inset 0 6px 16px rgba(0,0,0,.6); }
+  .joy .baza::before, .joy .baza::after { content: ""; position: absolute; background: rgba(255,255,255,.14); }
+  .joy .baza::before { left: 50%; top: 10px; bottom: 10px; width: 2px; } .joy .baza::after { top: 50%; left: 10px; right: 10px; height: 2px; }
+  .joy.pion .baza { width: clamp(78px, 10vh, 92px); border-radius: 46px; } .joy.pion .baza::after { display: none; }
+  .joy .galka { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #8a8a8a, #1d1d1d); border: 4px solid #0b0b0b; box-shadow: 0 6px 14px rgba(0,0,0,.7); z-index: 2; pointer-events: none; }
   .joy .galka.trzym { background: radial-gradient(circle at 35% 30%, #ffe08a, #b8860b); }
-  .joy .opis { position: absolute; font-size: 10px; color: #9aa4ad; }
-  .przelaczniki { display: grid; grid-template-columns: repeat(4, 74px); gap: 7px; }
-  .prz { height: 52px; border-radius: 10px; border: 2px solid #4f5962; background: #2a3137; color: #dfe6eb; font: 700 11px system-ui; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; transition: transform .08s; }
-  .prz .led { width: 10px; height: 10px; border-radius: 50%; background: #444; box-shadow: inset 0 0 2px #000; }
+  .joy .kier { position: absolute; font: 700 10.5px system-ui; color: #9aa6b0; pointer-events: none; }
+  .przyciski { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .przyciski.jeden { grid-template-columns: 1fr; }
+  .trz { min-width: 104px; height: 50px; border-radius: 12px; border: 2px solid #5b6670; background: linear-gradient(#3a434b, #262c31); color: #e9eef2; font: 800 12.5px system-ui; cursor: pointer; touch-action: none; line-height: 1.15; }
+  .trz.wcis, .trz:active { background: linear-gradient(#ffd23f, #c99a00); color: #1b1b1b; border-color: #ffd23f; }
+  .trz.nad { outline: 3px solid #ffd23f; }
+  .srodek { display: grid; grid-template-rows: auto auto; gap: 10px; height: 100%; align-content: center; }
+  .ekrany { display: flex; gap: 10px; justify-content: center; }
+  .przelaczniki { display: grid; grid-template-columns: repeat(5, 98px); gap: 8px; }
+  .prz { height: 50px; border-radius: 11px; border: 2px solid #56616b; background: #2a3137; color: #e3e9ee; font: 800 11.5px system-ui; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; transition: transform .08s; }
+  .prz .led { width: 11px; height: 11px; border-radius: 50%; background: #444; box-shadow: inset 0 0 2px #000; }
+  .prz .leds { display: flex; gap: 4px; } .prz .leds i { width: 9px; height: 9px; border-radius: 50%; background: #444; } .prz .leds i.on { background: #ffd23f; box-shadow: 0 0 6px #ffd23f; }
   .prz.on .led { background: #4cff7a; box-shadow: 0 0 8px #4cff7a; } .prz.on.zolta .led { background: #ffd23f; box-shadow: 0 0 8px #ffd23f; }
   .prz.nad { outline: 3px solid #ffd23f; } .prz.klik { transform: scale(.92); }
-  .stop { width: 74px; height: 74px; border-radius: 50%; border: 5px solid #f2b705; background: radial-gradient(circle at 40% 35%, #ff6b5b, #b3170c); color: #fff; font: 800 13px system-ui; cursor: pointer; box-shadow: 0 5px 12px rgba(0,0,0,.6); }
-  .stop.wcisniety { transform: translateY(3px) scale(.95); box-shadow: 0 1px 3px rgba(0,0,0,.6); background: radial-gradient(circle at 40% 35%, #c9473a, #6e0f07); }
+  .prz.miga { animation: miga .35s 4 alternate; } @keyframes miga { to { background: #f2b705; color: #111; } }
+  .stop { flex: none; width: 96px; height: 96px; border-radius: 50%; border: 6px solid #f2b705; background: radial-gradient(circle at 40% 35%, #ff6b5b, #b3170c); color: #fff; font: 900 16px system-ui; cursor: pointer; box-shadow: 0 6px 14px rgba(0,0,0,.6); }
+  .stop.wcisniety { transform: translateY(3px) scale(.95); box-shadow: 0 1px 3px rgba(0,0,0,.6); background: radial-gradient(circle at 40% 35%, #c9473a, #6e0f07); font-size: 13px; }
   .stop.nad { outline: 3px solid #ffd23f; outline-offset: 2px; }
-  .wsk { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; background: #0d1a14; border: 2px solid #3d4a44; border-radius: 10px; padding: 7px 10px; font: 600 12px ui-monospace, Menlo, monospace; color: #7dffa3; min-width: 250px; }
-  .wsk b { color: #c7ffd8; font-weight: 700; } .wsk .alarm { color: #ff6b5b; }
+  .wsk { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 14px; align-content: start; background: #0d1a14; border: 2px solid #3d4a44; border-radius: 12px; padding: 8px 12px; font: 600 13.5px ui-monospace, Menlo, monospace; color: #7dffa3; width: 330px; height: 142px; }
+  .wsk b { color: #c7ffd8; font-weight: 700; } .wsk .alarm { color: #ff6b5b; } .wsk .ok { color: #4cff7a; animation: miga2 .6s infinite alternate; } @keyframes miga2 { to { opacity: .45; } }
   .wsk .pasek { grid-column: 1 / 3; height: 8px; background: #1f2b25; border-radius: 4px; overflow: hidden; } .wsk .pasek div { height: 100%; width: 0; background: #7dffa3; }
-  .zadania { position: fixed; right: 10px; top: 52px; width: 260px; z-index: 30; background: rgba(20,24,28,.85); border-radius: 14px; padding: 10px 12px; font-size: 13px; }
+  .wsk .wiersz { grid-column: 1 / 3; }
+  #radar { width: 142px; height: 142px; border-radius: 12px; border: 2px solid #3d4a44; background: #0d1a14; }
+  .podpis { font: 700 10.5px system-ui; color: #8f9aa3; text-align: center; margin-top: 2px; }
+  #ramaKabiny { position: fixed; inset: 0 0 var(--ph) 0; pointer-events: none; z-index: 5; display: none; }
+  body.wKabinie #ramaKabiny { display: block; }
+  @media (max-width: 1250px) { .przelaczniki { grid-template-columns: repeat(5, 82px); } .prz { font-size: 10.5px; } .wsk { width: 280px; font-size: 12px; } .trz { min-width: 84px; font-size: 11px; } .pulpit { gap: 8px; padding: 10px; } .konsola { gap: 10px; padding: 8px; } }
+  @media (max-width: 1380px) { .przelaczniki { grid-template-columns: repeat(5, 90px); } .trz { min-width: 86px; } .konsola { gap: 10px; padding: 8px 10px; } .joy .baza { width: 132px; height: 132px; } .joy.pion .baza { width: 80px; height: 132px; } .stop { width: 84px; height: 84px; } .pulpit { padding: 10px 14px; gap: 10px; } }
+  @media (max-height: 880px) { :root { --ph: 252px; } .wsk { height: 122px; font-size: 12.5px; padding: 6px 10px; } #radar { width: 122px; height: 122px; } .podpis { display: none; } .prz { height: 44px; } .przelaczniki { gap: 6px; } .srodek { gap: 8px; } .trz { height: 44px; } .joy .baza { width: 124px; height: 124px; } .joy.pion .baza { height: 124px; } .joy .galka { width: 54px; height: 54px; margin: -27px 0 0 -27px; } }
+  @media (max-width: 1050px) { .zadania { display: none; } #radar { display: none; } }
+  .zadania { position: fixed; right: 10px; top: 52px; width: 250px; max-height: calc(100vh - var(--ph) - 70px); overflow: auto; z-index: 30; background: rgba(20,24,28,.85); border-radius: 14px; padding: 10px 12px; font-size: 13px; }
   .zadania h3 { margin: 0 0 6px; font-size: 14px; } .zadania .z { display: flex; gap: 8px; align-items: center; padding: 3px 0; }
   .zadania .z i { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 800; flex: none; }
   .zadania .z.ok { color: #9fe3b7; } .zadania .stat { margin-top: 8px; border-top: 1px solid rgba(255,255,255,.15); padding-top: 6px; color: #c9d1d8; }
@@ -57,7 +78,6 @@
   .karta .btn-d { background: var(--ink); color: #fff; font-size: 15px; padding: 11px 18px; border-radius: 99px; } .karta .btn-d.jasny { background: #fff; color: var(--ink); border: 1px solid #ccc; }
   .karta table { width: 100%; border-collapse: collapse; font-size: 14px; } .karta td { padding: 3px 6px; border-bottom: 1px solid #ddd6c8; } .karta td:last-child { text-align: right; }
   .klaw { font-size: 12px; color: #555; } .klaw kbd { background: #fff; border: 1px solid #bbb; border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font: 600 11px ui-monospace, monospace; }
-  @media (max-width: 1100px) { .zadania { display: none; } .pulpit { transform: translateX(-50%) scale(.82); transform-origin: bottom center; } }
 </style>
 </head>
 <body>
@@ -74,33 +94,49 @@
 </div>
 <div class="zadania"><h3>Zlecenia przeniesienia</h3><div id="lista"></div><div class="stat" id="stat"></div></div>
 
+<svg id="ramaKabiny" preserveAspectRatio="none" viewBox="0 0 100 100"><path d="M0,0 L7,0 L3,100 L0,100Z M100,0 L93,0 L97,100 L100,100Z M0,0 L100,0 L100,3 L0,3Z" fill="#1a1e21" opacity=".85"/><path d="M7,0 L3,100 M93,0 L97,100" stroke="#d9a800" stroke-width=".5" vector-effect="non-scaling-stroke" fill="none"/></svg>
 <div class="pulpit" id="pulpit">
-  <div class="joy" id="joyL"><div class="baza"><div class="galka"></div></div>LEWY: ⟲ obrót · ↕ wózek</div>
-  <div class="wsk" id="wsk"></div>
-  <div class="przelaczniki">
-    <button class="prz" id="pZasil"><span class="led"></span>ZASILANIE</button>
-    <button class="prz zolta" id="pPrec"><span class="led"></span>PRECYZJA</button>
-    <button class="prz zolta" id="pHak"><span class="led"></span>HAK: ZACZEP</button>
-    <button class="prz" id="pSygnal"><span class="led"></span>📯 SYGNAŁ</button>
-    <button class="prz" id="pSwiatla"><span class="led"></span>💡 ŚWIATŁA</button>
-    <button class="prz" id="pKamera"><span class="led"></span>🎥 WIDOK</button>
-    <button class="prz zolta" id="pSledz"><span class="led"></span>ŚLEDŹ HAK</button>
-    <button class="prz" id="pReset"><span class="led"></span>↺ OD NOWA</button>
+  <div class="konsola">
+    <div class="joy" id="joyL"><div class="baza"><span class="kier" style="top:6px;left:50%;transform:translateX(-50%)">OD WIEŻY</span><span class="kier" style="bottom:6px;left:50%;transform:translateX(-50%)">DO WIEŻY</span><span class="kier" style="left:6px;top:50%;transform:translateY(-50%)">⟲</span><span class="kier" style="right:6px;top:50%;transform:translateY(-50%)">⟳</span><div class="galka"></div></div>LEWY: obrót · wózek</div>
+    <div class="przyciski">
+      <span></span><button class="trz" data-os="woz" data-k="1">▲ WÓZEK<br>od wieży</button>
+      <button class="trz" data-os="obr" data-k="-1">⟲ OBRÓT<br>w lewo</button><button class="trz" data-os="obr" data-k="1">OBRÓT ⟳<br>w prawo</button>
+      <span></span><button class="trz" data-os="woz" data-k="-1">▼ WÓZEK<br>do wieży</button>
+    </div>
   </div>
-  <button class="stop" id="pStop" title="STOP awaryjny">STOP</button>
-  <div class="joy pion" id="joyR"><div class="baza"><div class="galka"></div></div>PRAWY: ↕ hak</div>
+  <div class="srodek">
+    <div class="ekrany"><div><div class="wsk" id="wsk"></div></div><div><canvas id="radar" width="284" height="284"></canvas><div class="podpis">CELOWNIK (widok z góry, ±6 m)</div></div></div>
+    <div class="przelaczniki">
+      <button class="prz" id="pZasil"><span class="led"></span>ZASILANIE</button>
+      <button class="prz zolta" id="pBieg"><span class="leds"><i></i><i></i><i></i></span>PRĘDKOŚĆ</button>
+      <button class="prz zolta" id="pAnty"><span class="led"></span>ANTYKOŁYS.</button>
+      <button class="prz zolta" id="pHak"><span class="led"></span>HAK: ZACZEP</button>
+      <button class="prz" id="pSygnal"><span class="led"></span>📯 SYGNAŁ</button>
+      <button class="prz zolta" id="pLaser"><span class="led"></span>LASER HAKA</button>
+      <button class="prz" id="pSwiatla"><span class="led"></span>💡 ŚWIATŁA</button>
+      <button class="prz" id="pKamera"><span class="led"></span>🎥 WIDOK</button>
+      <button class="prz zolta" id="pSledz"><span class="led"></span>ŚLEDŹ HAK</button>
+      <button class="prz" id="pReset"><span class="led"></span>↺ OD NOWA</button>
+    </div>
+  </div>
+  <div class="konsola">
+    <div class="przyciski jeden"><button class="trz" data-os="hak" data-k="1">▲ HAK<br>w górę</button><button class="trz" data-os="hak" data-k="-1">▼ HAK<br>w dół</button></div>
+    <div class="joy pion" id="joyR"><div class="baza"><span class="kier" style="top:6px;left:50%;transform:translateX(-50%)">▲</span><span class="kier" style="bottom:6px;left:50%;transform:translateX(-50%)">▼</span><div class="galka"></div></div>PRAWY: hak</div>
+    <button class="stop" id="pStop" title="STOP awaryjny">STOP</button>
+  </div>
 </div>
 
 <div class="ekran" id="start"><div class="karta">
   <h1>🏗 Operator żurawia wieżowego</h1>
   <p>Siedzisz w kabinie żurawia 30 m nad placem budowy. Przenieś 4 ładunki do stref A–D: zaczep hak, unieś, przenieś obracając żuraw i przesuwając wózek, opuść i odczep. Uważaj na kołysanie, przeszkody i <b>ogranicznik udźwigu</b> – im dalej wózek od wieży, tym mniejszy dopuszczalny ciężar.</p>
   <ol>
-    <li>Włącz <b>ZASILANIE</b>. W razie zagrożenia – czerwony <b>STOP</b> (ponowne wciśnięcie zwalnia).</li>
-    <li><b>Lewy joystick</b>: w lewo/prawo obraca żuraw, w górę/dół przesuwa wózek od/do wieży. <b>Prawy</b>: podnosi i opuszcza hak.</li>
-    <li>Nad ładunkiem opuść hak tuż nad niego i wciśnij <b>HAK: ZACZEP</b>. Odczepić można dopiero ładunek postawiony na podłożu.</li>
-    <li><b>PRECYZJA</b> zwalnia ruchy – do dokładnego odstawiania.</li>
+    <li>Zasilanie włączy się po starcie. W razie zagrożenia – czerwony <b>STOP</b> (ponowne wciśnięcie zwalnia).</li>
+    <li><b>Lewy joystick</b> albo przyciski obok: obrót żurawia i wózek od/do wieży. <b>Prawy</b> albo ▲▼: hak w górę i w dół. Przyciski działają, dopóki je trzymasz.</li>
+    <li><b>PRĘDKOŚĆ</b> 1 / 2 / 3: bieg 1 to bardzo wolne, precyzyjne ruchy nad ładunkiem. Lekkie wychylenie joysticka też daje wolny ruch.</li>
+    <li><b>CELOWNIK</b> pokazuje z góry hak i ładunek albo strefę docelową. Gdy zaświeci się <b>MOŻNA ZACZEPIĆ</b> – wciśnij <b>HAK: ZACZEP</b>. Odczepić można dopiero ładunek postawiony na podłożu.</li>
+    <li>W kabinie patrzysz wzdłuż wysięgnika. Przeciągnij myszą po widoku, by się rozejrzeć; dwuklik – z powrotem na wprost.</li>
   </ol>
-  <div class="klaw">Klawiatura: <kbd>A</kbd>/<kbd>D</kbd> obrót · <kbd>W</kbd>/<kbd>S</kbd> wózek · <kbd>↑</kbd>/<kbd>↓</kbd> hak · <kbd>Spacja</kbd> zaczep/odczep · <kbd>P</kbd> precyzja · <kbd>H</kbd> sygnał · <kbd>C</kbd> widok · <kbd>Esc</kbd> STOP</div>
+  <div class="klaw">Klawiatura: <kbd>A</kbd>/<kbd>D</kbd> lub <kbd>←</kbd>/<kbd>→</kbd> obrót · <kbd>W</kbd>/<kbd>S</kbd> wózek · <kbd>↑</kbd>/<kbd>↓</kbd> hak · <kbd>Spacja</kbd> zaczep/odczep · <kbd>1</kbd>/<kbd>2</kbd>/<kbd>3</kbd> prędkość · <kbd>H</kbd> sygnał · <kbd>C</kbd> widok · <kbd>Esc</kbd> STOP</div>
   <label style="display:block;margin-top:10px;font-weight:700">Imię lub nr uczestnika <input id="imie" maxlength="40" placeholder="np. Uczestnik 1" style="font:15px system-ui;padding:8px 10px;border-radius:10px;border:1px solid #bbb;width:220px;margin-left:6px"></label>
   <div class="rzad"><button class="btn-d" id="sKamera">🖐 Dłonie przed kamerą</button><button class="btn-d jasny" id="sMysz">🖱 Mysz i klawiatura</button></div>
   <p style="font-size:12.5px;margin-top:10px">Dłońmi: chwyć gałkę joysticka (kciuk + palec wskazujący) i przesuń; puść – wraca do środka. Chwyt na przełączniku = naciśnięcie. Obraz z kamery zostaje na tym komputerze.</p>
@@ -110,8 +146,8 @@
 <script type="module">
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=34";
-import { zbudujScene, zbudujLadunki, LADUNKI, STREFY, udzwig, WIEZA, WYSIEG, WYS_WYSIEGU, R_MIN } from "./dzwig/scena.js?v=34";
+import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=35";
+import { zbudujScene, zbudujLadunki, LADUNKI, STREFY, udzwig, WIEZA, WYSIEG, WYS_WYSIEGU, R_MIN } from "./dzwig/scena.js?v=35";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.shadowMap.enabled = true; renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -120,13 +156,17 @@ const scene = new THREE.Scene();
 const cam = new THREE.PerspectiveCamera(62, 1, 0.1, 600);
 const ctlGora = new OrbitControls(cam, renderer.domElement); ctlGora.enabled = false; ctlGora.maxPolarAngle = Math.PI * 0.48;
 const S = zbudujScene(scene), ladunki = zbudujLadunki(scene);
-function rozmiar() { renderer.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); plotno(); }
+function rozmiar() { renderer.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; ustawOffset(); plotno(); }
+// środek obrazu nad kokpitem (kokpit zasłania dół ekranu)
+function ustawOffset() { const ph = $("#pulpit").offsetHeight || 0; cam.setViewOffset(innerWidth, innerHeight + ph, 0, ph, innerWidth, innerHeight); cam.updateProjectionMatrix(); }
 
 /* ------------------------------------------------------------ stan żurawia */
 const z = { theta: 0.35, r: 14, hy: 20, vT: 0, vR: 0, vH: 0, o: new THREE.Vector2(), ov: new THREE.Vector2(), wozekPop: null, wozekV: new THREE.Vector3() };
-const przel = { zasilanie: false, precyzja: false, swiatla: false, stop: false, sledz: true, widok: 0 };
+const przel = { zasilanie: false, bieg: 2, anty: true, laser: true, swiatla: false, stop: false, sledz: true, widok: 0 };
+const BIEG = [0, 0.12, 0.4, 1];
 const wej = { obr: 0, woz: 0, hak: 0 };          // z joysticków
 const klaw = { obr: 0, woz: 0, hak: 0 };
+const przy = { obr: 0, woz: 0, hak: 0 };      // przyciski „trzymaj”
 let zaczepiony = null, dlZawiesi = 1.2;
 const stat = { kolizje: 0, bledy: 0, start: 0, koniec: 0, przeciazenia: 0 };
 const WIDOKI = ["kabina", "z góry", "kamera na wózku"];
@@ -146,10 +186,12 @@ const koliduje = (box, L) => box.min.y < -0.02 || przeszkodyDla(L).some(p => p.i
 /* ------------------------------------------------------------ pętla fizyki */
 let alarmDo = 0, ostatniaKolizja = 0, ostPrzec = 0;
 function krok(dt, teraz) {
-  const aktywny = przel.zasilanie && !przel.stop, mn = przel.precyzja ? 0.3 : 1;
-  const cel = { vT: aktywny ? -(wej.obr + klaw.obr) * 0.2 * mn : 0, vR: aktywny ? (wej.woz + klaw.woz) * 2.4 * mn : 0, vH: aktywny ? (wej.hak + klaw.hak) * 2.6 * mn : 0 };
+  const aktywny = przel.zasilanie && !przel.stop, mn = BIEG[przel.bieg];
+  const os = k => Math.max(-1, Math.min(1, wej[k] + klaw[k] + przy[k]));
+  if (!przel.zasilanie && (os("obr") || os("woz") || os("hak")) && teraz > alarmDo) { alarmDo = teraz + 2500; komunikat("Żuraw jest wyłączony – wciśnij ZASILANIE (klawisz Z).", "zle"); $("#pZasil").classList.remove("miga"); void $("#pZasil").offsetWidth; $("#pZasil").classList.add("miga"); }
+  const cel = { vT: aktywny ? -os("obr") * 0.2 * mn : 0, vR: aktywny ? os("woz") * 2.4 * mn : 0, vH: aktywny ? os("hak") * 2.6 * mn : 0 };
   const zbliz = (v, c, a) => v + Math.max(-a * dt, Math.min(a * dt, c - v));
-  z.vT = zbliz(z.vT, Math.max(-0.2, Math.min(0.2, cel.vT)), przel.stop ? 0.6 : 0.12); z.vR = zbliz(z.vR, Math.max(-2.4, Math.min(2.4, cel.vR)), przel.stop ? 6 : 1.1); z.vH = zbliz(z.vH, Math.max(-2.6, Math.min(2.6, cel.vH)), przel.stop ? 8 : 1.6);
+  z.vT = zbliz(z.vT, cel.vT, przel.stop ? 0.8 : 0.3); z.vR = zbliz(z.vR, cel.vR, przel.stop ? 8 : 2.5); z.vH = zbliz(z.vH, cel.vH, przel.stop ? 10 : 3.5);
   const stary = { theta: z.theta, r: z.r, hy: z.hy };
   // ogranicznik udźwigu: z ładunkiem zbyt ciężkim na dany wysięg nie wolno wysuwać wózka ani podnosić
   let przeciazony = false;
@@ -181,11 +223,11 @@ function krok(dt, teraz) {
   const w = wozekSwiat();
   if (z.wozekPop) { const v = w.clone().sub(z.wozekPop).divideScalar(dt); const a = v.clone().sub(z.wozekV).divideScalar(dt); z.wozekV.copy(v);
     const L = Math.max(2, WYS_WYSIEGU - 1.3 - z.hy + (zaczepiony ? dlZawiesi + zaczepiony.wym[1] / 2 : 0)), g = 9.81 / L;
-    z.ov.x += (-g * z.o.x - 0.35 * z.ov.x - a.x) * dt; z.ov.y += (-g * z.o.y - 0.35 * z.ov.y - a.z) * dt;
+    const tl = przel.anty ? 2.4 : 0.35; z.ov.x += (-g * z.o.x - tl * z.ov.x - a.x) * dt; z.ov.y += (-g * z.o.y - tl * z.ov.y - a.z) * dt;
     z.o.x += z.ov.x * dt; z.o.y += z.ov.y * dt; z.o.clampLength(0, 4); }
   z.wozekPop = w;
   if (z.o.length() > 0.05 && zaczepiony) { const b = boxLadunku(zaczepiony, srodekZawieszonego(pozycjaHaka())); if (koliduje(b, zaczepiony)) { z.o.multiplyScalar(0.6); z.ov.multiplyScalar(-0.3); } }
-  rysujZuraw();
+  rysujZuraw(); rysujLaser();
   dzwiekSilnika(Math.abs(z.vT) * 5 + Math.abs(z.vR) / 2.4 + Math.abs(z.vH) / 2.6);
 }
 function rysujZuraw() {
@@ -199,6 +241,56 @@ function rysujZuraw() {
     const rog = (x, y) => new THREE.Vector3(c.x + x * cs + y * sn, t, c.z - x * sn + y * cs);
     S.zawiesia.geometry.setFromPoints([kh, rog(-a / 2.2, -b / 2.2), kh, rog(a / 2.2, -b / 2.2), kh, rog(-a / 2.2, b / 2.2), kh, rog(a / 2.2, b / 2.2)]); S.zawiesia.visible = true;
   } else S.zawiesia.visible = false;
+}
+
+/* ------------------------------------------------------------ pomoce precyzyjne: laser, podświetlenie, cel */
+function powierzchniaPod(x, zz, pomin) { let y = 0; for (const p of [...S.przeszkody, ...ladunki.filter(q => q !== pomin && q !== zaczepiony).map(q => boxLadunku(q, q.mesh.position))]) if (x > p.min.x && x < p.max.x && zz > p.min.z && zz < p.max.z && p.max.y < (zaczepiony ? zaczepiony.mesh.position.y : z.hy)) y = Math.max(y, p.max.y); return y; }
+function ladunekDoZaczepienia(h = pozycjaHaka()) {
+  let naj = null, nd = 1e9;
+  for (const L of ladunki) { if (L === zaczepiony) continue; const top = L.mesh.position.y + L.wym[1] / 2, d = Math.hypot(L.mesh.position.x - h.x, L.mesh.position.z - h.z), v = h.y - 0.95 - top; if (d < 1.3 && v > -0.4 && v < 2.2 && d < nd) { nd = d; naj = L; } }
+  return naj;
+}
+function celTeraz() {              // co pokazuje celownik: najbliższy nieodstawiony ładunek albo strefa zaczepionego
+  const h = pozycjaHaka();
+  if (zaczepiony) { const St = zaczepiony.strefa; return { x: St.srodek[0], z: St.srodek[2], y: St.srodek[1], w: St.wym[0], d: St.wym[1], kolor: St.kolor, lit: zaczepiony.cel, strefa: true }; }
+  const wolne = ladunki.filter(L => L.stan !== "na miejscu"); if (!wolne.length) return null;
+  const L = wolne.reduce((a, b) => Math.hypot(a.mesh.position.x - h.x, a.mesh.position.z - h.z) < Math.hypot(b.mesh.position.x - h.x, b.mesh.position.z - h.z) ? a : b);
+  return { x: L.mesh.position.x, z: L.mesh.position.z, y: L.mesh.position.y + L.wym[1] / 2, w: L.wym[0], d: L.wym[2], kolor: L.kolor, lit: L.cel, L };
+}
+const laser = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), new THREE.LineDashedMaterial({ color: 0xff3b30, dashSize: 0.5, gapSize: 0.3 }));
+const plamka = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.55, 32), new THREE.MeshBasicMaterial({ color: 0xff3b30, side: THREE.DoubleSide, depthTest: false, transparent: true, opacity: 0.9 }));
+plamka.rotation.x = -Math.PI / 2; plamka.renderOrder = 10; scene.add(laser, plamka);
+let stanCelu = { moznaZaczepic: null, moznaOdczepic: false };
+function rysujLaser() {
+  const h = pozycjaHaka(), start = zaczepiony ? zaczepiony.mesh.position.clone().setY(zaczepiony.mesh.position.y - zaczepiony.wym[1] / 2) : h.clone().setY(h.y - 0.95);
+  const y = powierzchniaPod(start.x, start.z, zaczepiony);
+  laser.visible = plamka.visible = przel.laser;
+  laser.geometry.setFromPoints([start, new THREE.Vector3(start.x, y, start.z)]); laser.computeLineDistances(); plamka.position.set(start.x, y + 0.06, start.z);
+  const L = zaczepiony ? null : ladunekDoZaczepienia(h); stanCelu.moznaZaczepic = L;
+  let odcz = false; if (zaczepiony) { const b = boxLadunku(zaczepiony, zaczepiony.mesh.position); odcz = b.min.y - podparcie(b, zaczepiony) <= 0.35; } stanCelu.moznaOdczepic = odcz;
+  const zielony = !!L || odcz; plamka.material.color.set(zielony ? 0x34c759 : 0xff3b30); laser.material.color.set(zielony ? 0x34c759 : 0xff3b30);
+  for (const q of ladunki) { const e = q.mesh.material.emissive; e.set(q === L ? 0x2a7a3a : 0x000000); }
+}
+function rysujRadar() {
+  const c = $("#radar"); if (!c || !c.offsetWidth) return; const g = c.getContext("2d"), W = c.width, sk = W / 12, h = pozycjaHaka();
+  const u = [Math.cos(z.theta), -Math.sin(z.theta)], t = [Math.sin(z.theta), Math.cos(z.theta)];   // u – od wieży, t – w prawo
+  const doR = (x, zz) => { const dx = x - h.x, dz = zz - h.z; return [W / 2 + (dx * t[0] + dz * t[1]) * sk, W / 2 - (dx * u[0] + dz * u[1]) * sk]; };
+  g.fillStyle = "#0d1a14"; g.fillRect(0, 0, W, W); g.strokeStyle = "#1f3a2a"; g.lineWidth = 1;
+  for (let i = -6; i <= 6; i++) { g.beginPath(); g.moveTo(W / 2 + i * sk, 0); g.lineTo(W / 2 + i * sk, W); g.moveTo(0, W / 2 + i * sk); g.lineTo(W, W / 2 + i * sk); g.stroke(); }
+  const cel = celTeraz();
+  if (cel) {
+    const rog = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => doR(cel.x + a * cel.w / 2, cel.z + b * cel.d / 2));
+    const [cx, cy] = doR(cel.x, cel.z), wPolu = cx > 0 && cx < W && cy > 0 && cy < W;
+    g.fillStyle = cel.kolor + "88"; g.strokeStyle = cel.kolor; g.lineWidth = 3; g.beginPath(); rog.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); g.fill(); g.stroke();
+    if (wPolu) { g.fillStyle = "#fff"; g.font = "800 26px system-ui"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(cel.lit, cx, cy); }
+    else { const a = Math.atan2(cy - W / 2, cx - W / 2), r = W / 2 - 16; g.save(); g.translate(W / 2 + Math.cos(a) * r, W / 2 + Math.sin(a) * r); g.rotate(a); g.fillStyle = cel.kolor; g.beginPath(); g.moveTo(14, 0); g.lineTo(-8, -10); g.lineTo(-8, 10); g.fill(); g.restore(); }
+    const dPoz = Math.hypot(cel.x - h.x, cel.z - h.z); g.fillStyle = "#c7ffd8"; g.font = "700 20px ui-monospace, monospace"; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(`↔ ${dPoz.toFixed(1)} m`, 8, 6);
+  }
+  if (zaczepiony) { const [a, , b] = zaczepiony.wym, p = zaczepiony.mesh.position, rog = [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([x, y]) => doR(p.x + x * a / 2, p.z + y * b / 2)); g.strokeStyle = "#ffffff"; g.setLineDash([6, 4]); g.lineWidth = 2; g.beginPath(); rog.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); g.stroke(); g.setLineDash([]); }
+  // strefa zaczepienia wokół haka i krzyż haka
+  g.strokeStyle = stanCelu.moznaZaczepic || stanCelu.moznaOdczepic ? "#4cff7a" : "#ffd23f"; g.lineWidth = 2; g.beginPath(); g.arc(W / 2, W / 2, 1.3 * sk, 0, 7); g.stroke();
+  g.beginPath(); g.moveTo(W / 2 - 12, W / 2); g.lineTo(W / 2 + 12, W / 2); g.moveTo(W / 2, W / 2 - 12); g.lineTo(W / 2, W / 2 + 12); g.stroke();
+  g.fillStyle = "#8f9aa3"; g.font = "700 15px system-ui"; g.textAlign = "center"; g.textBaseline = "bottom"; g.fillText("▲ od wieży", W / 2, W - 4);
 }
 
 /* ------------------------------------------------------------ zaczep / odczep */
@@ -226,18 +318,28 @@ function hak() {
 }
 
 /* ------------------------------------------------------------ kamera */
-const kab = new THREE.Object3D(); S.kabina.add(kab); kab.position.set(0.3, 1.55, 0.1);
+const kab = new THREE.Object3D(); S.kabina.add(kab); kab.position.set(0.55, 1.45, -0.1);
 let rozgl = { yaw: 0, pitch: 0 };
+let katy = null;
 function ustawKamere(dt) {
+  document.body.classList.toggle("wKabinie", przel.widok === 0);
+  S.kabina.visible = przel.widok !== 0;   // z wnętrza ramę kabiny rysuje nakładka – bez belek zasłaniających widok
   if (przel.widok === 0) {
     const p = new THREE.Vector3(); kab.getWorldPosition(p); cam.position.copy(p);
-    const h = pozycjaHaka(), kier = przel.sledz ? h.clone().sub(p).normalize() : new THREE.Vector3(Math.cos(-z.theta), -0.35, Math.sin(-z.theta)).normalize();
-    const e = new THREE.Euler().setFromVector3(new THREE.Vector3()); const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), kier);
-    const dodatek = new THREE.Quaternion().setFromEuler(new THREE.Euler(rozgl.pitch, rozgl.yaw, 0, "YXZ"));
-    const cel = q.multiply(dodatek); cam.quaternion.slerp(cel, Math.min(1, dt * 4)); cam.fov = 62; cam.updateProjectionMatrix();
+    // operator patrzy wzdłuż wysięgnika; „śledź hak” pochyla wzrok w dół na hak (z lekkim skrętem)
+    const przod = Math.atan2(-Math.cos(z.theta), Math.sin(z.theta)) , h = pozycjaHaka(), d = h.clone().sub(p);
+    const yawHak = Math.atan2(-d.x, -d.z), pitchHak = Math.atan2(d.y, Math.hypot(d.x, d.z));
+    const roz = a => Math.atan2(Math.sin(a), Math.cos(a));
+    let yaw = przod + Math.max(-0.45, Math.min(0.45, roz(yawHak - przod))), pitch = Math.max(-1.25, Math.min(-0.12, pitchHak + 0.12));
+    if (!przel.sledz) { yaw = przod; pitch = -0.38; }
+    yaw += rozgl.yaw; pitch = Math.max(-1.45, Math.min(0.6, pitch + rozgl.pitch));
+    if (!katy) katy = { yaw, pitch };
+    const k = Math.min(1, dt * 5); katy.yaw += roz(yaw - katy.yaw) * k; katy.pitch += (pitch - katy.pitch) * k;
+    cam.quaternion.setFromEuler(new THREE.Euler(katy.pitch, katy.yaw, 0, "YXZ"));
+    if (cam.fov !== 72) { cam.fov = 72; cam.updateProjectionMatrix(); }
   } else if (przel.widok === 2) {
-    const w = wozekSwiat(); cam.position.copy(w).add(new THREE.Vector3(0, -0.6, 0)); cam.up.set(Math.cos(-z.theta), 0, Math.sin(-z.theta)); cam.lookAt(w.x, 0, w.z); cam.fov = 48; cam.updateProjectionMatrix(); cam.up.set(0, 1, 0);
-  } else { ctlGora.target.lerp(pozycjaHaka(), Math.min(1, dt * 2)); ctlGora.update(); }
+    katy = null; const w = wozekSwiat(); cam.position.copy(w).add(new THREE.Vector3(0, -0.6, 0)); cam.up.set(Math.cos(-z.theta), 0, Math.sin(-z.theta)); cam.lookAt(w.x, 0, w.z); cam.up.set(0, 1, 0); if (cam.fov !== 48) { cam.fov = 48; cam.updateProjectionMatrix(); }
+  } else { katy = null; ctlGora.target.lerp(pozycjaHaka(), Math.min(1, dt * 2)); ctlGora.update(); }
 }
 function zmienWidok() {
   przel.widok = (przel.widok + 1) % 3; $("#widokNazwa").textContent = "widok: " + WIDOKI[przel.widok];
@@ -247,7 +349,7 @@ function zmienWidok() {
 // rozglądanie się w kabinie: prawy przycisk myszy
 let rozglD = null;
 renderer.domElement.addEventListener("pointerdown", e => { if (przel.widok === 0 && (e.button === 2 || e.button === 0)) rozglD = { x: e.clientX, y: e.clientY, ...rozgl }; });
-addEventListener("pointermove", e => { if (rozglD) { rozgl.yaw = rozglD.yaw - (e.clientX - rozglD.x) * 0.004; rozgl.pitch = Math.max(-0.8, Math.min(0.8, rozglD.pitch - (e.clientY - rozglD.y) * 0.004)); } });
+addEventListener("pointermove", e => { if (rozglD) { rozgl.yaw = rozglD.yaw - (e.clientX - rozglD.x) * 0.004; rozgl.yaw = Math.max(-1.6, Math.min(1.6, rozgl.yaw)); rozgl.pitch = Math.max(-0.9, Math.min(0.9, rozglD.pitch - (e.clientY - rozglD.y) * 0.004)); } });
 addEventListener("pointerup", () => { rozglD = null; });
 renderer.domElement.addEventListener("dblclick", () => { rozgl = { yaw: 0, pitch: 0 }; });
 renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
@@ -257,25 +359,35 @@ const joy = {};
 function zrobJoystick(el, pion, onZmiana) {
   const baza = el.querySelector(".baza"), galka = el.querySelector(".galka");
   const j = { x: 0, y: 0, trzyma: null, ustaw(px, py) {
-      const r = baza.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = (pion ? r.height : r.width) / 2 - 20;
+      const r = baza.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = (pion ? r.height : r.width) / 2 - 30;
       let dx = pion ? 0 : (px - cx) / R, dy = (py - cy) / R; const d = Math.hypot(dx, dy); if (d > 1) { dx /= d; dy /= d; }
       this.x = dx; this.y = dy; this.rysuj(); onZmiana(this); },
     pusc() { this.trzyma = null; this.x = this.y = 0; galka.classList.remove("trzym"); this.rysuj(); onZmiana(this); },
-    rysuj() { const r = baza.getBoundingClientRect(), R = (pion ? r.height : r.width) / 2 - 20; galka.style.transform = `translate(${this.x * R}px, ${this.y * R}px)`; },
+    rysuj() { const r = baza.getBoundingClientRect(), R = (pion ? r.height : r.width) / 2 - 30; galka.style.transform = `translate(${this.x * R}px, ${this.y * R}px)`; },
     el: baza, galka };
   baza.addEventListener("pointerdown", e => { j.trzyma = "mysz"; galka.classList.add("trzym"); baza.setPointerCapture(e.pointerId); j.ustaw(e.clientX, e.clientY); e.preventDefault(); });
   baza.addEventListener("pointermove", e => { if (j.trzyma === "mysz") j.ustaw(e.clientX, e.clientY); });
-  baza.addEventListener("pointerup", () => { if (j.trzyma === "mysz") j.pusc(); });
+  baza.addEventListener("pointerup", () => { if (j.trzyma === "mysz") j.pusc(); }); baza.addEventListener("pointercancel", () => { if (j.trzyma === "mysz") j.pusc(); });
   return j;
 }
-const martwa = v => Math.abs(v) < 0.12 ? 0 : (v - Math.sign(v) * 0.12) / 0.88;
+const martwa = v => { const a = Math.abs(v) < 0.08 ? 0 : (Math.abs(v) - 0.08) / 0.92; return Math.sign(v) * Math.pow(a, 1.8); };   // lekkie wychylenie = bardzo wolny ruch
 joy.L = zrobJoystick($("#joyL"), false, j => { wej.obr = martwa(j.x); wej.woz = martwa(-j.y); });
 joy.R = zrobJoystick($("#joyR"), true, j => { wej.hak = martwa(-j.y); });
 
 /* ------------------------------------------------------------ przełączniki */
 function ustawLed(id, on) { $(id).classList.toggle("on", on); }
+function zasilanie(wl) { przel.zasilanie = wl; ustawLed("#pZasil", wl); if (wl) startDzwieku(); }
 $("#pZasil").onclick = () => { przel.zasilanie = !przel.zasilanie; ustawLed("#pZasil", przel.zasilanie); dzwiek("klik"); komunikat(przel.zasilanie ? "Zasilanie włączone – żuraw gotowy do pracy." : "Zasilanie wyłączone."); if (przel.zasilanie) startDzwieku(); };
-$("#pPrec").onclick = () => { przel.precyzja = !przel.precyzja; ustawLed("#pPrec", przel.precyzja); dzwiek("klik"); };
+function ustawBieg(b) { przel.bieg = b; $$("#pBieg .leds i").forEach((e, i) => e.classList.toggle("on", i < b)); }
+$("#pBieg").onclick = () => { ustawBieg(przel.bieg % 3 + 1); dzwiek("klik"); komunikat(`Prędkość ${przel.bieg}: ${["", "bardzo wolno – precyzyjne naprowadzanie", "średnio", "pełna"][przel.bieg]}.`); };
+$("#pAnty").onclick = () => { przel.anty = !przel.anty; ustawLed("#pAnty", przel.anty); dzwiek("klik"); komunikat(przel.anty ? "Stabilizacja kołysania włączona." : "Stabilizacja kołysania wyłączona – ładunek będzie się mocno kołysał."); };
+$("#pLaser").onclick = () => { przel.laser = !przel.laser; ustawLed("#pLaser", przel.laser); dzwiek("klik"); };
+ustawBieg(2); ustawLed("#pAnty", true); ustawLed("#pLaser", true);
+function trzymaj(btn, wl) { const os = btn.dataset.os, k = +btn.dataset.k; if (wl) { przy[os] = k; btn.classList.add("wcis"); } else { if (przy[os] === k) przy[os] = 0; btn.classList.remove("wcis"); } }
+for (const b of $$(".trz")) {
+  b.addEventListener("pointerdown", e => { b.setPointerCapture(e.pointerId); trzymaj(b, true); e.preventDefault(); });
+  for (const ev of ["pointerup", "pointercancel", "lostpointercapture"]) b.addEventListener(ev, () => trzymaj(b, false));
+}
 $("#pHak").onclick = hak;
 $("#pSygnal").onclick = () => { dzwiek("sygnal"); ustawLed("#pSygnal", true); setTimeout(() => ustawLed("#pSygnal", false), 800); };
 $("#pSwiatla").onclick = () => { przel.swiatla = !przel.swiatla; ustawLed("#pSwiatla", przel.swiatla); S.reflektor.intensity = przel.swiatla ? 900 : 0; dzwiek("klik"); };
@@ -290,24 +402,30 @@ $("#bPomoc").onclick = () => { $("#start").hidden = false; };
 const wcisniete = new Set();
 addEventListener("keydown", e => {
   if (e.repeat) return; const k = e.key.toLowerCase(); wcisniete.add(k);
-  if (k === " ") { e.preventDefault(); hak(); } else if (k === "p") $("#pPrec").click(); else if (k === "h") $("#pSygnal").click(); else if (k === "c") $("#pKamera").click(); else if (k === "escape") $("#pStop").click(); else if (k === "z") $("#pZasil").click();
+  if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(k)) e.preventDefault();
+  if (k === " ") hak(); else if (k === "p") $("#pBieg").click(); else if ("123".includes(k) && k.length === 1) { ustawBieg(+k); komunikat("Prędkość " + k); } else if (k === "l") $("#pLaser").click(); else if (k === "h") $("#pSygnal").click(); else if (k === "c") $("#pKamera").click(); else if (k === "escape") $("#pStop").click(); else if (k === "z") $("#pZasil").click();
   klawisze();
 });
 addEventListener("keyup", e => { wcisniete.delete(e.key.toLowerCase()); klawisze(); });
 function klawisze() {
-  klaw.obr = (wcisniete.has("d") ? 1 : 0) - (wcisniete.has("a") ? 1 : 0);
+  klaw.obr = (wcisniete.has("d") || wcisniete.has("arrowright") ? 1 : 0) - (wcisniete.has("a") || wcisniete.has("arrowleft") ? 1 : 0);
   klaw.woz = (wcisniete.has("w") ? 1 : 0) - (wcisniete.has("s") ? 1 : 0);
   klaw.hak = (wcisniete.has("arrowup") ? 1 : 0) - (wcisniete.has("arrowdown") ? 1 : 0);
 }
 
 /* ------------------------------------------------------------ wskaźniki i zlecenia */
+let tWsk = 0;
 function rysujWskazniki() {
+  rysujRadar(); const t = performance.now(); if (t - tWsk < 90) return; tWsk = t;
   const Q = udzwig(z.r), m = zaczepiony?.masa || 0, proc = Math.min(1, m / Q), stopnie = ((z.theta * 180 / Math.PI) % 360 + 360) % 360;
+  const pod = zaczepiony ? Math.max(0, zaczepiony.mesh.position.y - zaczepiony.wym[1] / 2 - powierzchniaPod(zaczepiony.mesh.position.x, zaczepiony.mesh.position.z, zaczepiony)) : null;
+  const stanTxt = !przel.zasilanie ? '<b class="alarm">WYŁĄCZONY – wciśnij ZASILANIE</b>' : przel.stop ? '<b class="alarm">STOP AWARYJNY</b>' : stanCelu.moznaZaczepic ? `<b class="ok">✔ MOŻNA ZACZEPIĆ: ${stanCelu.moznaZaczepic.nazwa.toUpperCase()}</b>` : stanCelu.moznaOdczepic ? '<b class="ok">✔ STOI – MOŻNA ODCZEPIĆ</b>' : zaczepiony ? `ładunek ${pod.toFixed(1)} m nad podłożem` : "GOTOWY";
   $("#wsk").innerHTML = `<span>OBRÓT <b>${stopnie.toFixed(0)}°</b></span><span>WYSIĘG <b>${z.r.toFixed(1)} m</b></span>
-    <span>HAK <b>${Math.max(0, z.hy - 1).toFixed(1)} m</b></span><span>KOŁYS. <b class="${z.o.length() > 0.8 ? "alarm" : ""}">${z.o.length().toFixed(2)} m</b></span>
+    <span>HAK <b>${Math.max(0, z.hy - 1).toFixed(1)} m</b></span><span>KOŁYS. <b class="${z.o.length() > 0.6 ? "alarm" : ""}">${z.o.length().toFixed(2)} m</b></span>
     <span class="${proc > 0.9 ? "alarm" : ""}">ŁAD. <b>${m.toFixed(1)} t</b></span><span>UDŹWIG <b>${Q.toFixed(1)} t</b></span>
     <div class="pasek"><div style="width:${proc * 100}%;background:${proc > 0.9 ? "#ff6b5b" : proc > 0.7 ? "#ffd23f" : "#7dffa3"}"></div></div>
-    <span>${przel.zasilanie ? (przel.stop ? '<b class="alarm">STOP</b>' : "<b>GOTOWY</b>") : "wyłączony"}</span><span>${przel.precyzja ? "<b>PRECYZJA</b>" : "normalny"}</span>`;
+    <span>BIEG <b>${przel.bieg}</b></span><span>${przel.anty ? "antykołys. <b>ON</b>" : "antykołys. off"}</span>
+    <span class="wiersz">${stanTxt}</span>`;
 }
 function rysujListe() {
   $("#lista").innerHTML = ladunki.map(L => `<div class="z ${L.stan === "na miejscu" ? "ok" : ""}"><i style="background:${L.strefa.kolor}">${L.cel}</i><span><b>${L.nazwa}</b> ${L.masa} t<br><small>${L.stan === "na miejscu" ? `✓ w strefie, ${L.czas.toFixed(0)} s, odchyłka ${(L.dokladnosc * 100).toFixed(0)} cm` : `→ ${L.strefa.nazwa} · ${L.stan}`}</small></span></div>`).join("");
@@ -363,15 +481,17 @@ function ramka(dlonie) {
   const nad = new Set();
   for (const d of dlonie) {
     const P = d.punkty.map(naEkran), c = naEkran(d.chwyt), r = reka[d.strona] || (reka[d.strona] = { trzyma: null });
-    const el = document.elementFromPoint(c.x, c.y), baza = el?.closest(".baza"), btn = el?.closest(".prz, .stop, .btn-d");
+    const el = document.elementFromPoint(c.x, c.y), baza = el?.closest(".baza"), trz = el?.closest(".trz"), btn = trz ? null : el?.closest(".prz, .stop, .btn-d");
+    if (trz) nad.add(trz);
     if (baza) nad.add(baza.querySelector(".galka")); if (btn) nad.add(btn);
     if (d.szczypie && !r.trzyma) {
       if (baza) { const j = baza === joy.L.el ? joy.L : joy.R; j.trzyma = d.strona; j.galka.classList.add("trzym"); r.trzyma = j; j.ustaw(c.x, c.y); }
+      else if (trz) { trzymaj(trz, true); r.trzyma = { trzyma: d.strona, pusc: () => trzymaj(trz, false) }; }
       else if (btn) { btn.classList.add("klik"); setTimeout(() => btn.classList.remove("klik"), 140); btn.click(); r.trzyma = "przycisk"; }
       else r.trzyma = "nic";
     } else if (!d.szczypie && r.trzyma) { if (r.trzyma.pusc && r.trzyma.trzyma === d.strona) r.trzyma.pusc(); r.trzyma = null; }
     else if (r.trzyma?.ustaw) r.trzyma.ustaw(c.x, c.y);
-    rysujDlon(g2, P, KOLOR[d.strona] || KOLOR.Prawa, { szczypie: d.szczypie, nadCzyms: !!(baza || btn) });
+    rysujDlon(g2, P, KOLOR[d.strona] || KOLOR.Prawa, { szczypie: d.szczypie, nadCzyms: !!(baza || btn || trz) });
   }
   for (const s of Object.keys(reka)) if (!dlonie.some(d => d.strona === s)) { if (reka[s].trzyma?.pusc) reka[s].trzyma.pusc(); delete reka[s]; }
   for (const e of nadPop) if (!nad.has(e)) e.classList.remove("nad"); for (const e of nad) e.classList.add("nad"); nadPop = nad;
@@ -387,19 +507,23 @@ async function start(zKamera) {
     } catch (e) { alert(/Permission|NotAllowed/i.test(e.name + e.message) ? "Brak dostępu do kamery – zezwól na kamerę albo wybierz mysz." : "Nie udało się: " + e.message); return; }
   }
   $("#start").hidden = true;
+  if (!przel.zasilanie) { zasilanie(true); komunikat("Zasilanie włączone – żuraw gotowy. Prędkość 2; do precyzyjnego naprowadzania wybierz 1."); }
+  ustawOffset();
 }
 $("#sKamera").onclick = () => start(true);
 $("#sMysz").onclick = () => start(false);
 rozmiar(); addEventListener("resize", rozmiar);
 let poprz = performance.now();
 renderer.setAnimationLoop(() => {
-  const t = performance.now(), dt = Math.min(0.05, (t - poprz) / 1000); poprz = t;
-  krok(dt, t); ustawKamere(dt); rysujWskazniki();
+  const t = performance.now(), dtc = Math.min(0.2, (t - poprz) / 1000); poprz = t;
+  const n = Math.max(1, Math.ceil(dtc / 0.034)), dt = dtc / n;   // kroki fizyki niezależne od liczby klatek
+  for (let i = 0; i < n; i++) krok(dt, t);
+  ustawKamere(dtc); rysujWskazniki();
   if (stat.start && !stat.koniec) { const s = Math.round((t - stat.start) / 1000); $("#czas").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; }
   renderer.render(scene, cam);
 });
 window.__dzwigTest = { z, przel, ladunki: () => ladunki.map(L => ({ id: L.id, stan: L.stan, poz: L.mesh.position.toArray() })), zaczepiony: () => zaczepiony?.id || null, stat, wej, hak, pozycjaHaka: () => pozycjaHaka().toArray(), sztucznaDlon, wynikSymulacji,
-  ustaw: o => { Object.assign(z, o); z.o.set(0, 0); z.ov.set(0, 0); z.wozekPop = null; }, joyL: () => { const r = joy.L.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, joyR: () => { const r = joy.R.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; } };
+  przy, ustawBieg, stanCelu, ustaw: o => { Object.assign(z, o); z.o.set(0, 0); z.ov.set(0, 0); z.wozekPop = null; }, joyL: () => { const r = joy.L.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, joyR: () => { const r = joy.R.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; } };
 window.__dzwigTest.podsumowanie = podsumowanie;
 window.__dzwigGotowy = true;
 </script>

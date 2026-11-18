@@ -69,7 +69,9 @@ export function zbudujScene(scene) {
   const ciegnoMat = new THREE.LineBasicMaterial({ color: "#333" });
   for (const x of [26, -12]) obrot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 6.3, 0), new THREE.Vector3(x, WYS_WYSIEGU - WIEZA + 0.8, 0)]), ciegnoMat));
   // kabina operatora (przy maszcie, z przodu, pod wysięgnikiem)
-  const kabina = new THREE.Group(); kabina.name = "Kabina operatora"; kabina.position.set(1.3, -0.4, 1.4); obrot.add(kabina);
+  const kabina = new THREE.Group(); kabina.name = "Kabina operatora"; kabina.position.set(2.3, -2.7, 1.5); obrot.add(kabina);
+  // wspornik kabiny pod wysięgnikiem
+  const wsp = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.3, 0.3), zolty); wsp.position.set(1.4, -0.3, 1.5); obrot.add(wsp); const wsp2 = wsp.clone(); wsp2.rotation.z = Math.PI / 2; wsp2.scale.x = 0.9; wsp2.position.set(1.4, -1.4, 1.5); obrot.add(wsp2);
   const szyba = new THREE.MeshStandardMaterial({ color: "#9ec3d6", transparent: true, opacity: 0.18, roughness: 0.05, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false });
   const rama = new THREE.MeshStandardMaterial({ color: "#d9a800", roughness: 0.5, metalness: 0.3 });
   const kab = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.3, 1.8), szyba); kab.position.y = 1.15; kabina.add(kab);
