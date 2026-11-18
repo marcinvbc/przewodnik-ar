@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Układ kostny – ułóż szkielet · Lekcje AR</title>
+<meta name="theme-color" content="#16232a">
+<script type="importmap">
+{ "imports": {
+  "three": "../lib/three/build/three.module.min.js",
+  "three/addons/": "../lib/three/examples/jsm/"
+} }
+</script>
+<script src="../wersja.js"></script>
+<script>window.WERSJA = window.WERSJA || ""; window.zWersja = window.zWersja || (u => u);</script>
+<script src="konfiguracja.js"></script>
+<style>
+  :root { --ink: #16232a; --kosc: #efe6d2; --ok: #2f8f5a; --zle: #c0392b; --uwaga: #d4a017; --akcent: #3a6ea5; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #16232a; color: #fff; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  #scena { position: fixed; inset: 0; }
+  #scena canvas { display: block; }
+  #rece { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 30; }
+  #podglad { position: fixed; right: 14px; bottom: 14px; width: 180px; border-radius: 12px; transform: scaleX(-1); opacity: .75; z-index: 25; border: 2px solid rgba(255,255,255,.3); display: none; }
+  body.kamera #podglad { display: block; }
+  .hud { position: fixed; left: 12px; right: 12px; top: 10px; z-index: 40; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .hud .tytul { font-weight: 800; font-size: 18px; margin-right: 4px; }
+  .pill { padding: 5px 12px; border-radius: 99px; background: rgba(0,0,0,.45); font-size: 13px; }
+  .pill.ok { background: rgba(47,143,90,.9); }
+  .hud .prawo { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-d { border: 0; border-radius: 99px; padding: 8px 14px; font: 700 13px system-ui; background: rgba(255,255,255,.93); color: var(--ink); cursor: pointer; text-decoration: none; transition: transform .1s, background .1s; }
+  .btn-d.nad { background: #ffd23f; transform: scale(1.06); }
+  .btn-d.on { background: #ffd23f; }
+  .btn-d.klik { transform: scale(.92); }
+  .btn-d.glowny { background: var(--ok); color: #fff; }
+  #etykieta { position: fixed; z-index: 35; pointer-events: none; background: rgba(22,35,42,.92); border: 1px solid rgba(255,255,255,.25); border-radius: 10px; padding: 5px 10px; font-size: 13px; font-weight: 600; display: none; white-space: nowrap; }
+  #komunikat { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); z-index: 45; background: rgba(22,35,42,.95); border-radius: 12px; padding: 9px 16px; font-size: 14px; display: none; max-width: 90vw; text-align: center; }
+  #komunikat.dobrze { background: rgba(47,143,90,.95); } #komunikat.zle { background: rgba(192,57,43,.95); }
+  .panel { position: fixed; left: 12px; top: 60px; bottom: 60px; width: 215px; z-index: 20; background: rgba(10,18,22,.72); border-radius: 14px; padding: 10px 12px; overflow: auto; font-size: 13px; }
+  .panel h3 { margin: 2px 0 8px; font-size: 14px; }
+  .panel .k { display: flex; gap: 6px; align-items: baseline; padding: 2px 0; opacity: .85; }
+  .panel .k.ok { opacity: 1; color: #9fe3b7; } .panel .k.ok::before { content: "✓"; } .panel .k:not(.ok)::before { content: "○"; opacity: .6; }
+  .panel .osoby { margin-top: 10px; border-top: 1px solid rgba(255,255,255,.15); padding-top: 8px; }
+  .pomoc { position: fixed; left: 12px; right: 210px; bottom: 10px; z-index: 40; background: rgba(0,0,0,.5); border-radius: 12px; padding: 6px 12px; font-size: 12px; display: flex; gap: 6px 16px; flex-wrap: wrap; }
+  .pomoc b { color: #ffd23f; }
+  .ekran { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: rgba(16,26,31,.9); }
+  .ekran[hidden], [hidden] { display: none !important; }
+  .karta { width: min(640px, 94vw); max-height: 92vh; overflow: auto; background: #f6f1e7; color: var(--ink); border-radius: 22px; padding: 22px 26px; }
+  .karta h1 { margin: 0 0 6px; font-size: 25px; } .karta h2 { margin: 0 0 6px; }
+  .karta p { color: #444; margin: 6px 0 12px; }
+  .karta .rzad { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .karta .btn-d { background: var(--ink); color: #fff; font-size: 15px; padding: 11px 18px; }
+  .karta .btn-d.jasny { background: #fff; color: var(--ink); border: 1px solid #ccc; }
+  .karta label { font-size: 14px; } .karta input[type=text] { font: inherit; padding: 6px 10px; border: 1px solid #bbb; border-radius: 8px; width: 140px; }
+  .opcje { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0 14px; }
+  .opcja { border: 2px solid #ddd; border-radius: 14px; padding: 10px 12px; cursor: pointer; background: #fff; }
+  .opcja.on { border-color: var(--akcent); background: #eef4fb; } .opcja b { display: block; }
+  .opcja small { color: #555; }
+  .wynik-tab { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 8px 0; }
+  .wynik-tab td { padding: 3px 6px; border-bottom: 1px solid #e3ddd0; } .wynik-tab td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+  .ocena { font-size: 44px; font-weight: 800; }
+  .zrodlo { font-size: 11.5px; color: #777; margin-top: 10px; }
+  @media (max-width: 900px) { .panel { display: none; } .pomoc { right: 12px; } }
+</style>
+</head>
+<body>
+<div id="scena"></div>
+<video id="podglad" autoplay muted playsinline></video>
+<canvas id="rece"></canvas>
+<div id="etykieta"></div>
+<div id="komunikat"></div>
+
+<div class="hud">
+  <span class="tytul">🦴 Układ kostny – ułóż szkielet</span>
+  <span class="pill" id="postep">0 / 22</span>
+  <span class="pill" id="czas">00:00</span>
+  <span class="pill" id="tryb">nauka</span>
+  <span class="pill" id="grupaInfo" hidden></span>
+  <span class="prawo">
+    <button class="btn-d" id="bWzorzec" title="Półprzezroczysty szkielet-wzorzec w miejscu docelowym">👁 Wzorzec</button>
+    <button class="btn-d" id="bWidok" title="Widok z przodu">⟲ Przód</button>
+    <button class="btn-d" id="bMieszaj">🔀 Rozsyp</button>
+    <button class="btn-d glowny" id="bSprawdz">✔ Sprawdź z wzorcem</button>
+    <button class="btn-d" id="bGrupa">👥 Grupa</button>
+    <a class="btn-d" href="../">← Wróć</a>
+  </span>
+</div>
+<div class="panel" id="panel"><h3>Kości do ułożenia</h3><div id="lista"></div><div class="osoby" id="osoby" hidden></div></div>
+<div class="pomoc" id="pomoc">
+  <span><b>🤏 chwyć kość</b> (kciuk + palec wskazujący) i przenieś na miejsce</span>
+  <span><b>🤏🤏 dwie dłonie w pustym miejscu</b> – obróć szkielet</span>
+  <span><b>🖱 mysz:</b> lewy – przenoszenie, prawy – obrót, kółko – zoom</span>
+  <span>Pamiętaj: <b>lewa strona szkieletu</b> jest po <b>Twojej prawej</b> (patrzysz na niego z przodu)</span>
+</div>
+
+<div class="ekran" id="start"><div class="karta">
+  <h1>🦴 Ułóż szkielet człowieka</h1>
+  <p>Przed Tobą 22 części prawdziwego szkieletu dorosłego człowieka: czaszka, kręgosłup, klatka piersiowa, obręcze, kończyny, dłonie i stopy. Przenieś każdą na swoje miejsce. Na koniec porównasz swój szkielet ze wzorcem i dostaniesz ocenę.</p>
+  <b>Tryb</b>
+  <div class="opcje" id="tryby">
+    <div class="opcja on" data-t="nauka"><b>📘 Nauka</b><small>Widać półprzezroczysty wzorzec, kość „wskakuje” na miejsce, podpowiedzi lewa/prawa.</small></div>
+    <div class="opcja" data-t="sprawdzian"><b>📝 Sprawdzian</b><small>Bez wzorca i przyciągania. Na końcu porównanie z wzorcem, ocena i zaliczenie.</small></div>
+  </div>
+  <b>Sterowanie</b>
+  <div class="rzad" style="margin:6px 0 4px">
+    <button class="btn-d" id="sKamera">🖐 Dłonie przed kamerą</button>
+    <button class="btn-d jasny" id="sMysz">🖱 Mysz / ekran dotykowy</button>
+  </div>
+  <p style="font-size:13px;margin-top:8px">Obraz z kamery jest analizowany tylko na tym komputerze. Pracujecie w grupie? Po starcie kliknij <b>👥 Grupa</b> – kilka osób układa ten sam szkielet i widzi swoje ruchy na żywo.</p>
+  <div id="startInfo" style="font-size:13px;color:#555;min-height:1.3em"></div>
+  <div class="zrodlo">Modele kości: BodyParts3D, © The Database Center for Life Science, licencja CC BY 4.0 (uproszczone i pogrupowane na potrzeby lekcji).</div>
+</div></div>
+
+<div class="ekran" id="wynik" hidden><div class="karta" id="wynikTresc"></div></div>
+
+<div class="ekran" id="grupa" hidden><div class="karta">
+  <h2>👥 Praca w grupie</h2>
+  <p>Wszyscy z tym samym <b>kodem zajęć</b> i <b>numerem grupy</b> układają jeden wspólny szkielet: widzicie na żywo, kto co trzyma i gdzie kładzie. Działa między komputerami, gdy lekcje mają włączony serwer (Supabase, patrz instrukcja); bez niego – między kartami jednej przeglądarki.</p>
+  <div class="rzad"><label>Imię <input type="text" id="gImie" maxlength="20"></label><label>Kod zajęć <input type="text" id="gKod" maxlength="8" style="width:100px;text-transform:uppercase"></label><label>Grupa <input type="text" id="gNr" value="1" maxlength="2" style="width:50px"></label></div>
+  <div class="rzad" style="margin-top:14px"><button class="btn-d" id="gDolacz">Dołącz</button><button class="btn-d jasny" id="gZamknij">Anuluj</button><button class="btn-d jasny" id="gWyjdz" hidden>Pracuj sam</button></div>
+</div></div>
+
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=28";
+import { backend, uid } from "./wspolne.js";
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const MODELE = "../modele/szkielet/";
+const SNAP = 0.07, DOBRZE = 0.05, PRAWIE = 0.10;       // metry: przyciąganie (nauka), ocena ✓ i „prawie”
+let tryb = "nauka";
+
+/* ------------------------------------------------------------ scena */
+const host = $("#scena"), renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.outputColorSpace = THREE.SRGBColorSpace; host.append(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color("#1d2c33");
+const cam = new THREE.PerspectiveCamera(32, 1, 0.05, 50);
+const ctl = new OrbitControls(cam, renderer.domElement);
+ctl.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE }; ctl.touches = { ONE: null, TWO: THREE.TOUCH.DOLLY_ROTATE };
+ctl.enablePan = false; ctl.enableDamping = true; ctl.minDistance = 1.2; ctl.maxDistance = 9;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x3a4a52, 1.25));
+const sw = new THREE.DirectionalLight(0xffffff, 1.7); sw.position.set(1.5, 3, 3); scene.add(sw);
+const sw2 = new THREE.DirectionalLight(0xaaccff, 0.6); sw2.position.set(-2, 1.5, -2); scene.add(sw2);
+// podłoga i strefy
+const podloga = new THREE.Mesh(new THREE.CircleGeometry(2.4, 64), new THREE.MeshStandardMaterial({ color: "#2a3b43", roughness: 1 }));
+podloga.rotation.x = -Math.PI / 2; podloga.position.y = -0.005; scene.add(podloga);
+const strefa = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.46, 64), new THREE.MeshBasicMaterial({ color: "#ffd23f", transparent: true, opacity: .5 }));
+strefa.rotation.x = -Math.PI / 2; strefa.position.y = 0.001; scene.add(strefa);
+
+function widokPrzod() { const h = innerHeight, w = innerWidth, a = w / h; const potrzW = 3.5, potrzH = 2.05; const fov = cam.fov * Math.PI / 180; const d = Math.max(potrzH / 2 / Math.tan(fov / 2), potrzW / 2 / (Math.tan(fov / 2) * a)) + 0.4; cam.position.set(0, 0.9, d); ctl.target.set(0, 0.88, 0); ctl.update(); }
+function rozmiar() { renderer.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); }
+rozmiar(); widokPrzod();
+addEventListener("resize", () => { rozmiar(); plotno(); });
+
+/* ------------------------------------------------------------ kości */
+const meta = await (await fetch(MODELE + "szkielet.json?v=" + (window.WERSJA || ""))).json();
+const loader = new GLTFLoader();
+const kosci = {}, duchy = {};
+const MAT_DUCH = new THREE.MeshBasicMaterial({ color: "#9fd0ff", transparent: true, opacity: 0.16, depthWrite: false });
+const MAT_OK = new THREE.MeshStandardMaterial({ color: "#d9f2df", roughness: .6 });
+const lustro = id => id.endsWith("_L") ? id.slice(0, -1) + "P" : id.endsWith("_P") ? id.slice(0, -1) + "L" : null;
+$("#startInfo").textContent = "Wczytuję kości…";
+await Promise.all(meta.map(async m => {
+  const g = await loader.loadAsync(MODELE + m.id + ".glb?v=" + (window.WERSJA || ""));
+  const o = g.scene; o.userData = { id: m.id, meta: m };
+  o.traverse(c => { if (c.isMesh) { c.userData.id = m.id; c.userData.matBazowy = c.material; } });
+  scene.add(o); kosci[m.id] = o;
+  const d = o.clone(true); d.traverse(c => { if (c.isMesh) c.material = MAT_DUCH; }); d.position.set(...m.srodek); d.visible = false; scene.add(d); duchy[m.id] = d;
+}));
+$("#startInfo").textContent = "";
+const cel = id => new THREE.Vector3(...kosci[id].userData.meta.srodek);
+
+/* stan: pozycje kości (wspólny w grupie) */
+let S = nowyStan();
+function rng(seed) { let a = seed >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function nowyStan(ziarno = Date.now()) {
+  // rozsyp: dwie „półki” po bokach szkieletu, części losowo przydzielone do stron i kolumn
+  const r = rng(ziarno), ids = meta.map(m => m.id).sort(() => r() - 0.5), pos = {};
+  const strony = [[], []]; ids.forEach((id, i) => strony[i % 2].push(id));
+  strony.forEach((lista, s) => {
+    let x = 0.58, y = 1.85, szer = 0;
+    for (const id of lista) {
+      const [w, h] = meta.find(m => m.id === id).rozmiar;
+      if (y - h < 0.03) { x += szer + 0.07; y = 1.85; szer = 0; }
+      const cx = (x + w / 2) * (s ? 1 : -1), cy = y - h / 2;
+      pos[id] = { x: cx, y: cy, z: cel(id).z, ok: false, kto: null };
+      y -= h + 0.06; szer = Math.max(szer, w);
+    }
+  });
+  return { wersja: Date.now(), pos, start: Date.now(), koniec: null };
+}
+function ustawKosci() {
+  for (const id in kosci) {
+    const p = S.pos[id], o = kosci[id];
+    if (!p) continue;
+    if (chwyt.id !== id) o.position.set(p.x, p.y, p.z);
+    o.traverse(c => { if (c.isMesh) c.material = p.ok && tryb === "nauka" ? MAT_OK : c.userData.matBazowy; });
+    duchy[id].visible = pokazWzorzec && !p.ok;
+  }
+  const n = Object.values(S.pos).filter(p => p.ok).length;
+  $("#postep").textContent = tryb === "nauka" ? `${n} / ${meta.length} na miejscu` : `${meta.length} części`;
+  $("#postep").classList.toggle("ok", tryb === "nauka" && n === meta.length);
+  $("#lista").innerHTML = meta.map(m => `<div class="k ${S.pos[m.id]?.ok && tryb === "nauka" ? "ok" : ""}">${m.nazwa}${S.pos[m.id]?.kto && S.pos[m.id].kto !== ja.uid ? ` <small style="color:#ffd23f">(${esc(osobaImie(S.pos[m.id].kto))})</small>` : ""}</div>`).join("");
+}
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let pokazWzorzec = true;
+$("#bWzorzec").onclick = () => { pokazWzorzec = !pokazWzorzec; $("#bWzorzec").classList.toggle("on", pokazWzorzec); ustawKosci(); };
+$("#bWidok").onclick = widokPrzod;
+$("#bMieszaj").onclick = () => { S = nowyStan(); zapisz(); komunikat("Kości rozsypane – zaczynamy od nowa."); };
+
+/* ------------------------------------------------------------ chwytanie (mysz i dłonie) */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+const chwyt = { id: null, plaszczyzna: new THREE.Plane(), przes: new THREE.Vector3(), kto: null };
+function kosciPod(x, y) {
+  ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, cam);
+  const lista = Object.values(kosci).filter(o => !(S.pos[o.userData.id]?.ok && tryb === "nauka"));
+  const hit = ray.intersectObjects(lista, true)[0];
+  if (hit) return hit.object.userData.id;
+  // ażurowe kości (klatka, miednica, dłoń, stopa): wystarczy wskazać wnętrze ich obrysu na ekranie
+  let najm = null, pole = Infinity;
+  for (const o of lista) {
+    const b = new THREE.Box3().setFromObject(o); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (let i = 0; i < 8; i++) { const v = new THREE.Vector3(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).project(cam);
+      const sx = (v.x + 1) / 2 * innerWidth, sy = (1 - v.y) / 2 * innerHeight; x0 = Math.min(x0, sx); x1 = Math.max(x1, sx); y0 = Math.min(y0, sy); y1 = Math.max(y1, sy); }
+    const a = (x1 - x0) * (y1 - y0);
+    if (x >= x0 && x <= x1 && y >= y0 && y <= y1 && a < pole) { pole = a; najm = o.userData.id; }
+  }
+  return najm;
+}
+function punktNaPlaszczyznie(x, y, pl) { ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1); ray.setFromCamera(ndc, cam); const p = new THREE.Vector3(); return ray.ray.intersectPlane(pl, p) ? p : null; }
+function zacznij(id, x, y) {
+  const p = S.pos[id]; if (p.kto && p.kto !== ja.uid && obecni.has(p.kto)) { komunikat(`Tę kość trzyma ${osobaImie(p.kto)}.`); return false; }
+  const o = kosci[id], n = new THREE.Vector3(); cam.getWorldDirection(n);
+  chwyt.plaszczyzna.setFromNormalAndCoplanarPoint(n.negate(), o.position);
+  const pt = punktNaPlaszczyznie(x, y, chwyt.plaszczyzna); if (!pt) return false;
+  chwyt.id = id; chwyt.przes.copy(o.position).sub(pt);
+  p.kto = ja.uid; p.ok = false; wyslij({ typ: "trzyma", id, kto: ja.uid });
+  if (!S.start) S.start = Date.now();
+  return true;
+}
+let ostatniRuch = 0;
+function przesun(x, y) {
+  if (!chwyt.id) return;
+  const pt = punktNaPlaszczyznie(x, y, chwyt.plaszczyzna); if (!pt) return;
+  const o = kosci[chwyt.id]; o.position.copy(pt.add(chwyt.przes));
+  o.position.y = Math.max(o.userData.meta.rozmiar[1] / 2 - 0.02, o.position.y);
+  if (performance.now() - ostatniRuch > 60) { ostatniRuch = performance.now(); wyslij({ typ: "ruch", id: chwyt.id, x: o.position.x, y: o.position.y, z: o.position.z }); }
+}
+function upusc() {
+  const id = chwyt.id; if (!id) return;
+  const o = kosci[id], p = S.pos[id], d = o.position.distanceTo(cel(id));
+  p.x = o.position.x; p.y = o.position.y; p.z = o.position.z; p.kto = null; chwyt.id = null;
+  if (tryb === "nauka") {
+    if (d < SNAP) { p.x = cel(id).x; p.y = cel(id).y; p.z = cel(id).z; p.ok = true; dzwiek(true); komunikat(`✓ ${o.userData.meta.nazwa}`, "dobrze"); }
+    else {
+      const l = lustro(id);
+      if (l && o.position.distanceTo(cel(l)) < SNAP * 1.6) { dzwiek(false); komunikat(`To ${id.endsWith("_L") ? "LEWA" : "PRAWA"} strona szkieletu – patrzysz na niego z przodu, więc jego ${id.endsWith("_L") ? "lewa" : "prawa"} strona jest po Twojej ${id.endsWith("_L") ? "prawej" : "lewej"}.`, "zle"); }
+      else if (d < SNAP * 2.2) komunikat("Blisko! Popraw trochę położenie.");
+    }
+  }
+  zapisz();
+  if (tryb === "nauka" && Object.values(S.pos).every(q => q.ok) && !S.koniec) { S.koniec = Date.now(); zapisz(); setTimeout(() => sprawdz(true), 600); }
+}
+
+// mysz / dotyk
+renderer.domElement.addEventListener("pointerdown", e => {
+  if (e.button !== 0) return;
+  const id = kosciPod(e.clientX, e.clientY);
+  if (id && zacznij(id, e.clientX, e.clientY)) { renderer.domElement.setPointerCapture(e.pointerId); e.preventDefault(); }
+});
+renderer.domElement.addEventListener("pointermove", e => {
+  if (chwyt.id) przesun(e.clientX, e.clientY);
+  else etykieta(kosciPod(e.clientX, e.clientY), e.clientX, e.clientY);
+});
+renderer.domElement.addEventListener("pointerup", () => upusc());
+renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
+function etykieta(id, x, y) {
+  const el = $("#etykieta");
+  if (!id) { el.style.display = "none"; renderer.domElement.style.cursor = ""; return; }
+  el.textContent = kosci[id].userData.meta.nazwa; el.style.display = "block"; el.style.left = x + 16 + "px"; el.style.top = y + 12 + "px";
+  renderer.domElement.style.cursor = "grab";
+}
+
+/* ------------------------------------------------------------ dłonie */
+const cv = $("#rece"), g2 = cv.getContext("2d"), wideo = $("#podglad");
+function plotno() { const d = devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; g2.setTransform(d, 0, 0, d, 0, 0); }
+plotno();
+const naEkran = p => ({ x: p.x * innerWidth, y: p.y * innerHeight });
+const KOLOR = { Prawa: [76, 201, 240], Lewa: [255, 140, 90] };
+const reka = {};            // strona → { trzyma: id | "obrot", ostatni }
+let nadBtn = new Set();
+function ramka(dlonie, teraz) {
+  g2.clearRect(0, 0, innerWidth, innerHeight);
+  const nad = new Set(); let tekst = null;
+  for (const d of dlonie) {
+    const P = d.punkty.map(naEkran), c = naEkran(d.chwyt), r = reka[d.strona] || (reka[d.strona] = { trzyma: null, ostatni: c });
+    const btn = document.elementFromPoint(c.x, c.y)?.closest(".btn-d"); if (btn) nad.add(btn);
+    const podKosc = !btn ? kosciPod(c.x, c.y) : null;
+    if (d.szczypie && !r.trzyma) {
+      if (btn) { btn.classList.add("klik"); setTimeout(() => btn.classList.remove("klik"), 150); btn.click(); r.trzyma = "przycisk"; }
+      else if (podKosc && !chwyt.id && zacznij(podKosc, c.x, c.y)) { r.trzyma = podKosc; }
+      else r.trzyma = "obrot";
+    } else if (!d.szczypie && r.trzyma) {
+      if (r.trzyma !== "obrot" && r.trzyma !== "przycisk" && chwyt.id === r.trzyma) upusc();
+      r.trzyma = null;
+    } else if (r.trzyma && r.trzyma !== "obrot" && r.trzyma !== "przycisk") przesun(c.x, c.y);
+    r.ostatni = c;
+    if (podKosc && !r.trzyma) tekst = { id: podKosc, x: c.x, y: c.y };
+    rysujDlon(g2, P, KOLOR[d.strona] || KOLOR.Prawa, { szczypie: d.szczypie, nadCzyms: !!podKosc || !!btn });
+  }
+  // obie dłonie „szczypią” w pustym miejscu → obrót szkieletu (kamery) wokół osi pionowej
+  const L = reka.Lewa, R = reka.Prawa, Ld = dlonie.find(d => d.strona === "Lewa"), Rd = dlonie.find(d => d.strona === "Prawa");
+  if (L?.trzyma === "obrot" && R?.trzyma === "obrot" && Ld && Rd) {
+    const a = naEkran(Ld.chwyt), b = naEkran(Rd.chwyt), sx = (a.x + b.x) / 2;
+    if (obrotPoprz != null) { const dx = sx - obrotPoprz; ctl.object.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), -dx * 0.006); }
+    obrotPoprz = sx;
+  } else obrotPoprz = null;
+  for (const s of Object.keys(reka)) if (!dlonie.some(d => d.strona === s)) { if (reka[s].trzyma && chwyt.id === reka[s].trzyma) upusc(); delete reka[s]; }
+  for (const b of nadBtn) if (!nad.has(b)) b.classList.remove("nad"); for (const b of nad) b.classList.add("nad"); nadBtn = nad;
+  if (tekst) etykieta(tekst.id, tekst.x, tekst.y); else if (dlonie.length) etykieta(null);
+}
+let obrotPoprz = null;
+
+/* ------------------------------------------------------------ ocena i porównanie z wzorcem */
+const linie = new THREE.Group(); scene.add(linie);
+function sprawdz(auto = false) {
+  linie.clear();
+  const wiersze = meta.map(m => {
+    const p = S.pos[m.id], d = new THREE.Vector3(p.x, p.y, p.z).distanceTo(cel(m.id));
+    const st = d <= DOBRZE ? "ok" : d <= PRAWIE ? "prawie" : "zle";
+    const kol = st === "ok" ? 0x2f8f5a : st === "prawie" ? 0xd4a017 : 0xc0392b;
+    if (st !== "ok") linie.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(p.x, p.y, p.z), cel(m.id)]), new THREE.LineBasicMaterial({ color: kol })));
+    let uwaga = ""; const l = lustro(m.id);
+    if (st !== "ok" && l && new THREE.Vector3(p.x, p.y, p.z).distanceTo(cel(l)) <= PRAWIE) uwaga = " – pomylona strona (lewa/prawa)";
+    return { m, d, st, uwaga };
+  });
+  const pkt = wiersze.reduce((s, w) => s + (w.st === "ok" ? 1 : w.st === "prawie" ? 0.5 : 0), 0), proc = Math.round(pkt / meta.length * 100);
+  const [ocena, slowo] = proc >= 98 ? [6, "celujący"] : proc >= 88 ? [5, "bardzo dobry"] : proc >= 75 ? [4, "dobry"] : proc >= 60 ? [3, "dostateczny"] : proc >= 45 ? [2, "dopuszczający"] : [1, "niedostateczny"];
+  const zal = proc >= 60, czas = Math.round(((S.koniec || Date.now()) - S.start) / 1000);
+  pokazWzorzec = true; ustawKosci();
+  const tekst = `Układ kostny – ${tryb}: ${proc}% (${pkt}/${meta.length} pkt), ocena ${ocena} (${slowo}), ${zal ? "ZALICZONE" : "nie zaliczone"}, czas ${fmtCzas(czas)}${ja.imie ? ", " + ja.imie : ""}${kodZajec ? `, zajęcia ${kodZajec} gr. ${nrGrupy}` : ""}`;
+  $("#wynikTresc").innerHTML = `
+    <h2>${auto ? "🎉 Szkielet ułożony!" : "Porównanie z wzorcem"}</h2>
+    <div class="rzad"><span class="ocena" style="color:${zal ? "var(--ok)" : "var(--zle)"}">${ocena}</span>
+      <div><b>${proc}%</b> zgodności ze wzorcem · ${slowo}<br><b style="color:${zal ? "var(--ok)" : "var(--zle)"}">${zal ? "✔ Zadanie zaliczone" : "✘ Jeszcze nie zaliczone (potrzeba 60%)"}</b><br><span style="color:#555">czas: ${fmtCzas(czas)}</span></div></div>
+    <p style="margin:10px 0 2px">✓ do ${DOBRZE * 100} cm od miejsca we wzorcu = 1 pkt · ~ do ${PRAWIE * 100} cm = ½ pkt · dalej = 0 pkt. Na scenie linie pokazują, gdzie kość powinna leżeć.</p>
+    <table class="wynik-tab">${wiersze.map(w => `<tr><td>${w.st === "ok" ? "✅" : w.st === "prawie" ? "🟡" : "❌"} ${esc(w.m.nazwa)}<small style="color:#b3261e">${w.uwaga}</small></td><td>${(w.d * 100).toFixed(0)} cm</td></tr>`).join("")}</table>
+    <div class="rzad"><button class="btn-d" id="wZamknij">Popraw układ</button><button class="btn-d jasny" id="wKopiuj">📋 Kopiuj wynik</button><button class="btn-d jasny" id="wNowy">🔀 Od nowa</button></div>`;
+  $("#wynik").hidden = false;
+  $("#wZamknij").onclick = () => { $("#wynik").hidden = true; };
+  $("#wKopiuj").onclick = async () => { try { await navigator.clipboard.writeText(tekst); komunikat("Wynik skopiowany – wklej go np. w zadaniu w Moodle.", "dobrze"); } catch { prompt("Skopiuj wynik:", tekst); } };
+  $("#wNowy").onclick = () => { $("#wynik").hidden = true; linie.clear(); S = nowyStan(); zapisz(); };
+  if (kanalW) kanalW.send("szkielet", { typ: "wynik", grupa: nrGrupy, imie: ja.imie, proc, ocena, czas });
+}
+$("#bSprawdz").onclick = () => sprawdz(false);
+const fmtCzas = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+/* ------------------------------------------------------------ komunikaty i dźwięk */
+let tKom;
+function komunikat(t, klasa = "") { const k = $("#komunikat"); k.textContent = t; k.className = klasa; k.style.display = "block"; clearTimeout(tKom); tKom = setTimeout(() => k.style.display = "none", 3200); }
+let ac;
+function dzwiek(dobrze) {
+  try { ac ??= new AudioContext(); const o = ac.createOscillator(), g = ac.createGain(); o.connect(g); g.connect(ac.destination);
+    o.frequency.setValueAtTime(dobrze ? 660 : 220, ac.currentTime); if (dobrze) o.frequency.setValueAtTime(990, ac.currentTime + 0.09);
+    g.gain.setValueAtTime(0.15, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.3); o.start(); o.stop(ac.currentTime + 0.32); } catch {}
+}
+
+/* ------------------------------------------------------------ praca w grupie (wspólny szkielet na żywo) */
+let ja = (() => { try { return JSON.parse(localStorage.getItem("szkielet-ja")) || null; } catch { return null; } })() || { uid: uid(), imie: "" };
+let kanal = null, kanalW = null, kodZajec = null, nrGrupy = null;
+const obecni = new Map();
+const osobaImie = u => obecni.get(u)?.imie || "ktoś";
+function wyslij(m) { if (kanal) kanal.send("szkielet", { ...m, od: ja.uid }); }
+function zapisz() { S.wersja = Math.max(Date.now(), (S.wersja || 0) + 1); wyslij({ typ: "stan", stan: S }); ustawKosci(); }
+async function dolacz(kod, nr) {
+  kanal?.close(); kanalW?.close(); obecni.clear(); kodZajec = kod; nrGrupy = nr;
+  const b = await backend(), me = { uid: ja.uid, imie: ja.imie };
+  kanal = b.channel(`szkielet-${kod}-g${nr}`, { zdarzenia: ["szkielet"],
+    onReady() { wyslij({ typ: "hej" }); },
+    onPresence(l) { obecni.clear(); for (const m of l) obecni.set(m.uid, m); rysujOsoby(); },
+    onMessage(ev, m) {
+      if (!m || m.od === ja.uid) return;
+      if (m.typ === "hej") wyslij({ typ: "stan", stan: S });
+      else if (m.typ === "stan" && (m.stan?.wersja || 0) > (S.wersja || 0)) { const moj = chwyt.id; S = m.stan; if (moj) S.pos[moj].kto = ja.uid; ustawKosci(); }
+      else if (m.typ === "ruch" && m.id !== chwyt.id) kosci[m.id]?.position.set(m.x, m.y, m.z);
+      else if (m.typ === "trzyma" && S.pos[m.id]) { S.pos[m.id].kto = m.kto; ustawKosci(); }
+    } }, me);
+  kanalW = b.channel(`szkielet-${kod}-wyniki`, { zdarzenia: ["szkielet"] }, { ...me, uid: ja.uid + "-w" });
+  $("#grupaInfo").hidden = false; $("#grupaInfo").textContent = `👥 ${kod} · grupa ${nr}`; $("#osoby").hidden = false; $("#gWyjdz").hidden = false;
+  history.replaceState(null, "", `?kod=${encodeURIComponent(kod)}&grupa=${encodeURIComponent(nr)}`);
+}
+function rysujOsoby() { $("#osoby").innerHTML = `<b>W grupie:</b><br>` + [...obecni.values()].map(o => `• ${esc(o.imie || "?")}${o.uid === ja.uid ? " (Ty)" : ""}`).join("<br>"); ustawKosci(); }
+$("#bGrupa").onclick = () => { $("#gImie").value = ja.imie; $("#gKod").value = kodZajec || new URLSearchParams(location.search).get("kod") || ""; $("#grupa").hidden = false; };
+$("#gZamknij").onclick = () => { $("#grupa").hidden = true; };
+$("#gWyjdz").onclick = () => { kanal?.close(); kanalW?.close(); kanal = kanalW = null; kodZajec = null; $("#grupaInfo").hidden = true; $("#osoby").hidden = true; $("#gWyjdz").hidden = true; $("#grupa").hidden = true; };
+$("#gDolacz").onclick = async () => {
+  const imie = $("#gImie").value.trim(), kod = $("#gKod").value.trim().toUpperCase(), nr = $("#gNr").value.trim() || "1";
+  if (!imie || !kod) { komunikat("Podaj imię i kod zajęć."); return; }
+  ja.imie = imie; try { localStorage.setItem("szkielet-ja", JSON.stringify(ja)); } catch {}
+  await dolacz(kod, nr); $("#grupa").hidden = true; komunikat(`Dołączono: ${kod}, grupa ${nr}.`, "dobrze");
+};
+
+/* ------------------------------------------------------------ start */
+$$("#tryby .opcja").forEach(o => o.onclick = () => { $$("#tryby .opcja").forEach(x => x.classList.toggle("on", x === o)); tryb = o.dataset.t; });
+function ustawTryb() {
+  $("#tryb").textContent = tryb === "nauka" ? "📘 nauka" : "📝 sprawdzian";
+  pokazWzorzec = tryb === "nauka"; $("#bWzorzec").classList.toggle("on", pokazWzorzec); $("#bWzorzec").hidden = tryb !== "nauka";
+  ustawKosci();
+}
+async function start(zKamera) {
+  ustawTryb();
+  if (zKamera) {
+    try {
+      $("#startInfo").textContent = "Uruchamiam kamerę i model dłoni…";
+      if (!window.__symulacjaDloni) { await kamera(wideo); document.body.classList.add("kamera"); }
+      await uruchomDlonie({ video: wideo, onRamka: ramka, symulacja: window.__symulacjaDloni || null });
+    } catch (e) { $("#startInfo").textContent = /Permission|NotAllowed/i.test(e.name + e.message) ? "Brak dostępu do kamery – zezwól na kamerę albo wybierz mysz." : "Nie udało się: " + e.message; return; }
+  }
+  S.start = Date.now(); $("#start").remove();
+  const q = new URLSearchParams(location.search); if (q.get("kod") && ja.imie) dolacz(q.get("kod").toUpperCase(), q.get("grupa") || "1");
+}
+$("#sKamera").onclick = () => start(true);
+$("#sMysz").onclick = () => start(false);
+ustawKosci();
+
+renderer.setAnimationLoop(() => {
+  ctl.update(); renderer.render(scene, cam);
+  if (S.start && !S.koniec && !$("#start")) $("#czas").textContent = fmtCzas(Math.round((Date.now() - S.start) / 1000));
+});
+window.__szkieletTest = { sztucznaDlon, wynikSymulacji, kosci, S: () => S, cel: id => cel(id).toArray(), naEkran: (id, v) => { const p = (v ? new THREE.Vector3(...v) : kosci[id].position).clone().project(cam); return [(p.x + 1) / 2 * innerWidth, (1 - p.y) / 2 * innerHeight]; }, sprawdz };
+window.__szkieletGotowy = true;
+window.__szkieletDebug = () => ({ reka: JSON.parse(JSON.stringify(reka)), chwyt: chwyt.id });
+</script>
+</body>
+</html>

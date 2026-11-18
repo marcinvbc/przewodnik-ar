@@ -1,0 +1,615 @@
+[
+ {
+  "id": "czaszka",
+  "nazwa": "Czaszka",
+  "srodek": [
+   -0.0007,
+   1.5571,
+   0.0964
+  ],
+  "rozmiar": [
+   0.144,
+   0.1621,
+   0.1973
+  ],
+  "trojkaty": 53386,
+  "kosci": [
+   "occipital bone",
+   "frontal bone",
+   "sphenoid bone",
+   "ethmoid",
+   "vomer",
+   "right temporal bone",
+   "left temporal bone",
+   "right parietal bone",
+   "left parietal bone",
+   "right zygomatic bone",
+   "left zygomatic bone",
+   "right lacrimal bone",
+   "left lacrimal bone",
+   "right nasal bone",
+   "left nasal bone",
+   "right maxilla",
+   "left maxilla",
+   "right palatine bone",
+   "left palatine bone",
+   "right inferior nasal concha",
+   "left inferior nasal concha"
+  ]
+ },
+ {
+  "id": "zuchwa",
+  "nazwa": "Żuchwa",
+  "srodek": [
+   -0.0006,
+   1.4755,
+   0.1391
+  ],
+  "rozmiar": [
+   0.1002,
+   0.0796,
+   0.0789
+  ],
+  "trojkaty": 4237,
+  "kosci": [
+   "mandible"
+  ]
+ },
+ {
+  "id": "kregi_szyjne",
+  "nazwa": "Kręgi szyjne",
+  "srodek": [
+   -0.0002,
+   1.4339,
+   0.0619
+  ],
+  "rozmiar": [
+   0.084,
+   0.113,
+   0.0777
+  ],
+  "trojkaty": 12273,
+  "kosci": [
+   "atlas",
+   "axis",
+   "seventh cervical vertebra",
+   "third cervical vertebra",
+   "fourth cervical vertebra",
+   "fifth cervical vertebra",
+   "sixth cervical vertebra",
+   "intervertebral disk of third cervical vertebra",
+   "intervertebral disk of fourth cervical vertebra",
+   "intervertebral disk of fifth cervical vertebra",
+   "intervertebral disk of sixth cervical vertebra",
+   "intervertebral disk of seventh cervical vertebra",
+   "intervertebral disk of axis"
+  ]
+ },
+ {
+  "id": "krzyzowa",
+  "nazwa": "Kość krzyżowa",
+  "srodek": [
+   0.0009,
+   0.8633,
+   0.05
+  ],
+  "rozmiar": [
+   0.1217,
+   0.1443,
+   0.0884
+  ],
+  "trojkaty": 8100,
+  "kosci": [
+   "sacrum"
+  ]
+ },
+ {
+  "id": "klatka",
+  "nazwa": "Klatka piersiowa (żebra i mostek)",
+  "srodek": [
+   -0.0012,
+   1.1989,
+   0.1057
+  ],
+  "rozmiar": [
+   0.273,
+   0.3765,
+   0.2039
+  ],
+  "trojkaty": 43467,
+  "kosci": [
+   "manubrium",
+   "body of sternum",
+   "xiphoid process",
+   "left costal cartilage",
+   "right costal cartilage",
+   "right first rib",
+   "right first costal cartilage",
+   "right second rib",
+   "right second costal cartilage",
+   "right third rib",
+   "right third costal cartilage",
+   "right fourth rib",
+   "right fourth costal cartilage",
+   "left first rib",
+   "left first costal cartilage",
+   "left second rib",
+   "left second costal cartilage",
+   "left third rib",
+   "left third costal cartilage",
+   "right fifth rib",
+   "right fifth costal cartilage",
+   "left fifth rib",
+   "left fifth costal cartilage",
+   "left fourth rib",
+   "left fourth costal cartilage",
+   "right sixth rib",
+   "right sixth costal cartilage",
+   "left sixth rib",
+   "left sixth costal cartilage",
+   "right seventh rib",
+   "right seventh costal cartilage",
+   "left seventh rib",
+   "left seventh costal cartilage",
+   "right eighth rib",
+   "left eighth rib",
+   "right ninth rib",
+   "left ninth rib",
+   "right tenth rib",
+   "left tenth rib",
+   "right eleventh rib",
+   "left eleventh rib",
+   "right twelfth rib",
+   "left twelfth rib"
+  ]
+ },
+ {
+  "id": "kregi_piersiowe",
+  "nazwa": "Kręgi piersiowe",
+  "srodek": [
+   -0.0022,
+   1.2288,
+   0.0525
+  ],
+  "rozmiar": [
+   0.0718,
+   0.3298,
+   0.1035
+  ],
+  "trojkaty": 26334,
+  "kosci": [
+   "ninth thoracic vertebra",
+   "tenth thoracic vertebra",
+   "eleventh thoracic vertebra",
+   "twelfth thoracic vertebra",
+   "intervertebral disk of first thoracic vertebra",
+   "intervertebral disk of second thoracic vertebra",
+   "intervertebral disk of third thoracic vertebra",
+   "intervertebral disk of fourth thoracic vertebra",
+   "intervertebral disk of fifth thoracic vertebra",
+   "intervertebral disk of sixth thoracic vertebra",
+   "intervertebral disk of seventh thoracic vertebra",
+   "intervertebral disk of eighth thoracic vertebra",
+   "intervertebral disk of ninth thoracic vertebra",
+   "intervertebral disk of tenth thoracic vertebra",
+   "intervertebral disk of eleventh thoracic vertebra",
+   "intervertebral disk of twelfth thoracic vertebra",
+   "first thoracic vertebra",
+   "second thoracic vertebra",
+   "third thoracic vertebra",
+   "fourth thoracic vertebra",
+   "fifth thoracic vertebra",
+   "sixth thoracic vertebra",
+   "seventh thoracic vertebra",
+   "eighth thoracic vertebra"
+  ]
+ },
+ {
+  "id": "kregi_ledzwiowe",
+  "nazwa": "Kręgi lędźwiowe",
+  "srodek": [
+   -0.0016,
+   0.9943,
+   0.0731
+  ],
+  "rozmiar": [
+   0.1003,
+   0.18,
+   0.0868
+  ],
+  "trojkaty": 16703,
+  "kosci": [
+   "first lumbar vertebra",
+   "second lumbar vertebra",
+   "third lumbar vertebra",
+   "fourth lumbar vertebra",
+   "fifth lumbar vertebra",
+   "intervertebral disk of first lumbar vertebra",
+   "intervertebral disk of second lumbar vertebra",
+   "intervertebral disk of third lumbar vertebra",
+   "intervertebral disk of fourth lumbar vertebra",
+   "intervertebral disk of fifth lumbar vertebra"
+  ]
+ },
+ {
+  "id": "bark_P",
+  "nazwa": "Obręcz barkowa prawa (obojczyk i łopatka)",
+  "srodek": [
+   -0.0899,
+   1.2844,
+   0.0677
+  ],
+  "rozmiar": [
+   0.1566,
+   0.1648,
+   0.1577
+  ],
+  "trojkaty": 8374,
+  "kosci": [
+   "right clavicle",
+   "right scapula"
+  ]
+ },
+ {
+  "id": "bark_L",
+  "nazwa": "Obręcz barkowa lewa (obojczyk i łopatka)",
+  "srodek": [
+   0.0886,
+   1.2844,
+   0.0677
+  ],
+  "rozmiar": [
+   0.1569,
+   0.1649,
+   0.1577
+  ],
+  "trojkaty": 8484,
+  "kosci": [
+   "left clavicle",
+   "left scapula"
+  ]
+ },
+ {
+  "id": "miednica",
+  "nazwa": "Miednica (kości miedniczne)",
+  "srodek": [
+   0.0003,
+   0.8632,
+   0.0831
+  ],
+  "rozmiar": [
+   0.2628,
+   0.2079,
+   0.1382
+  ],
+  "trojkaty": 10447,
+  "kosci": [
+   "right hip bone",
+   "left hip bone"
+  ]
+ },
+ {
+  "id": "stopa_P",
+  "nazwa": "Kości stopy prawej",
+  "srodek": [
+   -0.1008,
+   0.0328,
+   0.1199
+  ],
+  "rozmiar": [
+   0.0908,
+   0.0737,
+   0.2215
+  ],
+  "trojkaty": 14189,
+  "kosci": [
+   "middle phalanx of right little toe",
+   "right talus",
+   "right calcaneus",
+   "navicular bone of right foot",
+   "right first metatarsal bone",
+   "right second metatarsal bone",
+   "right third metatarsal bone",
+   "right fourth metatarsal bone",
+   "right fifth metatarsal bone",
+   "right medial cuneiform bone",
+   "right intermediate cuneiform bone",
+   "right lateral cuneiform bone",
+   "right cuboid bone",
+   "proximal phalanx of right second toe",
+   "proximal phalanx of right third toe",
+   "proximal phalanx of right fourth toe",
+   "proximal phalanx of right little toe",
+   "middle phalanx of right second toe",
+   "middle phalanx of right third toe",
+   "middle phalanx of right fourth toe",
+   "distal phalanx of right big toe",
+   "distal phalanx of right second toe",
+   "distal phalanx of right third toe",
+   "distal phalanx of right fourth toe",
+   "distal phalanx of right little toe",
+   "proximal phalanx of right big toe"
+  ]
+ },
+ {
+  "id": "stopa_L",
+  "nazwa": "Kości stopy lewej",
+  "srodek": [
+   0.0993,
+   0.033,
+   0.1197
+  ],
+  "rozmiar": [
+   0.0905,
+   0.0735,
+   0.2211
+  ],
+  "trojkaty": 14309,
+  "kosci": [
+   "middle phalanx of left little toe",
+   "left talus",
+   "left calcaneus",
+   "navicular bone of left foot",
+   "left first metatarsal bone",
+   "left second metatarsal bone",
+   "left third metatarsal bone",
+   "left fourth metatarsal bone",
+   "left fifth metatarsal bone",
+   "left medial cuneiform bone",
+   "left intermediate cuneiform bone",
+   "left lateral cuneiform bone",
+   "left cuboid bone",
+   "proximal phalanx of left second toe",
+   "proximal phalanx of left third toe",
+   "proximal phalanx of left fourth toe",
+   "proximal phalanx of left little toe",
+   "middle phalanx of left second toe",
+   "middle phalanx of left third toe",
+   "middle phalanx of left fourth toe",
+   "distal phalanx of left big toe",
+   "distal phalanx of left second toe",
+   "distal phalanx of left third toe",
+   "distal phalanx of left fourth toe",
+   "distal phalanx of left little toe",
+   "proximal phalanx of left big toe"
+  ]
+ },
+ {
+  "id": "ramie_P",
+  "nazwa": "Kość ramienna prawa",
+  "srodek": [
+   -0.1911,
+   1.1933,
+   0.0718
+  ],
+  "rozmiar": [
+   0.1007,
+   0.3071,
+   0.0493
+  ],
+  "trojkaty": 3997,
+  "kosci": [
+   "right humerus"
+  ]
+ },
+ {
+  "id": "ramie_L",
+  "nazwa": "Kość ramienna lewa",
+  "srodek": [
+   0.1895,
+   1.1932,
+   0.0719
+  ],
+  "rozmiar": [
+   0.1003,
+   0.3073,
+   0.0492
+  ],
+  "trojkaty": 4101,
+  "kosci": [
+   "left humerus"
+  ]
+ },
+ {
+  "id": "przedramie_P",
+  "nazwa": "Przedramię prawe (kość promieniowa i łokciowa)",
+  "srodek": [
+   -0.2387,
+   0.9391,
+   0.082
+  ],
+  "rozmiar": [
+   0.0827,
+   0.2473,
+   0.0828
+  ],
+  "trojkaty": 2651,
+  "kosci": [
+   "right radius",
+   "right ulna"
+  ]
+ },
+ {
+  "id": "przedramie_L",
+  "nazwa": "Przedramię lewe (kość promieniowa i łokciowa)",
+  "srodek": [
+   0.2375,
+   0.9392,
+   0.0821
+  ],
+  "rozmiar": [
+   0.0827,
+   0.2474,
+   0.0831
+  ],
+  "trojkaty": 2619,
+  "kosci": [
+   "left radius",
+   "left ulna"
+  ]
+ },
+ {
+  "id": "dlon_P",
+  "nazwa": "Kości dłoni prawej",
+  "srodek": [
+   -0.2721,
+   0.7427,
+   0.149
+  ],
+  "rozmiar": [
+   0.1051,
+   0.1588,
+   0.0848
+  ],
+  "trojkaty": 12056,
+  "kosci": [
+   "right trapezoid",
+   "right scaphoid",
+   "right lunate",
+   "right triquetral",
+   "right pisiform",
+   "right trapezium",
+   "right capitate",
+   "right hamate",
+   "proximal phalanx of right thumb",
+   "proximal phalanx of right index finger",
+   "proximal phalanx of right middle finger",
+   "proximal phalanx of right ring finger",
+   "proximal phalanx of right little finger",
+   "middle phalanx of right index finger",
+   "middle phalanx of right middle finger",
+   "middle phalanx of right ring finger",
+   "middle phalanx of right little finger",
+   "distal phalanx of right thumb",
+   "distal phalanx of right index finger",
+   "distal phalanx of right middle finger",
+   "distal phalanx of right ring finger",
+   "distal phalanx of right little finger",
+   "right first metacarpal bone",
+   "right second metacarpal bone",
+   "right third metacarpal bone",
+   "right fourth metacarpal bone",
+   "right fifth metacarpal bone"
+  ]
+ },
+ {
+  "id": "dlon_L",
+  "nazwa": "Kości dłoni lewej",
+  "srodek": [
+   0.2707,
+   0.7428,
+   0.149
+  ],
+  "rozmiar": [
+   0.1043,
+   0.1587,
+   0.0849
+  ],
+  "trojkaty": 12000,
+  "kosci": [
+   "middle phalanx of left index finger",
+   "middle phalanx of left middle finger",
+   "middle phalanx of left ring finger",
+   "middle phalanx of left little finger",
+   "distal phalanx of left thumb",
+   "distal phalanx of left index finger",
+   "distal phalanx of left middle finger",
+   "distal phalanx of left ring finger",
+   "distal phalanx of left little finger",
+   "left scaphoid",
+   "left lunate",
+   "left triquetral",
+   "left pisiform",
+   "left trapezium",
+   "left trapezoid",
+   "left capitate",
+   "left hamate",
+   "left first metacarpal bone",
+   "left second metacarpal bone",
+   "left third metacarpal bone",
+   "left fourth metacarpal bone",
+   "left fifth metacarpal bone",
+   "proximal phalanx of left thumb",
+   "proximal phalanx of left little finger",
+   "proximal phalanx of left middle finger",
+   "proximal phalanx of left index finger",
+   "proximal phalanx of left ring finger"
+  ]
+ },
+ {
+  "id": "udo_P",
+  "nazwa": "Kość udowa prawa",
+  "srodek": [
+   -0.089,
+   0.623,
+   0.0782
+  ],
+  "rozmiar": [
+   0.111,
+   0.4402,
+   0.0754
+  ],
+  "trojkaty": 5952,
+  "kosci": [
+   "right femur"
+  ]
+ },
+ {
+  "id": "udo_L",
+  "nazwa": "Kość udowa lewa",
+  "srodek": [
+   0.0877,
+   0.623,
+   0.0782
+  ],
+  "rozmiar": [
+   0.1111,
+   0.4402,
+   0.0755
+  ],
+  "trojkaty": 5965,
+  "kosci": [
+   "left femur"
+  ]
+ },
+ {
+  "id": "podudzie_P",
+  "nazwa": "Podudzie prawe (piszczel, strzałka, rzepka)",
+  "srodek": [
+   -0.0828,
+   0.2385,
+   0.0766
+  ],
+  "rozmiar": [
+   0.0874,
+   0.3959,
+   0.0791
+  ],
+  "trojkaty": 5795,
+  "kosci": [
+   "right tibia",
+   "right fibula",
+   "right patella"
+  ]
+ },
+ {
+  "id": "podudzie_L",
+  "nazwa": "Podudzie lewe (piszczel, strzałka, rzepka)",
+  "srodek": [
+   0.0815,
+   0.2385,
+   0.0766
+  ],
+  "rozmiar": [
+   0.0872,
+   0.396,
+   0.0792
+  ],
+  "trojkaty": 5770,
+  "kosci": [
+   "left tibia",
+   "left fibula",
+   "left patella"
+  ]
+ }
+]

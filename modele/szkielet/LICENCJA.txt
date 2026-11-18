@@ -1,0 +1,4 @@
+Modele kości: BodyParts3D, © The Database Center for Life Science, licencja CC BY 4.0
+(https://creativecommons.org/licenses/by/4.0/), źródło: https://dbarchive.biosciencedbc.jp/en/bodyparts3d/
+Kopia plików STL: https://github.com/Kevin-Mattheus-Moerman/BodyParts3D
+Zmiany: konwersja STL → GLB, uproszczenie siatek, połączenie kości w 22 części układanki, model-wzorzec.
