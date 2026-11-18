@@ -58,6 +58,9 @@
   .hand-btn { position: absolute; right: 12px; top: 12px; border: 0; border-radius: 99px; padding: 8px 12px; font: 600 13px system-ui, sans-serif;
     background: rgba(255,255,255,.92); color: var(--ink); box-shadow: 0 2px 8px rgba(0,0,0,.15); cursor: pointer; }
   .hand-btn.on { background: #2f6b3a; color: #fff; }
+  .dlonie-link { position: absolute; left: 12px; top: 52px; border-radius: 99px; padding: 8px 12px; font: 600 13px system-ui, sans-serif; text-decoration: none;
+    background: var(--ink); color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.15); z-index: 2; }
+  @media (pointer: coarse) { .dlonie-link { display: none; } }
   .hand-help { position: absolute; left: 12px; right: 12px; top: 54px; background: rgba(31,42,46,.85); color: #fff; font-size: 12px; border-radius: 12px; padding: 7px 10px; text-align: center; }
   .hotspot { border: 0; background: #fff; color: var(--ink); border-radius: 99px; padding: 5px 10px 5px 8px;
     font: 600 12px system-ui, sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.25); display: flex; align-items: center; gap: 6px; }
@@ -213,6 +216,7 @@ function renderAttraction(a) {
       </button>
     </model-viewer>
     <button class="sun-btn" id="sunBtn" title="Jaśniej / ciemniej">☀️</button>
+    <a class="dlonie-link" href="dlonie.html?a=${encodeURIComponent(a.id)}" title="Pełny ekran: wirtualne dłonie z kamery laptopa – przesuwaj okna i obracaj model">🖐 Wirtualne dłonie</a>
     <button class="hand-btn" id="handBtn" title="Obracaj model ruchem dłoni przed kamerą">🤏 Steruj dłonią</button>
     <div class="hand-help" id="handHelp" hidden>🤏 chwyć i przesuń: obrót · przybliż dłoń: zoom · ✋ dłoń: reset · 👍 Bartek opowiada · 👋 machnij: kolejna atrakcja</div>
     <div class="no-ar" id="noar" hidden>AR działa na telefonie · tu możesz obracać model palcem/myszką</div>
