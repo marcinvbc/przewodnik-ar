@@ -27,6 +27,10 @@
   .btn-d.nad { background: var(--zloto); transform: scale(1.06); }
   .btn-d.on { background: var(--zloto); }
   .btn-d.klik { transform: scale(.92); }
+  .utwor { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,.5); border-radius: 99px; padding: 3px; }
+  .utwor span { font-weight: 700; font-size: 13px; padding: 0 6px; white-space: nowrap; }
+  .utwor small { opacity: .65; font-weight: 500; }
+  .utwor .btn-d { padding: 6px 11px; }
   .tempo { background: rgba(0,0,0,.5); border-radius: 99px; padding: 5px 12px; font-size: 13px; font-variant-numeric: tabular-nums; }
   .pomoc { position: fixed; left: 14px; right: 220px; bottom: 12px; z-index: 40; background: rgba(0,0,0,.55); border-radius: 12px; padding: 6px 12px; font-size: 12px; display: flex; gap: 6px 16px; flex-wrap: wrap; }
   .pomoc b { color: var(--zloto); }
@@ -96,6 +100,27 @@
       <ellipse cx="22" cy="-6" rx="34" ry="10" fill="url(#mosiadz)" stroke="#9a6d1d" stroke-width="2" transform="rotate(18 22 -6)"/>
       <line x1="0" y1="4" x2="0" y2="46" stroke="#444" stroke-width="3"/><line x1="-14" y1="46" x2="14" y2="46" stroke="#444" stroke-width="3"/>
     </symbol>
+    <linearGradient id="lakier" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2322c"/><stop offset="1" stop-color="#7a0f12"/></linearGradient>
+    <linearGradient id="lakierB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a7bd5"/><stop offset="1" stop-color="#16325e"/></linearGradient>
+    <symbol id="i-gitara" viewBox="-40 -80 80 160" overflow="visible">
+      <rect x="-4" y="-78" width="8" height="78" rx="2" fill="#c89a5c"/><path d="M-6-80h12l2-10h-16z" fill="#222"/>
+      <path d="M-6 -6c-14-14-34-4-30 14c2 10 10 10 8 18c-3 12 4 30 28 30s31-18 28-30c-2-8 6-8 8-18c4-18-16-28-30-14z" fill="url(#lakier)" stroke="#3a0608" stroke-width="2"/>
+      <path d="M-14 10h28v26h-28z" fill="#f4f1ea" opacity=".9"/><rect x="-10" y="16" width="20" height="4" fill="#222"/><rect x="-10" y="28" width="20" height="4" fill="#222"/>
+      <g stroke="#ddd" stroke-width=".7"><line x1="-2.5" y1="-76" x2="-2.5" y2="40"/><line x1="0" y1="-76" x2="0" y2="40"/><line x1="2.5" y1="-76" x2="2.5" y2="40"/></g>
+    </symbol>
+    <symbol id="i-bas" viewBox="-40 -100 80 200" overflow="visible">
+      <rect x="-4" y="-98" width="8" height="100" rx="2" fill="#c89a5c"/><path d="M-7-100h14v-10h-14z" fill="#222"/>
+      <path d="M-6 0c-12-12-30-4-27 12c2 9 9 9 7 16c-3 12 4 28 26 28s29-16 26-28c-2-7 5-7 7-16c3-16-15-24-27-12z" fill="url(#lakierB)" stroke="#0b1a33" stroke-width="2"/>
+      <rect x="-12" y="16" width="24" height="7" fill="#222"/><rect x="-12" y="34" width="24" height="5" fill="#bbb"/>
+      <g stroke="#ccc" stroke-width="1"><line x1="-2.5" y1="-96" x2="-2.5" y2="44"/><line x1="2.5" y1="-96" x2="2.5" y2="44"/></g>
+    </symbol>
+    <symbol id="i-perkusja" viewBox="-100 -70 200 140" overflow="visible">
+      <ellipse cx="-62" cy="-38" rx="28" ry="8" fill="url(#mosiadz)" stroke="#9a6d1d" transform="rotate(-10 -62 -38)"/><line x1="-62" y1="-34" x2="-62" y2="55" stroke="#444" stroke-width="3"/>
+      <ellipse cx="66" cy="-46" rx="30" ry="8" fill="url(#mosiadz)" stroke="#9a6d1d" transform="rotate(12 66 -46)"/><line x1="66" y1="-42" x2="66" y2="55" stroke="#444" stroke-width="3"/>
+      <ellipse cx="-24" cy="-22" rx="20" ry="13" fill="#2b2b2e" stroke="#ddd" stroke-width="3"/><ellipse cx="24" cy="-22" rx="20" ry="13" fill="#2b2b2e" stroke="#ddd" stroke-width="3"/>
+      <circle cx="0" cy="20" r="40" fill="#1a1a1c" stroke="#d8d8d8" stroke-width="5"/><circle cx="0" cy="20" r="30" fill="#f2efe6"/><text x="0" y="27" text-anchor="middle" font-size="18" font-weight="800" fill="#7a0f12" style="stroke:none">ROCK</text>
+      <ellipse cx="-54" cy="12" rx="18" ry="9" fill="#ccc" stroke="#777" stroke-width="2"/>
+    </symbol>
     <symbol id="i-krzeslo" viewBox="-20 -20 40 40" overflow="visible"><rect x="-14" y="-6" width="28" height="12" rx="4" fill="#2b1d14"/></symbol>
   </defs>
   <rect width="1600" height="900" fill="url(#sala)"/>
@@ -105,6 +130,9 @@
     <path d="M60 820 Q800 470 1540 820" fill="none" stroke="#c9975e" stroke-opacity=".35" stroke-width="3"/>
     <path d="M140 620 Q800 330 1460 620" fill="none" stroke="#c9975e" stroke-opacity=".3" stroke-width="3"/>
     <path d="M240 420 Q800 190 1360 420" fill="none" stroke="#c9975e" stroke-opacity=".25" stroke-width="3"/>
+  </g>
+  <g id="reflektory" opacity="0" style="mix-blend-mode:screen;transition:opacity .6s">
+    <path d="M300 0L120 900H520Z" fill="#b14cff" opacity=".18"/><path d="M800 0L620 900H980Z" fill="#3fa9ff" opacity=".16"/><path d="M1300 0L1080 900H1480Z" fill="#ff3b6b" opacity=".18"/>
   </g>
   <g id="sekcje"></g>
   <g id="nutki"></g>
@@ -118,6 +146,8 @@
   <span class="tytul">🎼 Orkiestra – stań za pulpitem</span>
   <span class="stan" id="stan">przygotowanie…</span>
   <span class="tempo" id="takt">takt –</span>
+  <span class="utwor"><button class="btn-d" id="btnPoprz" title="Poprzedni utwór">◀</button><span id="tytulUtworu">Oda do radości</span><button class="btn-d" id="btnNast" title="Następny utwór">▶</button></span>
+  <button class="btn-d" id="btnStyl" title="Aranżacja klasyczna lub rockowa">🎸 Rockowo</button>
   <span class="prawo">
     <button class="btn-d" id="btnWolniej">− wolniej</button>
     <span class="tempo" id="tempo">♩ = 96</span>
@@ -137,14 +167,15 @@
 
 <div id="start"><div class="karta">
   <h1>🎼 Zostań dyrygentem</h1>
-  <p>Przed Tobą orkiestra: smyczki z przodu, dęte drewniane w środku, blacha i perkusja z tyłu. Skieruj dłoń w stronę sekcji, a zacznie grać „Odę do radości”. Im wyżej i energiczniej prowadzisz, tym głośniej grają. Obraz z kamery jest analizowany tylko na tym komputerze.</p>
+  <p style="margin-bottom:8px"><b>Utwór:</b> <select id="wyborUtworu" style="font:inherit;padding:4px 8px;border-radius:8px"></select> <br><label style="display:inline-block;margin-top:8px"><input type="checkbox" id="wyborRock"> 🎸 wersja rockowa</label></p>
+  <p>Przed Tobą orkiestra: smyczki z przodu, dęte drewniane w środku, blacha i perkusja z tyłu. Skieruj dłoń w stronę sekcji, a zacznie grać wybrany utwór. W wersji rockowej na scenę wchodzą gitara elektryczna, gitara basowa i perkusja. Im wyżej i energiczniej prowadzisz, tym głośniej grają. Obraz z kamery jest analizowany tylko na tym komputerze.</p>
   <div class="rzad"><button class="btn-d" id="btnStart">Włącz kamerę i dźwięk</button><button class="btn-d jasny" id="btnMysz">Bez kamery (mysz)</button></div>
   <div class="info" id="info"></div>
 </div></div>
 
 <script type="module">
 import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "./dlonie.js";
-import { SEKCJE, Orkiestra } from "./orkiestra.js";
+import { SEKCJE, UTWORY, sekcjeStylu, Orkiestra } from "./orkiestra.js";
 
 const $ = s => document.querySelector(s), NS = "http://www.w3.org/2000/svg";
 const svg = $("#scena"), orkiestra = new Orkiestra();
@@ -152,9 +183,14 @@ const el = (tag, at = {}, rodzic) => { const e = document.createElementNS(NS, ta
 
 /* ---------------- rysowanie sekcji ---------------- */
 const W = 1600, H = 900;
-const ROZMIAR = { skrzypce: [60, 92], altowka: [66, 100], wiolonczela: [95, 150], kontrabas: [120, 190], fortepian: [210, 165], flet: [120, 40], klarnet: [40, 120], harfa: [110, 175], waltornia: [80, 80], trabka: [110, 46], kotly: [110, 88], talerze: [120, 100] };
-const stan = {};
-for (const s of SEKCJE) {
+const ROZMIAR = { gitara: [105, 210], bas: [95, 235], perkusja: [270, 190], skrzypce: [60, 92], altowka: [66, 100], wiolonczela: [95, 150], kontrabas: [120, 190], fortepian: [210, 165], flet: [120, 40], klarnet: [40, 120], harfa: [110, 175], waltornia: [80, 80], trabka: [110, 46], kotly: [110, 88], talerze: [120, 100] };
+let stan = {};
+function rysujScene(styl) {
+  for (const S of Object.values(stan)) orkiestra.ustawPoziom(S.s.id, 0);
+  $("#sekcje").replaceChildren(); stan = {};
+  $("#reflektory").setAttribute("opacity", styl === "rock" ? 1 : 0);
+  for (const s0 of sekcjeStylu(styl)) {
+  const [x0, y0, sk] = s0[styl], s = { ...s0, x: x0, y: y0, s: sk };
   const cx = s.x * W, cy = s.y * H, g = el("g", { class: "sekcja", "data-id": s.id }, $("#sekcje"));
   const podsw = el("ellipse", { cx, cy: cy + 10, rx: 150 * s.s, ry: 95 * s.s, fill: "url(#swiatlo)", class: "podswietl", opacity: 0 }, g);
   const [iw, ih] = ROZMIAR[s.ikona], sc = s.s * 0.9;
@@ -173,6 +209,7 @@ for (const s of SEKCJE) {
   const pasek = el("rect", { x: cx - 50, y: cy + ih * sc * 0.5 + 50 * s.s, width: 0, height: 6, rx: 3, fill: "#f2c14e" }, g);
   const dyn = el("text", { x: cx, y: cy - ih * sc * 0.5 - (rzedy - 1) * dy - 14, "text-anchor": "middle", class: "dyn" }, g);
   stan[s.id] = { s, cx, cy, r: 150 * s.s, g, podsw, ikony, pasek, dyn, poziom: 0, cel: 0, ostatnio: -1e9, ekspresja: 0 };
+  }
 }
 
 /* ---------------- nutki lecące z grającej sekcji ---------------- */
@@ -214,7 +251,7 @@ function aktualizuj(teraz, wskazania, piesc) {
     S.dyn.textContent = S.poziom > 0.04 ? DYN.find(([p]) => S.poziom >= p)?.[1] || "pp" : "";
     S.g.style.filter = S.poziom > 0.05 ? `brightness(${1 + S.poziom * 0.5})` : "";
   }
-  $("#takt").textContent = `takt ${orkiestra.takt}/16`;
+  $("#takt").textContent = `takt ${orkiestra.takt}/${orkiestra.takty}`;
 }
 
 /* ---------------- dłonie ---------------- */
@@ -269,8 +306,30 @@ let tuttiGestem = false;
 function ustawTutti(on, gestem = false) { tutti = on; tuttiGestem = on && gestem; $("#btnTutti").classList.toggle("on", on); }
 $("#btnTutti").onclick = () => ustawTutti(!tutti);
 $("#btnTlo").onclick = () => { tlo = !tlo; $("#btnTlo").textContent = `Tło orkiestry: ${tlo ? "wł." : "wył."}`; $("#btnTlo").classList.toggle("on", tlo); };
-const tempo = d => { orkiestra.tempo = Math.min(140, Math.max(60, orkiestra.tempo + d)); $("#tempo").textContent = `♩ = ${orkiestra.tempo}`; };
+const tempo = d => { orkiestra.tempo = Math.min(170, Math.max(50, orkiestra.tempo + d)); $("#tempo").textContent = `♩ = ${orkiestra.tempo}`; };
 $("#btnWolniej").onclick = () => tempo(-8); $("#btnSzybciej").onclick = () => tempo(8);
+
+/* ---------------- utwór i styl ---------------- */
+let nrUtworu = 0, styl = "klasyka";
+const wybor = $("#wyborUtworu");
+UTWORY.forEach((u, i) => wybor.append(new Option(`${u.nazwa} – ${u.autor}`, i)));
+function pokazUtwor() {
+  const u = UTWORY[nrUtworu];
+  $("#tytulUtworu").innerHTML = ""; $("#tytulUtworu").append(u.nazwa + " ", Object.assign(document.createElement("small"), { textContent: styl === "rock" ? "· rock" : "· " + u.autor }));
+  $("#btnStyl").textContent = styl === "rock" ? "🎻 Klasycznie" : "🎸 Rockowo";
+  $("#tempo").textContent = `♩ = ${orkiestra.tempo}`;
+}
+let zmiana = Promise.resolve();
+function zmienUtwor(nr, nowyStyl = styl) {
+  nrUtworu = (nr + UTWORY.length) % UTWORY.length; const zmienionyStyl = nowyStyl !== styl; styl = nowyStyl;
+  if (zmienionyStyl) rysujScene(styl);
+  zmiana = zmiana.then(() => orkiestra.ustawUtwor(UTWORY[nrUtworu], styl, (n, z) => { $("#stan").textContent = `strojenie ${n}/${z}…`; })).then(pokazUtwor);
+  pokazUtwor();
+}
+$("#btnPoprz").onclick = () => zmienUtwor(nrUtworu - 1);
+$("#btnNast").onclick = () => zmienUtwor(nrUtworu + 1);
+$("#btnStyl").onclick = () => zmienUtwor(nrUtworu, styl === "rock" ? "klasyka" : "rock");
+rysujScene(styl); pokazUtwor();
 
 /* ---------------- mysz: kursor to „dłoń” dyrygenta ---------------- */
 let mysz = null;
@@ -296,6 +355,8 @@ async function start(zKamera) {
   const info = $("#info"); info.classList.remove("blad");
   $("#btnStart").disabled = $("#btnMysz").disabled = true;
   try {
+    nrUtworu = +wybor.value; styl = $("#wyborRock").checked ? "rock" : "klasyka";
+    rysujScene(styl); await orkiestra.ustawUtwor(UTWORY[nrUtworu], styl); pokazUtwor();
     info.textContent = "Strojenie orkiestry: wczytuję instrumenty…";
     const ile = await orkiestra.start((n, z) => { info.textContent = `Strojenie orkiestry: ${n}/${z} instrumentów`; });
     if (!Object.keys(orkiestra.probki).length) info.textContent = "Próbki instrumentów niedostępne – gra syntezator.";
@@ -313,7 +374,7 @@ async function start(zKamera) {
 }
 $("#btnStart").onclick = () => start(true);
 $("#btnMysz").onclick = () => start(false);
-window.__dyrygentTest = { sztucznaDlon, wynikSymulacji, orkiestra, stan: () => Object.fromEntries(Object.entries(stan).map(([k, S]) => [k, +S.poziom.toFixed(2)])) };
+window.__dyrygentTest = { sztucznaDlon, wynikSymulacji, orkiestra, zmienUtwor, stan: () => Object.fromEntries(Object.entries(stan).map(([k, S]) => [k, +S.poziom.toFixed(2)])) };
 addEventListener("pagehide", () => orkiestra.stop());
 </script>
 </body>
