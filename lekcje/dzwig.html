@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operator żurawia wieżowego · Lekcje AR</title>
+<meta name="theme-color" content="#20262b">
+<script type="importmap">
+{ "imports": { "three": "../lib/three/build/three.module.min.js", "three/addons/": "../lib/three/examples/jsm/" } }
+</script>
+<script src="../wersja.js"></script>
+<style>
+  :root { --ink: #20262b; --zolty: #f2b705; --ok: #2f8f5a; --zle: #c0392b; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #20262b; color: #fff; font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; user-select: none; }
+  #scena { position: fixed; inset: 0; } #scena canvas { display: block; }
+  #rece { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 60; }
+  #podglad { position: fixed; right: 12px; top: 56px; width: 150px; border-radius: 10px; transform: scaleX(-1); opacity: .75; z-index: 25; display: none; }
+  body.kamera #podglad { display: block; }
+  [hidden] { display: none !important; }
+  .hud { position: fixed; left: 10px; right: 10px; top: 8px; z-index: 40; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .hud .tytul { font-weight: 800; font-size: 17px; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+  .pill { padding: 5px 11px; border-radius: 99px; background: rgba(0,0,0,.5); font-size: 13px; }
+  .hud .prawo { margin-left: auto; display: flex; gap: 6px; }
+  .btn-d { border: 0; border-radius: 10px; padding: 7px 12px; font: 700 13px system-ui; background: rgba(255,255,255,.92); color: var(--ink); cursor: pointer; text-decoration: none; transition: transform .08s, background .1s; }
+  .btn-d.nad { outline: 3px solid #ffd23f; } .btn-d.klik { transform: scale(.93); }
+  /* pulpit sterowniczy */
+  .pulpit { position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 40; display: flex; gap: 14px; align-items: flex-end; background: linear-gradient(#2c3238, #1c2126); border: 2px solid #4a525a; border-radius: 18px; padding: 10px 14px; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+  .joy { width: 128px; text-align: center; font-size: 11.5px; color: #c9d1d8; }
+  .joy .baza { position: relative; width: 116px; height: 116px; margin: 0 auto 4px; border-radius: 50%; background: radial-gradient(#3b434b, #22282d); border: 3px solid #555f68; touch-action: none; }
+  .joy .baza::before, .joy .baza::after { content: ""; position: absolute; background: rgba(255,255,255,.12); }
+  .joy .baza::before { left: 50%; top: 8px; bottom: 8px; width: 2px; } .joy .baza::after { top: 50%; left: 8px; right: 8px; height: 2px; }
+  .joy.pion .baza { width: 60px; border-radius: 30px; } .joy.pion .baza::after { display: none; }
+  .joy .galka { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #777, #222); border: 3px solid #111; box-shadow: 0 4px 10px rgba(0,0,0,.6); cursor: grab; z-index: 2; }
+  .joy .galka.trzym { background: radial-gradient(circle at 35% 30%, #ffe08a, #b8860b); }
+  .joy .opis { position: absolute; font-size: 10px; color: #9aa4ad; }
+  .przelaczniki { display: grid; grid-template-columns: repeat(4, 74px); gap: 7px; }
+  .prz { height: 52px; border-radius: 10px; border: 2px solid #4f5962; background: #2a3137; color: #dfe6eb; font: 700 11px system-ui; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; transition: transform .08s; }
+  .prz .led { width: 10px; height: 10px; border-radius: 50%; background: #444; box-shadow: inset 0 0 2px #000; }
+  .prz.on .led { background: #4cff7a; box-shadow: 0 0 8px #4cff7a; } .prz.on.zolta .led { background: #ffd23f; box-shadow: 0 0 8px #ffd23f; }
+  .prz.nad { outline: 3px solid #ffd23f; } .prz.klik { transform: scale(.92); }
+  .stop { width: 74px; height: 74px; border-radius: 50%; border: 5px solid #f2b705; background: radial-gradient(circle at 40% 35%, #ff6b5b, #b3170c); color: #fff; font: 800 13px system-ui; cursor: pointer; box-shadow: 0 5px 12px rgba(0,0,0,.6); }
+  .stop.wcisniety { transform: translateY(3px) scale(.95); box-shadow: 0 1px 3px rgba(0,0,0,.6); background: radial-gradient(circle at 40% 35%, #c9473a, #6e0f07); }
+  .stop.nad { outline: 3px solid #ffd23f; outline-offset: 2px; }
+  .wsk { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; background: #0d1a14; border: 2px solid #3d4a44; border-radius: 10px; padding: 7px 10px; font: 600 12px ui-monospace, Menlo, monospace; color: #7dffa3; min-width: 250px; }
+  .wsk b { color: #c7ffd8; font-weight: 700; } .wsk .alarm { color: #ff6b5b; }
+  .wsk .pasek { grid-column: 1 / 3; height: 8px; background: #1f2b25; border-radius: 4px; overflow: hidden; } .wsk .pasek div { height: 100%; width: 0; background: #7dffa3; }
+  .zadania { position: fixed; right: 10px; top: 52px; width: 260px; z-index: 30; background: rgba(20,24,28,.85); border-radius: 14px; padding: 10px 12px; font-size: 13px; }
+  .zadania h3 { margin: 0 0 6px; font-size: 14px; } .zadania .z { display: flex; gap: 8px; align-items: center; padding: 3px 0; }
+  .zadania .z i { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-weight: 800; flex: none; }
+  .zadania .z.ok { color: #9fe3b7; } .zadania .stat { margin-top: 8px; border-top: 1px solid rgba(255,255,255,.15); padding-top: 6px; color: #c9d1d8; }
+  #kom { position: fixed; left: 50%; top: 56px; transform: translateX(-50%); z-index: 45; background: rgba(20,24,28,.94); border-radius: 12px; padding: 8px 16px; font-size: 14px; display: none; text-align: center; max-width: 80vw; }
+  #kom.dobrze { background: rgba(47,143,90,.95); } #kom.zle { background: rgba(192,57,43,.95); }
+  .ekran { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: rgba(18,22,26,.9); }
+  .karta { width: min(640px, 94vw); max-height: 92vh; overflow: auto; background: #f4f1ea; color: var(--ink); border-radius: 22px; padding: 22px 26px; }
+  .karta h1 { margin: 0 0 6px; font-size: 25px; } .karta p, .karta li { color: #444; } .karta .rzad { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+  .karta .btn-d { background: var(--ink); color: #fff; font-size: 15px; padding: 11px 18px; border-radius: 99px; } .karta .btn-d.jasny { background: #fff; color: var(--ink); border: 1px solid #ccc; }
+  .karta table { width: 100%; border-collapse: collapse; font-size: 14px; } .karta td { padding: 3px 6px; border-bottom: 1px solid #ddd6c8; } .karta td:last-child { text-align: right; }
+  .klaw { font-size: 12px; color: #555; } .klaw kbd { background: #fff; border: 1px solid #bbb; border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font: 600 11px ui-monospace, monospace; }
+  @media (max-width: 1100px) { .zadania { display: none; } .pulpit { transform: translateX(-50%) scale(.82); transform-origin: bottom center; } }
+</style>
+</head>
+<body>
+<div id="scena"></div>
+<video id="podglad" autoplay muted playsinline></video>
+<canvas id="rece"></canvas>
+<div id="kom"></div>
+
+<div class="hud">
+  <span class="tytul">🏗 Operator żurawia wieżowego</span>
+  <span class="pill" id="czas">00:00</span>
+  <span class="pill" id="widokNazwa">widok: kabina</span>
+  <span class="prawo"><button class="btn-d" id="bPomoc">❔ Sterowanie</button><a class="btn-d" href="../">← Wróć</a></span>
+</div>
+<div class="zadania"><h3>Zlecenia przeniesienia</h3><div id="lista"></div><div class="stat" id="stat"></div></div>
+
+<div class="pulpit" id="pulpit">
+  <div class="joy" id="joyL"><div class="baza"><div class="galka"></div></div>LEWY: ⟲ obrót · ↕ wózek</div>
+  <div class="wsk" id="wsk"></div>
+  <div class="przelaczniki">
+    <button class="prz" id="pZasil"><span class="led"></span>ZASILANIE</button>
+    <button class="prz zolta" id="pPrec"><span class="led"></span>PRECYZJA</button>
+    <button class="prz zolta" id="pHak"><span class="led"></span>HAK: ZACZEP</button>
+    <button class="prz" id="pSygnal"><span class="led"></span>📯 SYGNAŁ</button>
+    <button class="prz" id="pSwiatla"><span class="led"></span>💡 ŚWIATŁA</button>
+    <button class="prz" id="pKamera"><span class="led"></span>🎥 WIDOK</button>
+    <button class="prz zolta" id="pSledz"><span class="led"></span>ŚLEDŹ HAK</button>
+    <button class="prz" id="pReset"><span class="led"></span>↺ OD NOWA</button>
+  </div>
+  <button class="stop" id="pStop" title="STOP awaryjny">STOP</button>
+  <div class="joy pion" id="joyR"><div class="baza"><div class="galka"></div></div>PRAWY: ↕ hak</div>
+</div>
+
+<div class="ekran" id="start"><div class="karta">
+  <h1>🏗 Operator żurawia wieżowego</h1>
+  <p>Siedzisz w kabinie żurawia 30 m nad placem budowy. Przenieś 4 ładunki do stref A–D: zaczep hak, unieś, przenieś obracając żuraw i przesuwając wózek, opuść i odczep. Uważaj na kołysanie, przeszkody i <b>ogranicznik udźwigu</b> – im dalej wózek od wieży, tym mniejszy dopuszczalny ciężar.</p>
+  <ol>
+    <li>Włącz <b>ZASILANIE</b>. W razie zagrożenia – czerwony <b>STOP</b> (ponowne wciśnięcie zwalnia).</li>
+    <li><b>Lewy joystick</b>: w lewo/prawo obraca żuraw, w górę/dół przesuwa wózek od/do wieży. <b>Prawy</b>: podnosi i opuszcza hak.</li>
+    <li>Nad ładunkiem opuść hak tuż nad niego i wciśnij <b>HAK: ZACZEP</b>. Odczepić można dopiero ładunek postawiony na podłożu.</li>
+    <li><b>PRECYZJA</b> zwalnia ruchy – do dokładnego odstawiania.</li>
+  </ol>
+  <div class="klaw">Klawiatura: <kbd>A</kbd>/<kbd>D</kbd> obrót · <kbd>W</kbd>/<kbd>S</kbd> wózek · <kbd>↑</kbd>/<kbd>↓</kbd> hak · <kbd>Spacja</kbd> zaczep/odczep · <kbd>P</kbd> precyzja · <kbd>H</kbd> sygnał · <kbd>C</kbd> widok · <kbd>Esc</kbd> STOP</div>
+  <div class="rzad"><button class="btn-d" id="sKamera">🖐 Dłonie przed kamerą</button><button class="btn-d jasny" id="sMysz">🖱 Mysz i klawiatura</button></div>
+  <p style="font-size:12.5px;margin-top:10px">Dłońmi: chwyć gałkę joysticka (kciuk + palec wskazujący) i przesuń; puść – wraca do środka. Chwyt na przełączniku = naciśnięcie. Obraz z kamery zostaje na tym komputerze.</p>
+</div></div>
+<div class="ekran" id="koniec" hidden><div class="karta" id="koniecTresc"></div></div>
+
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=33";
+import { zbudujScene, zbudujLadunki, LADUNKI, STREFY, udzwig, WIEZA, WYSIEG, WYS_WYSIEGU, R_MIN } from "./dzwig/scena.js?v=33";
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.shadowMap.enabled = true; renderer.outputColorSpace = THREE.SRGBColorSpace;
+$("#scena").append(renderer.domElement);
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(62, 1, 0.1, 600);
+const ctlGora = new OrbitControls(cam, renderer.domElement); ctlGora.enabled = false; ctlGora.maxPolarAngle = Math.PI * 0.48;
+const S = zbudujScene(scene), ladunki = zbudujLadunki(scene);
+function rozmiar() { renderer.setSize(innerWidth, innerHeight); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); plotno(); }
+
+/* ------------------------------------------------------------ stan żurawia */
+const z = { theta: 0.35, r: 14, hy: 20, vT: 0, vR: 0, vH: 0, o: new THREE.Vector2(), ov: new THREE.Vector2(), wozekPop: null, wozekV: new THREE.Vector3() };
+const przel = { zasilanie: false, precyzja: false, swiatla: false, stop: false, sledz: true, widok: 0 };
+const wej = { obr: 0, woz: 0, hak: 0 };          // z joysticków
+const klaw = { obr: 0, woz: 0, hak: 0 };
+let zaczepiony = null, dlZawiesi = 1.2;
+const stat = { kolizje: 0, bledy: 0, start: 0, koniec: 0, przeciazenia: 0 };
+const WIDOKI = ["kabina", "z góry", "kamera na wózku"];
+
+/* ------------------------------------------------------------ geometria pomocnicza */
+const wozekSwiat = () => new THREE.Vector3(Math.cos(-z.theta) * z.r, WYS_WYSIEGU - 1.3, Math.sin(-z.theta) * z.r);
+function pozycjaHaka(o = z.o) { const w = wozekSwiat(); return new THREE.Vector3(w.x + o.x, z.hy, w.z + o.y); }
+function boxLadunku(L, srodek) { const h = new THREE.Vector3(...L.wym).multiplyScalar(0.5); return new THREE.Box3(srodek.clone().sub(h), srodek.clone().add(h)); }
+function srodekZawieszonego(hakPoz) { return hakPoz.clone().add(new THREE.Vector3(0, -0.95 - dlZawiesi - zaczepiony.wym[1] / 2, 0)); }
+function przeszkodyDla(L) { return [...S.przeszkody, ...ladunki.filter(q => q !== L && q !== zaczepiony).map(q => boxLadunku(q, q.mesh.position))]; }
+function podparcie(box, L) {      // najwyższa powierzchnia pod rzutem ładunku
+  let y = 0; for (const p of przeszkodyDla(L)) if (p.max.x > box.min.x + 0.05 && p.min.x < box.max.x - 0.05 && p.max.z > box.min.z + 0.05 && p.min.z < box.max.z - 0.05 && p.max.y <= box.min.y + 0.4) y = Math.max(y, p.max.y);
+  return y;
+}
+const koliduje = (box, L) => box.min.y < -0.02 || przeszkodyDla(L).some(p => p.intersectsBox(box.clone().expandByScalar(-0.04)));
+
+/* ------------------------------------------------------------ pętla fizyki */
+let alarmDo = 0, ostatniaKolizja = 0, ostPrzec = 0;
+function krok(dt, teraz) {
+  const aktywny = przel.zasilanie && !przel.stop, mn = przel.precyzja ? 0.3 : 1;
+  const cel = { vT: aktywny ? -(wej.obr + klaw.obr) * 0.2 * mn : 0, vR: aktywny ? (wej.woz + klaw.woz) * 2.4 * mn : 0, vH: aktywny ? (wej.hak + klaw.hak) * 2.6 * mn : 0 };
+  const zbliz = (v, c, a) => v + Math.max(-a * dt, Math.min(a * dt, c - v));
+  z.vT = zbliz(z.vT, Math.max(-0.2, Math.min(0.2, cel.vT)), przel.stop ? 0.6 : 0.12); z.vR = zbliz(z.vR, Math.max(-2.4, Math.min(2.4, cel.vR)), przel.stop ? 6 : 1.1); z.vH = zbliz(z.vH, Math.max(-2.6, Math.min(2.6, cel.vH)), przel.stop ? 8 : 1.6);
+  const stary = { theta: z.theta, r: z.r, hy: z.hy };
+  // ogranicznik udźwigu: z ładunkiem zbyt ciężkim na dany wysięg nie wolno wysuwać wózka ani podnosić
+  let przeciazony = false;
+  if (zaczepiony && zaczepiony.masa > udzwig(z.r) + 1e-6) przeciazony = true;
+  z.theta += z.vT * dt;
+  z.r = Math.max(R_MIN, Math.min(WYSIEG, z.r + z.vR * dt));
+  if (zaczepiony && zaczepiony.masa > udzwig(z.r) && z.r > stary.r) { z.r = stary.r; z.vR = 0; przeciazony = true; }
+  z.hy = Math.max(1.2, Math.min(WYS_WYSIEGU - 2.4, z.hy + z.vH * dt));
+  if (przeciazony && z.hy > stary.hy) { z.hy = stary.hy; z.vH = 0; }
+  if (przeciazony && teraz - ostPrzec > 2500) stat.przeciazenia++;
+  if (przeciazony) ostPrzec = teraz;
+  if (przeciazony && teraz > alarmDo) { alarmDo = teraz + 900; dzwiek("alarm"); komunikat(`⚠ Ogranicznik udźwigu: ${zaczepiony.nazwa} ${zaczepiony.masa} t, a na wysięgu ${z.r.toFixed(1)} m wolno ${udzwig(z.r).toFixed(1)} t. Przesuń wózek bliżej wieży.`, "zle"); }
+  // hak bez ładunku nie wchodzi w przeszkody ani w ziemię
+  const hakBox = h => new THREE.Box3().setFromCenterAndSize(h.clone().add(new THREE.Vector3(0, -0.5, 0)), new THREE.Vector3(0.7, 1.4, 0.5));
+  if (!zaczepiony) { const h = pozycjaHaka(); if (S.przeszkody.some(p => p.intersectsBox(hakBox(h))) || ladunki.some(q => boxLadunku(q, q.mesh.position).intersectsBox(hakBox(h)))) { if (z.hy < stary.hy) { z.hy = stary.hy; z.vH = 0; } } }
+  // kolizja ładunku: cofnij ruch i zalicz kolizję
+  if (zaczepiony) {
+    const b = boxLadunku(zaczepiony, srodekZawieszonego(pozycjaHaka()));
+    if (koliduje(b, zaczepiony)) {
+      const tylkoOpuszczanie = (() => { const t = { ...z }; z.theta = stary.theta; z.r = stary.r; const bb = boxLadunku(zaczepiony, srodekZawieszonego(pozycjaHaka())); const k = koliduje(bb, zaczepiony); z.theta = t.theta; z.r = t.r; return k; })();
+      Object.assign(z, stary); z.vT = z.vR = z.vH = 0;
+      if (!tylkoOpuszczanie || b.min.y > podparcie(b, zaczepiony) + 0.3) {
+        if (teraz - ostatniaKolizja > 1500) { stat.kolizje++; dzwiek("uderzenie"); komunikat("💥 Kolizja ładunku! Podnieś go wyżej albo omiń przeszkodę.", "zle"); }
+        ostatniaKolizja = teraz;
+      }
+    }
+  }
+  // wahadło: przyspieszenie wózka „ucieka” spod haka, grawitacja i tłumienie sprowadzają hak z powrotem
+  const w = wozekSwiat();
+  if (z.wozekPop) { const v = w.clone().sub(z.wozekPop).divideScalar(dt); const a = v.clone().sub(z.wozekV).divideScalar(dt); z.wozekV.copy(v);
+    const L = Math.max(2, WYS_WYSIEGU - 1.3 - z.hy + (zaczepiony ? dlZawiesi + zaczepiony.wym[1] / 2 : 0)), g = 9.81 / L;
+    z.ov.x += (-g * z.o.x - 0.35 * z.ov.x - a.x) * dt; z.ov.y += (-g * z.o.y - 0.35 * z.ov.y - a.z) * dt;
+    z.o.x += z.ov.x * dt; z.o.y += z.ov.y * dt; z.o.clampLength(0, 4); }
+  z.wozekPop = w;
+  if (z.o.length() > 0.05 && zaczepiony) { const b = boxLadunku(zaczepiony, srodekZawieszonego(pozycjaHaka())); if (koliduje(b, zaczepiony)) { z.o.multiplyScalar(0.6); z.ov.multiplyScalar(-0.3); } }
+  rysujZuraw();
+  dzwiekSilnika(Math.abs(z.vT) * 5 + Math.abs(z.vR) / 2.4 + Math.abs(z.vH) / 2.6);
+}
+function rysujZuraw() {
+  S.obrot.rotation.y = z.theta; S.wozek.position.x = z.r;
+  const h = pozycjaHaka(), w = wozekSwiat();
+  S.hak.position.copy(h);
+  S.lina.geometry.setFromPoints([w.clone().add(new THREE.Vector3(0, 0, 0.25)), h.clone().add(new THREE.Vector3(0, 0.45, 0.12)), h.clone().add(new THREE.Vector3(0, 0.45, -0.12)), w.clone().add(new THREE.Vector3(0, 0, -0.25))]);
+  if (zaczepiony) {
+    const c = srodekZawieszonego(h); zaczepiony.mesh.position.copy(c);
+    const [a, , b] = zaczepiony.wym, t = c.y + zaczepiony.wym[1] / 2, kh = h.clone().add(new THREE.Vector3(0, -0.95, 0)), kr = zaczepiony.mesh.rotation.y, cs = Math.cos(kr), sn = Math.sin(kr);
+    const rog = (x, y) => new THREE.Vector3(c.x + x * cs + y * sn, t, c.z - x * sn + y * cs);
+    S.zawiesia.geometry.setFromPoints([kh, rog(-a / 2.2, -b / 2.2), kh, rog(a / 2.2, -b / 2.2), kh, rog(-a / 2.2, b / 2.2), kh, rog(a / 2.2, b / 2.2)]); S.zawiesia.visible = true;
+  } else S.zawiesia.visible = false;
+}
+
+/* ------------------------------------------------------------ zaczep / odczep */
+function hak() {
+  if (!przel.zasilanie || przel.stop) { komunikat("Najpierw włącz ZASILANIE (i zwolnij STOP)."); return; }
+  const h = pozycjaHaka();
+  if (!zaczepiony) {
+    let naj = null, nd = 1e9;
+    for (const L of ladunki) { const top = L.mesh.position.y + L.wym[1] / 2, d = Math.hypot(L.mesh.position.x - h.x, L.mesh.position.z - h.z), v = h.y - 0.95 - top; if (d < 1.3 && v > -0.4 && v < 2.2 && d < nd) { nd = d; naj = L; } }
+    if (!naj) { komunikat("Brak ładunku pod hakiem – opuść hak tuż nad środek ładunku (do ok. 2 m)."); dzwiek("blad"); return; }
+    zaczepiony = naj; dlZawiesi = Math.max(0.5, Math.min(2.2, h.y - 0.95 - (naj.mesh.position.y + naj.wym[1] / 2)));
+    naj.stan = "w powietrzu"; komunikat(`🔗 Zaczepiono: ${naj.nazwa} (${naj.masa} t). Udźwig na tym wysięgu: ${udzwig(z.r).toFixed(1)} t.`, "dobrze"); dzwiek("klik");
+    if (!stat.start) stat.start = performance.now();
+  } else {
+    const L = zaczepiony, b = boxLadunku(L, L.mesh.position), pod = podparcie(b, L), nad = b.min.y - pod;
+    if (nad > 0.35) { stat.bledy++; dzwiek("blad"); komunikat(`✋ Ładunek wisi ${nad.toFixed(1)} m nad podłożem. Odczepiaj dopiero po postawieniu – opuść go niżej.`, "zle"); return; }
+    L.mesh.position.y = pod + L.wym[1] / 2; zaczepiony = null; z.o.set(0, 0); z.ov.set(0, 0);
+    const St = L.strefa, dx = L.mesh.position.x - St.srodek[0], dz = L.mesh.position.z - St.srodek[2], wSt = Math.abs(dx) <= St.wym[0] / 2 + 0.4 && Math.abs(dz) <= St.wym[1] / 2 + 0.4 && Math.abs(pod - St.srodek[1]) < 0.6;
+    if (wSt) { L.stan = "na miejscu"; L.dokladnosc = Math.hypot(dx, dz); dzwiek("ok"); komunikat(`✅ ${L.nazwa} w strefie ${L.cel}! Odchyłka od środka: ${(L.dokladnosc * 100).toFixed(0)} cm.`, "dobrze"); }
+    else { L.stan = "odstawiony"; dzwiek("klik"); komunikat(`${L.nazwa} odstawiony – to nie jest strefa ${L.cel}.`); }
+    rysujListe();
+    if (ladunki.every(q => q.stan === "na miejscu")) { stat.koniec = performance.now(); setTimeout(podsumowanie, 900); }
+  }
+  $("#pHak").innerHTML = `<span class="led"></span>${zaczepiony ? "HAK: ODCZEP" : "HAK: ZACZEP"}`; $("#pHak").classList.toggle("on", !!zaczepiony);
+}
+
+/* ------------------------------------------------------------ kamera */
+const kab = new THREE.Object3D(); S.kabina.add(kab); kab.position.set(0.3, 1.55, 0.1);
+let rozgl = { yaw: 0, pitch: 0 };
+function ustawKamere(dt) {
+  if (przel.widok === 0) {
+    const p = new THREE.Vector3(); kab.getWorldPosition(p); cam.position.copy(p);
+    const h = pozycjaHaka(), kier = przel.sledz ? h.clone().sub(p).normalize() : new THREE.Vector3(Math.cos(-z.theta), -0.35, Math.sin(-z.theta)).normalize();
+    const e = new THREE.Euler().setFromVector3(new THREE.Vector3()); const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, -1), kier);
+    const dodatek = new THREE.Quaternion().setFromEuler(new THREE.Euler(rozgl.pitch, rozgl.yaw, 0, "YXZ"));
+    const cel = q.multiply(dodatek); cam.quaternion.slerp(cel, Math.min(1, dt * 4)); cam.fov = 62; cam.updateProjectionMatrix();
+  } else if (przel.widok === 2) {
+    const w = wozekSwiat(); cam.position.copy(w).add(new THREE.Vector3(0, -0.6, 0)); cam.up.set(Math.cos(-z.theta), 0, Math.sin(-z.theta)); cam.lookAt(w.x, 0, w.z); cam.fov = 48; cam.updateProjectionMatrix(); cam.up.set(0, 1, 0);
+  } else { ctlGora.target.lerp(pozycjaHaka(), Math.min(1, dt * 2)); ctlGora.update(); }
+}
+function zmienWidok() {
+  przel.widok = (przel.widok + 1) % 3; $("#widokNazwa").textContent = "widok: " + WIDOKI[przel.widok];
+  ctlGora.enabled = przel.widok === 1;
+  if (przel.widok === 1) { cam.position.set(55, 60, 55); ctlGora.target.copy(pozycjaHaka()); cam.fov = 50; cam.updateProjectionMatrix(); ctlGora.update(); }
+}
+// rozglądanie się w kabinie: prawy przycisk myszy
+let rozglD = null;
+renderer.domElement.addEventListener("pointerdown", e => { if (przel.widok === 0 && (e.button === 2 || e.button === 0)) rozglD = { x: e.clientX, y: e.clientY, ...rozgl }; });
+addEventListener("pointermove", e => { if (rozglD) { rozgl.yaw = rozglD.yaw - (e.clientX - rozglD.x) * 0.004; rozgl.pitch = Math.max(-0.8, Math.min(0.8, rozglD.pitch - (e.clientY - rozglD.y) * 0.004)); } });
+addEventListener("pointerup", () => { rozglD = null; });
+renderer.domElement.addEventListener("dblclick", () => { rozgl = { yaw: 0, pitch: 0 }; });
+renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
+
+/* ------------------------------------------------------------ joysticki (mysz, dotyk, dłonie) */
+const joy = {};
+function zrobJoystick(el, pion, onZmiana) {
+  const baza = el.querySelector(".baza"), galka = el.querySelector(".galka");
+  const j = { x: 0, y: 0, trzyma: null, ustaw(px, py) {
+      const r = baza.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = (pion ? r.height : r.width) / 2 - 20;
+      let dx = pion ? 0 : (px - cx) / R, dy = (py - cy) / R; const d = Math.hypot(dx, dy); if (d > 1) { dx /= d; dy /= d; }
+      this.x = dx; this.y = dy; this.rysuj(); onZmiana(this); },
+    pusc() { this.trzyma = null; this.x = this.y = 0; galka.classList.remove("trzym"); this.rysuj(); onZmiana(this); },
+    rysuj() { const r = baza.getBoundingClientRect(), R = (pion ? r.height : r.width) / 2 - 20; galka.style.transform = `translate(${this.x * R}px, ${this.y * R}px)`; },
+    el: baza, galka };
+  baza.addEventListener("pointerdown", e => { j.trzyma = "mysz"; galka.classList.add("trzym"); baza.setPointerCapture(e.pointerId); j.ustaw(e.clientX, e.clientY); e.preventDefault(); });
+  baza.addEventListener("pointermove", e => { if (j.trzyma === "mysz") j.ustaw(e.clientX, e.clientY); });
+  baza.addEventListener("pointerup", () => { if (j.trzyma === "mysz") j.pusc(); });
+  return j;
+}
+const martwa = v => Math.abs(v) < 0.12 ? 0 : (v - Math.sign(v) * 0.12) / 0.88;
+joy.L = zrobJoystick($("#joyL"), false, j => { wej.obr = martwa(j.x); wej.woz = martwa(-j.y); });
+joy.R = zrobJoystick($("#joyR"), true, j => { wej.hak = martwa(-j.y); });
+
+/* ------------------------------------------------------------ przełączniki */
+function ustawLed(id, on) { $(id).classList.toggle("on", on); }
+$("#pZasil").onclick = () => { przel.zasilanie = !przel.zasilanie; ustawLed("#pZasil", przel.zasilanie); dzwiek("klik"); komunikat(przel.zasilanie ? "Zasilanie włączone – żuraw gotowy do pracy." : "Zasilanie wyłączone."); if (przel.zasilanie) startDzwieku(); };
+$("#pPrec").onclick = () => { przel.precyzja = !przel.precyzja; ustawLed("#pPrec", przel.precyzja); dzwiek("klik"); };
+$("#pHak").onclick = hak;
+$("#pSygnal").onclick = () => { dzwiek("sygnal"); ustawLed("#pSygnal", true); setTimeout(() => ustawLed("#pSygnal", false), 800); };
+$("#pSwiatla").onclick = () => { przel.swiatla = !przel.swiatla; ustawLed("#pSwiatla", przel.swiatla); S.reflektor.intensity = przel.swiatla ? 900 : 0; dzwiek("klik"); };
+$("#pKamera").onclick = () => { zmienWidok(); dzwiek("klik"); };
+$("#pSledz").onclick = () => { przel.sledz = !przel.sledz; ustawLed("#pSledz", przel.sledz); };
+$("#pReset").onclick = () => location.reload();
+$("#pStop").onclick = () => { przel.stop = !przel.stop; $("#pStop").classList.toggle("wcisniety", przel.stop); $("#pStop").textContent = przel.stop ? "ZWOLNIJ" : "STOP"; dzwiek(przel.stop ? "alarm" : "klik"); komunikat(przel.stop ? "🛑 STOP awaryjny – wszystkie ruchy zatrzymane." : "STOP zwolniony.", przel.stop ? "zle" : ""); };
+ustawLed("#pSledz", true);
+$("#bPomoc").onclick = () => { $("#start").hidden = false; };
+
+/* klawiatura */
+const wcisniete = new Set();
+addEventListener("keydown", e => {
+  if (e.repeat) return; const k = e.key.toLowerCase(); wcisniete.add(k);
+  if (k === " ") { e.preventDefault(); hak(); } else if (k === "p") $("#pPrec").click(); else if (k === "h") $("#pSygnal").click(); else if (k === "c") $("#pKamera").click(); else if (k === "escape") $("#pStop").click(); else if (k === "z") $("#pZasil").click();
+  klawisze();
+});
+addEventListener("keyup", e => { wcisniete.delete(e.key.toLowerCase()); klawisze(); });
+function klawisze() {
+  klaw.obr = (wcisniete.has("d") ? 1 : 0) - (wcisniete.has("a") ? 1 : 0);
+  klaw.woz = (wcisniete.has("w") ? 1 : 0) - (wcisniete.has("s") ? 1 : 0);
+  klaw.hak = (wcisniete.has("arrowup") ? 1 : 0) - (wcisniete.has("arrowdown") ? 1 : 0);
+}
+
+/* ------------------------------------------------------------ wskaźniki i zlecenia */
+function rysujWskazniki() {
+  const Q = udzwig(z.r), m = zaczepiony?.masa || 0, proc = Math.min(1, m / Q), stopnie = ((z.theta * 180 / Math.PI) % 360 + 360) % 360;
+  $("#wsk").innerHTML = `<span>OBRÓT <b>${stopnie.toFixed(0)}°</b></span><span>WYSIĘG <b>${z.r.toFixed(1)} m</b></span>
+    <span>HAK <b>${Math.max(0, z.hy - 1).toFixed(1)} m</b></span><span>KOŁYS. <b class="${z.o.length() > 0.8 ? "alarm" : ""}">${z.o.length().toFixed(2)} m</b></span>
+    <span class="${proc > 0.9 ? "alarm" : ""}">ŁAD. <b>${m.toFixed(1)} t</b></span><span>UDŹWIG <b>${Q.toFixed(1)} t</b></span>
+    <div class="pasek"><div style="width:${proc * 100}%;background:${proc > 0.9 ? "#ff6b5b" : proc > 0.7 ? "#ffd23f" : "#7dffa3"}"></div></div>
+    <span>${przel.zasilanie ? (przel.stop ? '<b class="alarm">STOP</b>' : "<b>GOTOWY</b>") : "wyłączony"}</span><span>${przel.precyzja ? "<b>PRECYZJA</b>" : "normalny"}</span>`;
+}
+function rysujListe() {
+  $("#lista").innerHTML = ladunki.map(L => `<div class="z ${L.stan === "na miejscu" ? "ok" : ""}"><i style="background:${L.strefa.kolor}">${L.cel}</i><span><b>${L.nazwa}</b> ${L.masa} t<br><small>${L.stan === "na miejscu" ? `✓ w strefie, odchyłka ${(L.dokladnosc * 100).toFixed(0)} cm` : `→ ${L.strefa.nazwa} · ${L.stan}`}</small></span></div>`).join("");
+  $("#stat").innerHTML = `Kolizje: <b>${stat.kolizje}</b> · Błędy odczepienia: <b>${stat.bledy}</b> · Przeciążenia: <b>${stat.przeciazenia}</b>`;
+}
+rysujListe();
+function podsumowanie() {
+  const czas = Math.round((stat.koniec - stat.start) / 1000), sr = ladunki.reduce((s, L) => s + L.dokladnosc, 0) / ladunki.length;
+  let pkt = 100 - stat.kolizje * 10 - stat.bledy * 5 - stat.przeciazenia * 3 - Math.max(0, sr - 0.3) * 20 - Math.max(0, czas - 420) / 20;
+  pkt = Math.max(0, Math.round(pkt));
+  const ocena = pkt >= 95 ? 6 : pkt >= 85 ? 5 : pkt >= 70 ? 4 : pkt >= 55 ? 3 : pkt >= 40 ? 2 : 1;
+  $("#koniecTresc").innerHTML = `<h1>🏁 Wszystkie ładunki na miejscu!</h1>
+    <table><tr><td>Czas pracy</td><td>${String(Math.floor(czas / 60)).padStart(2, "0")}:${String(czas % 60).padStart(2, "0")}</td></tr>
+    <tr><td>Średnia odchyłka od środka strefy</td><td>${(sr * 100).toFixed(0)} cm</td></tr><tr><td>Kolizje ładunku (−10 pkt)</td><td>${stat.kolizje}</td></tr>
+    <tr><td>Próby odczepienia w powietrzu (−5 pkt)</td><td>${stat.bledy}</td></tr><tr><td>Zadziałania ogranicznika udźwigu (−3 pkt)</td><td>${stat.przeciazenia}</td></tr>
+    <tr><td><b>Wynik</b></td><td><b>${pkt} / 100 · ocena ${ocena}</b></td></tr></table>
+    <div class="rzad"><button class="btn-d" onclick="location.reload()">↺ Jeszcze raz</button><button class="btn-d jasny" id="kKopiuj">📋 Kopiuj wynik</button></div>`;
+  $("#koniec").hidden = false;
+  $("#kKopiuj").onclick = () => navigator.clipboard?.writeText(`Operator żurawia: ${pkt}/100, ocena ${ocena}, czas ${czas} s, kolizje ${stat.kolizje}, błędy ${stat.bledy}, przeciążenia ${stat.przeciazenia}`);
+}
+let tKom; function komunikat(t, k = "") { const e = $("#kom"); e.textContent = t; e.className = k; e.style.display = "block"; clearTimeout(tKom); tKom = setTimeout(() => e.style.display = "none", 3500); }
+
+/* ------------------------------------------------------------ dźwięk */
+let ac, silnik, silnikG;
+function startDzwieku() { try { ac ??= new AudioContext(); ac.resume(); if (!silnik) { silnik = ac.createOscillator(); silnik.type = "sawtooth"; silnik.frequency.value = 55; const f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 300; silnikG = ac.createGain(); silnikG.gain.value = 0; silnik.connect(f); f.connect(silnikG); silnikG.connect(ac.destination); silnik.start(); } } catch {} }
+function dzwiekSilnika(v) { if (!silnik) return; silnikG.gain.setTargetAtTime(przel.zasilanie ? 0.015 + Math.min(1, v) * 0.06 : 0, ac.currentTime, 0.1); silnik.frequency.setTargetAtTime(50 + Math.min(1, v) * 45, ac.currentTime, 0.2); }
+function dzwiek(rodzaj) {
+  try { ac ??= new AudioContext(); const t = ac.currentTime, ton = (f, d, typ = "square", g = 0.12, od = 0) => { const o = ac.createOscillator(), gg = ac.createGain(); o.type = typ; o.frequency.value = f; o.connect(gg); gg.connect(ac.destination); gg.gain.setValueAtTime(g, t + od); gg.gain.exponentialRampToValueAtTime(0.001, t + od + d); o.start(t + od); o.stop(t + od + d + 0.02); };
+    if (rodzaj === "sygnal") { ton(392, 0.7, "sawtooth", 0.12); ton(494, 0.7, "sawtooth", 0.1); }
+    else if (rodzaj === "alarm") { ton(880, 0.15); ton(880, 0.15, "square", 0.12, 0.25); }
+    else if (rodzaj === "uderzenie") ton(70, 0.4, "triangle", 0.4);
+    else if (rodzaj === "ok") { ton(660, 0.12, "sine", 0.15); ton(990, 0.2, "sine", 0.15, 0.1); }
+    else if (rodzaj === "blad") ton(220, 0.25, "square", 0.1);
+    else ton(1200, 0.03, "square", 0.05);
+  } catch {}
+}
+
+/* ------------------------------------------------------------ dłonie przed kamerą */
+const cv = $("#rece"), g2 = cv.getContext("2d"), wideo = $("#podglad");
+function plotno() { const d = devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; g2.setTransform(d, 0, 0, d, 0, 0); }
+const naEkran = p => ({ x: p.x * innerWidth, y: p.y * innerHeight });
+const KOLOR = { Prawa: [76, 201, 240], Lewa: [255, 140, 90] }, reka = {};
+let nadPop = new Set();
+function ramka(dlonie) {
+  g2.clearRect(0, 0, innerWidth, innerHeight);
+  const nad = new Set();
+  for (const d of dlonie) {
+    const P = d.punkty.map(naEkran), c = naEkran(d.chwyt), r = reka[d.strona] || (reka[d.strona] = { trzyma: null });
+    const el = document.elementFromPoint(c.x, c.y), baza = el?.closest(".baza"), btn = el?.closest(".prz, .stop, .btn-d");
+    if (baza) nad.add(baza.querySelector(".galka")); if (btn) nad.add(btn);
+    if (d.szczypie && !r.trzyma) {
+      if (baza) { const j = baza === joy.L.el ? joy.L : joy.R; j.trzyma = d.strona; j.galka.classList.add("trzym"); r.trzyma = j; j.ustaw(c.x, c.y); }
+      else if (btn) { btn.classList.add("klik"); setTimeout(() => btn.classList.remove("klik"), 140); btn.click(); r.trzyma = "przycisk"; }
+      else r.trzyma = "nic";
+    } else if (!d.szczypie && r.trzyma) { if (r.trzyma.pusc && r.trzyma.trzyma === d.strona) r.trzyma.pusc(); r.trzyma = null; }
+    else if (r.trzyma?.ustaw) r.trzyma.ustaw(c.x, c.y);
+    rysujDlon(g2, P, KOLOR[d.strona] || KOLOR.Prawa, { szczypie: d.szczypie, nadCzyms: !!(baza || btn) });
+  }
+  for (const s of Object.keys(reka)) if (!dlonie.some(d => d.strona === s)) { if (reka[s].trzyma?.pusc) reka[s].trzyma.pusc(); delete reka[s]; }
+  for (const e of nadPop) if (!nad.has(e)) e.classList.remove("nad"); for (const e of nad) e.classList.add("nad"); nadPop = nad;
+}
+
+/* ------------------------------------------------------------ start i pętla */
+async function start(zKamera) {
+  if (zKamera) {
+    try { if (!window.__symulacjaDloni) { await kamera(wideo); document.body.classList.add("kamera"); }
+      await uruchomDlonie({ video: wideo, onRamka: ramka, symulacja: window.__symulacjaDloni || null });
+    } catch (e) { alert(/Permission|NotAllowed/i.test(e.name + e.message) ? "Brak dostępu do kamery – zezwól na kamerę albo wybierz mysz." : "Nie udało się: " + e.message); return; }
+  }
+  $("#start").hidden = true;
+}
+$("#sKamera").onclick = () => start(true);
+$("#sMysz").onclick = () => start(false);
+rozmiar(); addEventListener("resize", rozmiar);
+let poprz = performance.now();
+renderer.setAnimationLoop(() => {
+  const t = performance.now(), dt = Math.min(0.05, (t - poprz) / 1000); poprz = t;
+  krok(dt, t); ustawKamere(dt); rysujWskazniki();
+  if (stat.start && !stat.koniec) { const s = Math.round((t - stat.start) / 1000); $("#czas").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; }
+  renderer.render(scene, cam);
+});
+window.__dzwigTest = { z, przel, ladunki: () => ladunki.map(L => ({ id: L.id, stan: L.stan, poz: L.mesh.position.toArray() })), zaczepiony: () => zaczepiony?.id || null, stat, wej, hak, pozycjaHaka: () => pozycjaHaka().toArray(), sztucznaDlon, wynikSymulacji,
+  ustaw: o => { Object.assign(z, o); z.o.set(0, 0); z.ov.set(0, 0); z.wozekPop = null; }, joyL: () => { const r = joy.L.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, joyR: () => { const r = joy.R.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; } };
+window.__dzwigGotowy = true;
+</script>
+</body>
+</html>
