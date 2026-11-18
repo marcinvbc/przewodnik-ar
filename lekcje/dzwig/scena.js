@@ -54,22 +54,22 @@ export function zbudujScene(scene) {
   const kont = new THREE.MeshStandardMaterial({ color: "#2f6fa3", roughness: 0.6, metalness: 0.2 });
   dodajBlok(6, 2.7, 2.5, -22, -24, kont); dodajBlok(6, 2.7, 2.5, -22, -24, kont, 2.7);
   // wieża żurawia: fundament + maszt (stały), część obrotowa
-  dodajBlok(5, 1, 5, 0, 0, beton);
+  dodajBlok(5, 1, 5, 0, 0, beton).name = "Fundament";
   const zolty = new THREE.MeshStandardMaterial({ color: "#f2b705", roughness: 0.55, metalness: 0.3 });
-  const mast = new THREE.Mesh(maszt(WIEZA - 1), zolty); mast.position.set(-0.9, 1, -0.9); mast.castShadow = true;
+  const mast = new THREE.Mesh(maszt(WIEZA - 1), zolty); mast.position.set(-0.9, 1, -0.9); mast.castShadow = true; mast.name = "Maszt";
   mast.geometry.translate(0, 0, 0); scene.add(mast);
   przeszkody.push(new THREE.Box3(new THREE.Vector3(-1.2, 0, -1.2), new THREE.Vector3(1.2, WIEZA, 1.2)));
   const obrot = new THREE.Group(); obrot.position.y = WIEZA; scene.add(obrot);
-  const jib = new THREE.Mesh(kratownica(WYSIEG + 2, 1.6, 1.6, 2.2), zolty); jib.position.set(-1, WYS_WYSIEGU - WIEZA - 0.8, 0); jib.castShadow = true; obrot.add(jib);
-  const przeciw = new THREE.Mesh(kratownica(13, 1.6, 1.0, 2.2), zolty); przeciw.rotation.y = Math.PI; przeciw.position.set(-1, WYS_WYSIEGU - WIEZA - 0.8, 0); obrot.add(przeciw);
-  const balast = new THREE.Mesh(new THREE.BoxGeometry(3.5, 2.4, 2.2), beton); balast.position.set(-12, WYS_WYSIEGU - WIEZA - 1.6, 0); balast.castShadow = true; obrot.add(balast);
-  const wciagarka = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.2, 1.6), new THREE.MeshStandardMaterial({ color: "#555", metalness: 0.5, roughness: 0.4 })); wciagarka.position.set(-7, WYS_WYSIEGU - WIEZA - 0.2, 0); obrot.add(wciagarka);
-  const czubek = new THREE.Mesh(maszt(6, 1.4, 2), zolty); czubek.position.set(-0.7, 0.4, -0.7); obrot.add(czubek);
+  const jib = new THREE.Mesh(kratownica(WYSIEG + 2, 1.6, 1.6, 2.2), zolty); jib.position.set(-1, WYS_WYSIEGU - WIEZA - 0.8, 0); jib.castShadow = true; jib.name = "Wysięgnik"; obrot.add(jib);
+  const przeciw = new THREE.Mesh(kratownica(13, 1.6, 1.0, 2.2), zolty); przeciw.rotation.y = Math.PI; przeciw.position.set(-1, WYS_WYSIEGU - WIEZA - 0.8, 0); przeciw.name = "Przeciwwysięgnik"; obrot.add(przeciw);
+  const balast = new THREE.Mesh(new THREE.BoxGeometry(3.5, 2.4, 2.2), beton); balast.position.set(-12, WYS_WYSIEGU - WIEZA - 1.6, 0); balast.castShadow = true; balast.name = "Balast (przeciwwaga)"; obrot.add(balast);
+  const wciagarka = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.2, 1.6), new THREE.MeshStandardMaterial({ color: "#555", metalness: 0.5, roughness: 0.4 })); wciagarka.position.set(-7, WYS_WYSIEGU - WIEZA - 0.2, 0); wciagarka.name = "Wciągarka"; obrot.add(wciagarka);
+  const czubek = new THREE.Mesh(maszt(6, 1.4, 2), zolty); czubek.position.set(-0.7, 0.4, -0.7); czubek.name = "Wierzchołek wieży"; obrot.add(czubek);
   // cięgna czubka
   const ciegnoMat = new THREE.LineBasicMaterial({ color: "#333" });
   for (const x of [26, -12]) obrot.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 6.3, 0), new THREE.Vector3(x, WYS_WYSIEGU - WIEZA + 0.8, 0)]), ciegnoMat));
   // kabina operatora (przy maszcie, z przodu, pod wysięgnikiem)
-  const kabina = new THREE.Group(); kabina.position.set(1.3, -0.4, 1.4); obrot.add(kabina);
+  const kabina = new THREE.Group(); kabina.name = "Kabina operatora"; kabina.position.set(1.3, -0.4, 1.4); obrot.add(kabina);
   const szyba = new THREE.MeshStandardMaterial({ color: "#9ec3d6", transparent: true, opacity: 0.18, roughness: 0.05, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false });
   const rama = new THREE.MeshStandardMaterial({ color: "#d9a800", roughness: 0.5, metalness: 0.3 });
   const kab = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.3, 1.8), szyba); kab.position.y = 1.15; kabina.add(kab);
@@ -78,8 +78,8 @@ export function zbudujScene(scene) {
   const podloga = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.06, 1.7), new THREE.MeshStandardMaterial({ color: "#7fa7b8", transparent: true, opacity: 0.18, depthWrite: false })); podloga.position.y = 0.04; kabina.add(podloga);
   // wózek, lina, hak
   const wozek = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 1.8), new THREE.MeshStandardMaterial({ color: "#444", metalness: 0.5, roughness: 0.4 }));
-  wozek.position.y = WYS_WYSIEGU - WIEZA - 1.05; obrot.add(wozek);
-  const hak = new THREE.Group();
+  wozek.position.y = WYS_WYSIEGU - WIEZA - 1.05; wozek.name = "Wózek"; obrot.add(wozek);
+  const hak = new THREE.Group(); hak.name = "Zblocze z hakiem";
   const blok = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.45), new THREE.MeshStandardMaterial({ color: "#f2b705", roughness: 0.5 })); blok.castShadow = true; hak.add(blok);
   const zakrzywiony = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.07, 10, 20, Math.PI * 1.4), new THREE.MeshStandardMaterial({ color: "#555", metalness: 0.6, roughness: 0.3 }));
   zakrzywiony.position.y = -0.7; zakrzywiony.rotation.z = -Math.PI * 0.2; hak.add(zakrzywiony);

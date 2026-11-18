@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wyniki – operator żurawia · Lekcje AR</title>
+<script src="../wersja.js"></script>
+<style>
+  :root { --surface: #fcfcfb; --tlo: #f1efe9; --t1: #0b0b0b; --t2: #52514e; --t3: #8a8984; --siatka: #e4e2dc; --A: #2a78d6; --B: #eb6834; --inni: #c9c7c0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--tlo); color: var(--t1); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { background: #20262b; color: #fff; padding: 14px 22px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 20px; } header .prawo { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  header a, .btn { border: 0; border-radius: 10px; padding: 7px 12px; font: 600 13px system-ui; background: #fff; color: #20262b; cursor: pointer; text-decoration: none; }
+  .btn.ciemny { background: #20262b; color: #fff; } .btn.cichy { background: transparent; border: 1px solid #c9c7c0; }
+  main { max-width: 1180px; margin: 0 auto; padding: 18px 22px 40px; }
+  .filtry { display: flex; gap: 14px; align-items: end; flex-wrap: wrap; background: var(--surface); border-radius: 14px; padding: 12px 16px; }
+  .filtry label { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--t2); font-weight: 600; }
+  .filtry select { font: 14px system-ui; padding: 6px 8px; border-radius: 8px; border: 1px solid #c9c7c0; min-width: 250px; background: #fff; }
+  .kropka { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .kafle { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+  .kafel { background: var(--surface); border-radius: 14px; padding: 12px 14px; }
+  .kafel h3 { margin: 0 0 6px; font-size: 12px; color: var(--t2); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .kafel .w { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--t2); }
+  .kafel .w b { font-size: 22px; color: var(--t1); font-variant-numeric: tabular-nums; }
+  .kafel .roz { margin-top: 4px; font-size: 12.5px; color: var(--t2); border-top: 1px solid var(--siatka); padding-top: 5px; }
+  .karta { background: var(--surface); border-radius: 14px; padding: 14px 16px; margin-top: 14px; }
+  .karta h2 { margin: 0 0 2px; font-size: 16px; } .karta .pod { margin: 0 0 8px; color: var(--t2); font-size: 13px; }
+  .dwa { display: grid; grid-template-columns: 1.15fr 1fr; gap: 14px; } .dwa .karta { margin-top: 14px; }
+  .legenda { display: flex; gap: 14px; font-size: 12.5px; color: var(--t2); margin-bottom: 4px; flex-wrap: wrap; }
+  svg text { font-family: system-ui, sans-serif; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th { text-align: left; font-size: 12px; color: var(--t2); font-weight: 600; border-bottom: 1px solid var(--siatka); padding: 6px; cursor: pointer; white-space: nowrap; }
+  td { padding: 6px; border-bottom: 1px solid #efede7; } td.n, th.n { text-align: right; }
+  tr.selA td:first-child { box-shadow: inset 4px 0 var(--A); } tr.selB td:first-child { box-shadow: inset 4px 0 var(--B); }
+  .mini { border: 1px solid #c9c7c0; background: #fff; border-radius: 6px; font: 600 11px system-ui; padding: 2px 7px; cursor: pointer; margin-right: 3px; }
+  .mini.usun.potw { background: #c0392b; color: #fff; border-color: #c0392b; }
+  #tip { position: fixed; pointer-events: none; background: #20262b; color: #fff; border-radius: 8px; padding: 6px 9px; font-size: 12.5px; display: none; z-index: 10; max-width: 260px; }
+  .pusto { text-align: center; padding: 40px 20px; background: var(--surface); border-radius: 14px; margin-top: 14px; color: var(--t2); }
+  dialog { border: 0; border-radius: 16px; padding: 18px 20px; width: min(560px, 94vw); } dialog textarea { width: 100%; height: 120px; font: 12px ui-monospace, monospace; }
+  .info { font-size: 12.5px; color: var(--t2); margin-top: 6px; }
+  @media (max-width: 900px) { .kafle { grid-template-columns: 1fr 1fr; } .dwa { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>📊 Operator żurawia – porównanie wyników</h1>
+  <span class="prawo">
+    <button class="btn" id="bKod">📋 Wklej kod wyniku</button>
+    <label class="btn" style="margin:0">📂 Wczytaj plik<input type="file" id="plik" accept=".json,application/json" hidden></label>
+    <button class="btn" id="bCsv">⬇ CSV</button><button class="btn" id="bJson">⬇ JSON</button>
+    <a href="dzwig.html">🏗 Do lekcji</a><a href="../">← Start</a>
+  </span>
+</header>
+<main>
+  <div id="brak" class="pusto" hidden>
+    <p style="font-size:16px"><b>Nie ma jeszcze żadnych wyników.</b></p>
+    <p>Wyniki pojawiają się tu po ukończeniu lekcji <a href="dzwig.html">Operator żurawia</a> na tym komputerze. Wyniki z innych komputerów dodasz przyciskiem <b>Wklej kod wyniku</b> albo <b>Wczytaj plik</b>.</p>
+    <p><button class="btn ciemny" id="bDemo">Pokaż na danych przykładowych</button></p>
+  </div>
+  <div id="panel" hidden>
+    <div class="filtry">
+      <label><span><i class="kropka" style="background:var(--A)"></i>Uczestnik A</span><select id="selA"></select></label>
+      <label><span><i class="kropka" style="background:var(--B)"></i>Uczestnik B</span><select id="selB"></select></label>
+      <span class="info" id="infoDemo"></span>
+    </div>
+    <div class="kafle" id="kafle"></div>
+    <div class="dwa">
+      <div class="karta"><h2>Czas na każde zlecenie</h2><p class="pod">Od pierwszego zaczepienia ładunku do odstawienia go w strefie (sekundy).</p><div class="legenda" id="leg1"></div><div id="wykZlecenia"></div></div>
+      <div class="karta"><h2>Gdzie uciekał czas</h2><p class="pod">Różnica B − A na każdym zleceniu: słupek w prawo = B wolniej, w lewo = B szybciej.</p><div id="wykRoznica"></div><div id="wniosek" class="info"></div></div>
+    </div>
+    <div class="karta"><h2>Wszyscy uczestnicy – czas całkowity</h2><p class="pod">Od najszybszego. Wybrani uczestnicy są wyróżnieni kolorem.</p><div id="wykWszyscy"></div></div>
+    <div class="karta"><h2>Szczegóły zleceń</h2><div id="tabZlecenia"></div></div>
+    <div class="karta"><h2>Wszystkie wyniki</h2><p class="pod">Kliknij nagłówek, by posortować. Przyciski A / B wybierają uczestnika do porównania.</p><div id="tabWszyscy"></div></div>
+  </div>
+</main>
+<div id="tip"></div>
+<dialog id="dlg"><h3 style="margin-top:0">Wklej kod wyniku</h3><p class="info">Kod pojawia się na ekranie końcowym lekcji (zaczyna się od <code>DZWIG1:</code>). Możesz wkleić kilka kodów naraz – każdy w osobnej linii.</p><textarea id="kody"></textarea><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="btn cichy" id="dAnuluj">Anuluj</button><button class="btn ciemny" id="dDodaj">Dodaj</button></div><p class="info" id="dInfo"></p></dialog>
+
+<script>
+const KLUCZ = "dzwig-wyniki", $ = s => document.querySelector(s);
+const ZLEC = [["cegly", "Paleta cegieł", "A"], ["belka", "Belka stalowa", "B"], ["kontener", "Kontener na gruz", "C"], ["zbiornik", "Zbiornik z wodą", "D"]];
+let wyniki = [], demo = false, sort = { k: "czas_s", r: 1 };
+const wczytaj = () => { try { return JSON.parse(localStorage.getItem(KLUCZ) || "[]"); } catch { return []; } };
+const zapisz = () => { if (!demo) try { localStorage.setItem(KLUCZ, JSON.stringify(wyniki)); } catch {} };
+const mmss = s => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+const data = d => new Date(d).toLocaleString("pl-PL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const etykieta = w => `${w.uczestnik} · ${data(w.data)} · ${mmss(w.czas_s)}`;
+const poprawny = w => w && typeof w.uczestnik === "string" && Number.isFinite(w.czas_s) && Array.isArray(w.zlecenia);
+
+function przyklad() {   // dane przykładowe – wyraźnie oznaczone, nie trafiają do pamięci
+  const los = (a => () => (a = (a * 16807) % 2147483647) / 2147483647)(42);
+  const osoby = [["Uczestnik 1", 1.0], ["Uczestnik 2", 1.25], ["Uczestnik 3", 0.9], ["Uczestnik 4", 1.45], ["Uczestnik 5", 1.1]];
+  const baza = { cegly: 70, belka: 95, kontener: 85, zbiornik: 60 };
+  return osoby.map(([u, f], i) => {
+    const z = ZLEC.map(([id, nazwa, st], k) => { const kol = los() < 0.18 * f ? 1 : 0, bl = los() < 0.1 * f ? 1 : 0; return { id, nazwa, strefa: st, masa: [1.4, 2.2, 3.6, 5.5][k], czas_s: Math.round(baza[id] * f * (0.8 + los() * 0.45)), kolejnosc: k + 1, odchylka_cm: Math.round(15 + los() * 40 * f), proby: 1 + bl, kolizje: kol, bledy: bl, przeciazenia: id === "zbiornik" && los() < 0.4 * f ? 1 : 0 }; });
+    const czas = z.reduce((s, q) => s + q.czas_s, 0) + Math.round(20 + los() * 30), kol = z.reduce((s, q) => s + q.kolizje, 0), bl = z.reduce((s, q) => s + q.bledy, 0), pr = z.reduce((s, q) => s + q.przeciazenia, 0), od = Math.round(z.reduce((s, q) => s + q.odchylka_cm, 0) / 4);
+    const pkt = Math.max(0, Math.round(100 - kol * 10 - bl * 5 - pr * 3 - Math.max(0, od / 100 - 0.3) * 20 - Math.max(0, czas - 420) / 20));
+    return { v: 1, id: "demo" + i, uczestnik: u, data: new Date(Date.now() - (5 - i) * 3600e3).toISOString(), sterowanie: i % 2 ? "dłonie" : "mysz/klawiatura", czas_s: czas, punkty: pkt, ocena: pkt >= 95 ? 6 : pkt >= 85 ? 5 : pkt >= 70 ? 4 : pkt >= 55 ? 3 : pkt >= 40 ? 2 : 1, kolizje: kol, bledy: bl, przeciazenia: pr, odchylka_cm: od, zlecenia: z };
+  });
+}
+
+/* ---------- import / eksport ---------- */
+function dodaj(lista) { let n = 0; for (const w of lista) if (poprawny(w) && !wyniki.some(q => q.id === w.id)) { wyniki.push(w); n++; } if (n && demo) { demo = false; wyniki = wyniki.filter(w => !String(w.id).startsWith("demo")); } zapisz(); odswiez(); return n; }
+function dekoduj(t) { const out = []; for (const m of t.matchAll(/DZWIG1:([A-Za-z0-9+/=]+)/g)) try { out.push(JSON.parse(decodeURIComponent(escape(atob(m[1]))))); } catch {} return out; }
+$("#bKod").onclick = () => { $("#kody").value = ""; $("#dInfo").textContent = ""; $("#dlg").showModal(); };
+$("#dAnuluj").onclick = () => $("#dlg").close();
+$("#dDodaj").onclick = () => { const l = dekoduj($("#kody").value); if (!l.length) { $("#dInfo").textContent = "Nie rozpoznano kodu – skopiuj cały tekst zaczynający się od DZWIG1:"; return; } const n = dodaj(l); $("#dInfo").textContent = `Dodano: ${n}${l.length - n ? ` (pominięto ${l.length - n} – już były)` : ""}.`; if (n) setTimeout(() => $("#dlg").close(), 700); };
+$("#plik").onchange = async e => { const f = e.target.files[0]; if (!f) return; try { const t = await f.text(); const j = t.trim().startsWith("[") || t.trim().startsWith("{") ? JSON.parse(t) : dekoduj(t); dodaj(Array.isArray(j) ? j : [j]); } catch { alert("To nie jest plik wyników żurawia (JSON)."); } e.target.value = ""; };
+const pobierz = (nazwa, tresc, typ) => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([tresc], { type: typ })); a.download = nazwa; a.click(); };
+$("#bJson").onclick = () => pobierz("dzwig-wyniki.json", JSON.stringify(wyniki, null, 1), "application/json");
+$("#bCsv").onclick = () => {
+  const kol = ["uczestnik", "data", "sterowanie", "czas_s", "punkty", "ocena", "kolizje", "bledy", "przeciazenia", "odchylka_cm", ...ZLEC.flatMap(([id]) => [`${id}_czas_s`, `${id}_odchylka_cm`])];
+  const w = wyniki.map(r => { const z = Object.fromEntries(r.zlecenia.map(q => [q.id, q])); return [r.uczestnik, r.data, r.sterowanie, r.czas_s, r.punkty, r.ocena, r.kolizje, r.bledy, r.przeciazenia, r.odchylka_cm, ...ZLEC.flatMap(([id]) => [z[id]?.czas_s ?? "", z[id]?.odchylka_cm ?? ""])]; });
+  pobierz("dzwig-wyniki.csv", "﻿" + [kol, ...w].map(r => r.map(v => /[;"\n]/.test(v) ? `"${String(v).replace(/"/g, '""')}"` : v).join(";")).join("\n"), "text/csv");
+};
+$("#bDemo").onclick = () => { demo = true; wyniki = przyklad(); odswiez(); };
+
+/* ---------- podpowiedź ---------- */
+const tip = $("#tip");
+document.addEventListener("pointermove", e => { const t = e.target.closest("[data-tip]"); if (!t) { tip.style.display = "none"; return; } tip.innerHTML = t.dataset.tip; tip.style.display = "block"; tip.style.left = Math.min(innerWidth - tip.offsetWidth - 8, e.clientX + 14) + "px"; tip.style.top = (e.clientY + 14) + "px"; });
+
+/* ---------- wykresy (SVG) ---------- */
+const skala = m => { const k = [5, 10, 20, 25, 30, 50, 60, 100, 120, 200, 300, 600]; const krok = k.find(s => m / s <= 5) || 600; return { max: Math.max(krok, Math.ceil(m / krok) * krok), krok }; };
+function slupkiGrupowane(el, kat, serie) {     // poziome słupki: kategorie × (A,B)
+  const W = el.clientWidth || 520, lewy = 150, prawy = 46, h = 16, odst = 4, grupa = serie.length * (h + odst) + 14, H = kat.length * grupa + 26;
+  const { max, krok } = skala(Math.max(1, ...serie.flatMap(s => s.wart)));
+  const x = v => lewy + (W - lewy - prawy) * v / max; let s = `<svg width="${W}" height="${H}" role="img" aria-label="Czas na każde zlecenie">`;
+  for (let v = 0; v <= max; v += krok) s += `<line x1="${x(v)}" x2="${x(v)}" y1="0" y2="${H - 20}" stroke="var(--siatka)"/><text x="${x(v)}" y="${H - 5}" font-size="11" fill="var(--t3)" text-anchor="middle">${v}</text>`;
+  kat.forEach((k, i) => {
+    const y0 = i * grupa + 4; s += `<text x="${lewy - 10}" y="${y0 + grupa / 2 - 4}" font-size="12.5" fill="var(--t1)" text-anchor="end" dominant-baseline="middle">${esc(k)}</text>`;
+    serie.forEach((se, j) => { const v = se.wart[i], y = y0 + j * (h + odst), w = Math.max(2, x(v) - lewy);
+      s += `<g data-tip="<b>${esc(k)}</b><br>${esc(se.nazwa)}: ${v} s"><rect x="${lewy}" y="${y - 2}" width="${W - lewy}" height="${h + 4}" fill="transparent"/><path d="M${lewy},${y}h${w - 4}a4,4 0 0 1 4,4v${h - 8}a4,4 0 0 1 -4,4h${-(w - 4)}z" fill="${se.kolor}"/><text x="${lewy + w + 6}" y="${y + h / 2}" font-size="12" fill="var(--t2)" dominant-baseline="middle">${v} s</text></g>`; });
+  });
+  el.innerHTML = s + "</svg>";
+}
+function roznice(el, kat, d) {                 // słupki rozbieżne wokół zera
+  const W = el.clientWidth || 440, lewy = 150, prawy = 50, h = 20, odst = 12, H = kat.length * (h + odst) + 26, m = Math.max(5, ...d.map(Math.abs));
+  const { max, krok } = skala(m), srodek = lewy + (W - lewy - prawy) / 2, x = v => srodek + (W - lewy - prawy) / 2 * v / max;
+  let s = `<svg width="${W}" height="${H}" role="img" aria-label="Różnica czasu B minus A">`;
+  for (let v = -max; v <= max; v += krok) s += `<line x1="${x(v)}" x2="${x(v)}" y1="0" y2="${H - 20}" stroke="${v === 0 ? "var(--t3)" : "var(--siatka)"}"/><text x="${x(v)}" y="${H - 5}" font-size="11" fill="var(--t3)" text-anchor="middle">${v > 0 ? "+" : ""}${v}</text>`;
+  kat.forEach((k, i) => { const v = d[i], y = i * (h + odst) + 6, x0 = Math.min(x(0), x(v)), w = Math.max(2, Math.abs(x(v) - x(0)));
+    s += `<g data-tip="<b>${esc(k)}</b><br>${v > 0 ? `B wolniej o ${v} s` : v < 0 ? `B szybciej o ${-v} s` : "tyle samo"}"><rect x="${lewy}" y="${y - 3}" width="${W - lewy}" height="${h + 6}" fill="transparent"/><text x="${lewy - 10}" y="${y + h / 2}" font-size="12.5" fill="var(--t1)" text-anchor="end" dominant-baseline="middle">${esc(k)}</text>
+      <rect x="${x0}" y="${y}" width="${w}" height="${h}" rx="4" fill="${v > 0 ? "var(--B)" : "var(--A)"}"/><text x="${v >= 0 ? x0 + w + 5 : x0 - 5}" y="${y + h / 2}" font-size="12" fill="var(--t2)" text-anchor="${v >= 0 ? "start" : "end"}" dominant-baseline="middle">${v > 0 ? "+" : ""}${v} s</text></g>`; });
+  el.innerHTML = s + "</svg>";
+}
+function ranking(el, lista, a, b) {
+  const W = el.clientWidth || 900, lewy = 200, prawy = 60, h = 18, odst = 6, H = lista.length * (h + odst) + 26, { max, krok } = skala(Math.max(...lista.map(w => w.czas_s)));
+  const x = v => lewy + (W - lewy - prawy) * v / max; let s = `<svg width="${W}" height="${H}" role="img" aria-label="Czas całkowity wszystkich uczestników">`;
+  for (let v = 0; v <= max; v += krok) s += `<line x1="${x(v)}" x2="${x(v)}" y1="0" y2="${H - 20}" stroke="var(--siatka)"/><text x="${x(v)}" y="${H - 5}" font-size="11" fill="var(--t3)" text-anchor="middle">${mmss(v)}</text>`;
+  lista.forEach((w, i) => { const y = i * (h + odst) + 4, kol = w.id === a?.id ? "var(--A)" : w.id === b?.id ? "var(--B)" : "var(--inni)", szer = Math.max(2, x(w.czas_s) - lewy);
+    s += `<g data-tip="<b>${esc(w.uczestnik)}</b> (${data(w.data)})<br>czas ${mmss(w.czas_s)} · ${w.punkty} pkt · ocena ${w.ocena}<br>kolizje ${w.kolizje}, błędy ${w.bledy}"><rect x="0" y="${y - 3}" width="${W}" height="${h + 6}" fill="transparent"/><text x="${lewy - 10}" y="${y + h / 2}" font-size="12.5" fill="var(--t1)" text-anchor="end" dominant-baseline="middle" font-weight="${kol === "var(--inni)" ? 400 : 700}">${i + 1}. ${esc(w.uczestnik.length > 22 ? w.uczestnik.slice(0, 21) + "…" : w.uczestnik)}</text>
+      <path d="M${lewy},${y}h${szer - 4}a4,4 0 0 1 4,4v${h - 8}a4,4 0 0 1 -4,4h${-(szer - 4)}z" fill="${kol}"/><text x="${lewy + szer + 6}" y="${y + h / 2}" font-size="12" fill="var(--t2)" dominant-baseline="middle">${mmss(w.czas_s)}</text></g>`; });
+  el.innerHTML = s + "</svg>";
+}
+
+/* ---------- widok ---------- */
+function opcje(sel, wartosc) { sel.innerHTML = wyniki.map(w => `<option value="${esc(w.id)}">${esc(etykieta(w))}</option>`).join(""); sel.value = wartosc; }
+function kafel(tytul, a, b, f, nizejLepiej = true, jedn = "") {
+  const va = f(a), vb = f(b), d = vb - va, lepszy = d === 0 ? "" : (nizejLepiej ? d < 0 : d > 0) ? "B" : "A";
+  const fmt = v => jedn === "mmss" ? mmss(v) : v + jedn;
+  return `<div class="kafel"><h3>${tytul}</h3><div class="w"><span><i class="kropka" style="background:var(--A)"></i>A</span><b>${fmt(va)}</b></div><div class="w"><span><i class="kropka" style="background:var(--B)"></i>B</span><b>${fmt(vb)}</b></div>
+    <div class="roz">${lepszy ? `Lepiej: <b>${lepszy}</b> o ${jedn === "mmss" ? `${Math.abs(d)} s` : Math.abs(d) + jedn}${jedn === "mmss" && va ? ` (${Math.round(Math.abs(d) / Math.max(va, vb) * 100)}%)` : ""}` : "Remis"}</div></div>`;
+}
+function odswiez() {
+  if (!wyniki.length) { $("#brak").hidden = false; $("#panel").hidden = true; return; }
+  $("#brak").hidden = true; $("#panel").hidden = false;
+  $("#infoDemo").innerHTML = demo ? "⚠ <b>Dane przykładowe</b> – po dodaniu prawdziwego wyniku znikną." : `${wyniki.length} wynik(ów) na tym komputerze.`;
+  const selA = $("#selA"), selB = $("#selB"), ida = selA.value && wyniki.some(w => w.id === selA.value) ? selA.value : wyniki[0].id;
+  let idb = selB.value && wyniki.some(w => w.id === selB.value) ? selB.value : (wyniki[1] || wyniki[0]).id;
+  opcje(selA, ida); opcje(selB, idb);
+  const a = wyniki.find(w => w.id === ida), b = wyniki.find(w => w.id === idb);
+  $("#kafle").innerHTML = kafel("Czas całkowity", a, b, w => w.czas_s, true, "mmss") + kafel("Punkty (ocena)", a, b, w => w.punkty, false, " pkt") + kafel("Kolizje + błędy + przeciążenia", a, b, w => w.kolizje + w.bledy + w.przeciazenia, true) + kafel("Średnia odchyłka od środka strefy", a, b, w => w.odchylka_cm, true, " cm");
+  const zl = w => ZLEC.map(([id]) => w.zlecenia.find(q => q.id === id)?.czas_s ?? 0);
+  const kat = ZLEC.map(([, n, s]) => `${n} → ${s}`);
+  $("#leg1").innerHTML = `<span><i class="kropka" style="background:var(--A)"></i>A: ${esc(a.uczestnik)}</span><span><i class="kropka" style="background:var(--B)"></i>B: ${esc(b.uczestnik)}</span>`;
+  slupkiGrupowane($("#wykZlecenia"), kat, [{ nazwa: "A: " + a.uczestnik, kolor: "var(--A)", wart: zl(a) }, { nazwa: "B: " + b.uczestnik, kolor: "var(--B)", wart: zl(b) }]);
+  const d = zl(b).map((v, i) => Math.round((v - zl(a)[i]) * 10) / 10); roznice($("#wykRoznica"), kat, d);
+  const naj = d.reduce((m, v, i) => Math.abs(v) > Math.abs(d[m]) ? i : m, 0);
+  $("#wniosek").innerHTML = a.id === b.id ? "Wybierz dwóch różnych uczestników." : `Największa różnica: <b>${ZLEC[naj][1]}</b> – ${d[naj] > 0 ? `B potrzebował(a) o ${d[naj]} s więcej` : `B był(a) szybszy(a) o ${-d[naj]} s`}. Łącznie ${b.czas_s - a.czas_s > 0 ? `B wolniej o ${b.czas_s - a.czas_s} s` : b.czas_s < a.czas_s ? `B szybciej o ${a.czas_s - b.czas_s} s` : "remis"}.`;
+  ranking($("#wykWszyscy"), [...wyniki].sort((p, q) => p.czas_s - q.czas_s), a, b);
+  const z = (w, id) => w.zlecenia.find(q => q.id === id) || {};
+  $("#tabZlecenia").innerHTML = `<table><tr><th>Zlecenie</th><th class="n">Masa</th><th class="n">Czas A</th><th class="n">Czas B</th><th class="n">Odchyłka A</th><th class="n">Odchyłka B</th><th class="n">Kolizje A / B</th><th class="n">Błędy odczep. A / B</th><th class="n">Przeciąż. A / B</th></tr>` +
+    ZLEC.map(([id, n, s]) => { const p = z(a, id), q = z(b, id); return `<tr><td>${n} → strefa ${s}</td><td class="n">${p.masa ?? q.masa ?? ""} t</td><td class="n">${p.czas_s ?? "–"} s</td><td class="n">${q.czas_s ?? "–"} s</td><td class="n">${p.odchylka_cm ?? "–"} cm</td><td class="n">${q.odchylka_cm ?? "–"} cm</td><td class="n">${p.kolizje ?? 0} / ${q.kolizje ?? 0}</td><td class="n">${p.bledy ?? 0} / ${q.bledy ?? 0}</td><td class="n">${p.przeciazenia ?? 0} / ${q.przeciazenia ?? 0}</td></tr>`; }).join("") + "</table>";
+  const KOL = [["uczestnik", "Uczestnik"], ["data", "Data"], ["sterowanie", "Sterowanie"], ["czas_s", "Czas", 1], ["punkty", "Pkt", 1], ["ocena", "Ocena", 1], ["kolizje", "Kolizje", 1], ["bledy", "Błędy", 1], ["przeciazenia", "Przeciąż.", 1], ["odchylka_cm", "Odchyłka", 1]];
+  const lista = [...wyniki].sort((p, q) => (p[sort.k] > q[sort.k] ? 1 : p[sort.k] < q[sort.k] ? -1 : 0) * sort.r);
+  $("#tabWszyscy").innerHTML = `<table><tr>${KOL.map(([k, n, num]) => `<th class="${num ? "n" : ""}" data-sort="${k}">${n}${sort.k === k ? (sort.r > 0 ? " ▲" : " ▼") : ""}</th>`).join("")}<th></th></tr>` +
+    lista.map(w => `<tr class="${w.id === a.id ? "selA" : w.id === b.id ? "selB" : ""}"><td>${esc(w.uczestnik)}</td><td>${data(w.data)}</td><td>${esc(w.sterowanie || "")}</td><td class="n">${mmss(w.czas_s)}</td><td class="n">${w.punkty}</td><td class="n">${w.ocena}</td><td class="n">${w.kolizje}</td><td class="n">${w.bledy}</td><td class="n">${w.przeciazenia}</td><td class="n">${w.odchylka_cm} cm</td>
+      <td style="white-space:nowrap"><button class="mini" data-a="${esc(w.id)}">A</button><button class="mini" data-b="${esc(w.id)}">B</button><button class="mini usun" data-usun="${esc(w.id)}" title="Usuń wynik">✕</button></td></tr>`).join("") + "</table>";
+}
+document.addEventListener("click", e => {
+  const t = e.target;
+  if (t.dataset.sort) { sort = { k: t.dataset.sort, r: sort.k === t.dataset.sort ? -sort.r : 1 }; odswiez(); }
+  else if (t.dataset.a) { $("#selA").value = t.dataset.a; odswiez(); }
+  else if (t.dataset.b) { $("#selB").value = t.dataset.b; odswiez(); }
+  else if (t.dataset.usun) {   // dwa kliknięcia: najpierw potwierdzenie na przycisku
+    if (!t.classList.contains("potw")) { t.classList.add("potw"); t.textContent = "Usuń?"; setTimeout(() => { t.classList.remove("potw"); t.textContent = "✕"; }, 3000); return; }
+    wyniki = wyniki.filter(w => w.id !== t.dataset.usun); zapisz(); odswiez();
+  }
+});
+$("#selA").onchange = $("#selB").onchange = odswiez;
+addEventListener("resize", () => wyniki.length && odswiez());
+wyniki = wczytaj().filter(poprawny);
+if (/[?&]demo/.test(location.search) && !wyniki.length) { demo = true; wyniki = przyklad(); }
+odswiez();
+</script>
+</body>
+</html>

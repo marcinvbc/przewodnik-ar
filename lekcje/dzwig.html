@@ -70,7 +70,7 @@
   <span class="tytul">🏗 Operator żurawia wieżowego</span>
   <span class="pill" id="czas">00:00</span>
   <span class="pill" id="widokNazwa">widok: kabina</span>
-  <span class="prawo"><button class="btn-d" id="bPomoc">❔ Sterowanie</button><a class="btn-d" href="../">← Wróć</a></span>
+  <span class="prawo"><button class="btn-d" id="bPomoc">❔ Sterowanie</button><a class="btn-d" href="dzwig-wyniki.html">📊 Wyniki</a><a class="btn-d" href="../">← Wróć</a></span>
 </div>
 <div class="zadania"><h3>Zlecenia przeniesienia</h3><div id="lista"></div><div class="stat" id="stat"></div></div>
 
@@ -101,6 +101,7 @@
     <li><b>PRECYZJA</b> zwalnia ruchy – do dokładnego odstawiania.</li>
   </ol>
   <div class="klaw">Klawiatura: <kbd>A</kbd>/<kbd>D</kbd> obrót · <kbd>W</kbd>/<kbd>S</kbd> wózek · <kbd>↑</kbd>/<kbd>↓</kbd> hak · <kbd>Spacja</kbd> zaczep/odczep · <kbd>P</kbd> precyzja · <kbd>H</kbd> sygnał · <kbd>C</kbd> widok · <kbd>Esc</kbd> STOP</div>
+  <label style="display:block;margin-top:10px;font-weight:700">Imię lub nr uczestnika <input id="imie" maxlength="40" placeholder="np. Uczestnik 1" style="font:15px system-ui;padding:8px 10px;border-radius:10px;border:1px solid #bbb;width:220px;margin-left:6px"></label>
   <div class="rzad"><button class="btn-d" id="sKamera">🖐 Dłonie przed kamerą</button><button class="btn-d jasny" id="sMysz">🖱 Mysz i klawiatura</button></div>
   <p style="font-size:12.5px;margin-top:10px">Dłońmi: chwyć gałkę joysticka (kciuk + palec wskazujący) i przesuń; puść – wraca do środka. Chwyt na przełączniku = naciśnięcie. Obraz z kamery zostaje na tym komputerze.</p>
 </div></div>
@@ -109,8 +110,8 @@
 <script type="module">
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=33";
-import { zbudujScene, zbudujLadunki, LADUNKI, STREFY, udzwig, WIEZA, WYSIEG, WYS_WYSIEGU, R_MIN } from "./dzwig/scena.js?v=33";
+import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=34";
+import { zbudujScene, zbudujLadunki, LADUNKI, STREFY, udzwig, WIEZA, WYSIEG, WYS_WYSIEGU, R_MIN } from "./dzwig/scena.js?v=34";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.shadowMap.enabled = true; renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -158,7 +159,7 @@ function krok(dt, teraz) {
   if (zaczepiony && zaczepiony.masa > udzwig(z.r) && z.r > stary.r) { z.r = stary.r; z.vR = 0; przeciazony = true; }
   z.hy = Math.max(1.2, Math.min(WYS_WYSIEGU - 2.4, z.hy + z.vH * dt));
   if (przeciazony && z.hy > stary.hy) { z.hy = stary.hy; z.vH = 0; }
-  if (przeciazony && teraz - ostPrzec > 2500) stat.przeciazenia++;
+  if (przeciazony && teraz - ostPrzec > 2500) { stat.przeciazenia++; zaczepiony.przec = (zaczepiony.przec || 0) + 1; }
   if (przeciazony) ostPrzec = teraz;
   if (przeciazony && teraz > alarmDo) { alarmDo = teraz + 900; dzwiek("alarm"); komunikat(`⚠ Ogranicznik udźwigu: ${zaczepiony.nazwa} ${zaczepiony.masa} t, a na wysięgu ${z.r.toFixed(1)} m wolno ${udzwig(z.r).toFixed(1)} t. Przesuń wózek bliżej wieży.`, "zle"); }
   // hak bez ładunku nie wchodzi w przeszkody ani w ziemię
@@ -171,7 +172,7 @@ function krok(dt, teraz) {
       const tylkoOpuszczanie = (() => { const t = { ...z }; z.theta = stary.theta; z.r = stary.r; const bb = boxLadunku(zaczepiony, srodekZawieszonego(pozycjaHaka())); const k = koliduje(bb, zaczepiony); z.theta = t.theta; z.r = t.r; return k; })();
       Object.assign(z, stary); z.vT = z.vR = z.vH = 0;
       if (!tylkoOpuszczanie || b.min.y > podparcie(b, zaczepiony) + 0.3) {
-        if (teraz - ostatniaKolizja > 1500) { stat.kolizje++; dzwiek("uderzenie"); komunikat("💥 Kolizja ładunku! Podnieś go wyżej albo omiń przeszkodę.", "zle"); }
+        if (teraz - ostatniaKolizja > 1500) { stat.kolizje++; zaczepiony.kolizje = (zaczepiony.kolizje || 0) + 1; dzwiek("uderzenie"); komunikat("💥 Kolizja ładunku! Podnieś go wyżej albo omiń przeszkodę.", "zle"); }
         ostatniaKolizja = teraz;
       }
     }
@@ -209,14 +210,14 @@ function hak() {
     for (const L of ladunki) { const top = L.mesh.position.y + L.wym[1] / 2, d = Math.hypot(L.mesh.position.x - h.x, L.mesh.position.z - h.z), v = h.y - 0.95 - top; if (d < 1.3 && v > -0.4 && v < 2.2 && d < nd) { nd = d; naj = L; } }
     if (!naj) { komunikat("Brak ładunku pod hakiem – opuść hak tuż nad środek ładunku (do ok. 2 m)."); dzwiek("blad"); return; }
     zaczepiony = naj; dlZawiesi = Math.max(0.5, Math.min(2.2, h.y - 0.95 - (naj.mesh.position.y + naj.wym[1] / 2)));
-    naj.stan = "w powietrzu"; komunikat(`🔗 Zaczepiono: ${naj.nazwa} (${naj.masa} t). Udźwig na tym wysięgu: ${udzwig(z.r).toFixed(1)} t.`, "dobrze"); dzwiek("klik");
+    naj.stan = "w powietrzu"; naj.t0 ??= performance.now(); naj.proby = (naj.proby || 0) + 1; komunikat(`🔗 Zaczepiono: ${naj.nazwa} (${naj.masa} t). Udźwig na tym wysięgu: ${udzwig(z.r).toFixed(1)} t.`, "dobrze"); dzwiek("klik");
     if (!stat.start) stat.start = performance.now();
   } else {
-    const L = zaczepiony, b = boxLadunku(L, L.mesh.position), pod = podparcie(b, L), nad = b.min.y - pod;
-    if (nad > 0.35) { stat.bledy++; dzwiek("blad"); komunikat(`✋ Ładunek wisi ${nad.toFixed(1)} m nad podłożem. Odczepiaj dopiero po postawieniu – opuść go niżej.`, "zle"); return; }
+    const L = zaczepiony; L.mesh.position.copy(srodekZawieszonego(h)); const b = boxLadunku(L, L.mesh.position), pod = podparcie(b, L), nad = b.min.y - pod;
+    if (nad > 0.35) { stat.bledy++; L.bledy = (L.bledy || 0) + 1; dzwiek("blad"); komunikat(`✋ Ładunek wisi ${nad.toFixed(1)} m nad podłożem. Odczepiaj dopiero po postawieniu – opuść go niżej.`, "zle"); return; }
     L.mesh.position.y = pod + L.wym[1] / 2; zaczepiony = null; z.o.set(0, 0); z.ov.set(0, 0);
     const St = L.strefa, dx = L.mesh.position.x - St.srodek[0], dz = L.mesh.position.z - St.srodek[2], wSt = Math.abs(dx) <= St.wym[0] / 2 + 0.4 && Math.abs(dz) <= St.wym[1] / 2 + 0.4 && Math.abs(pod - St.srodek[1]) < 0.6;
-    if (wSt) { L.stan = "na miejscu"; L.dokladnosc = Math.hypot(dx, dz); dzwiek("ok"); komunikat(`✅ ${L.nazwa} w strefie ${L.cel}! Odchyłka od środka: ${(L.dokladnosc * 100).toFixed(0)} cm.`, "dobrze"); }
+    if (wSt) { L.stan = "na miejscu"; L.dokladnosc = Math.hypot(dx, dz); L.czas = (performance.now() - L.t0) / 1000; L.kolejnosc = ladunki.filter(q => q.stan === "na miejscu").length; dzwiek("ok"); komunikat(`✅ ${L.nazwa} w strefie ${L.cel}! Odchyłka od środka: ${(L.dokladnosc * 100).toFixed(0)} cm.`, "dobrze"); }
     else { L.stan = "odstawiony"; dzwiek("klik"); komunikat(`${L.nazwa} odstawiony – to nie jest strefa ${L.cel}.`); }
     rysujListe();
     if (ladunki.every(q => q.stan === "na miejscu")) { stat.koniec = performance.now(); setTimeout(podsumowanie, 900); }
@@ -309,7 +310,7 @@ function rysujWskazniki() {
     <span>${przel.zasilanie ? (przel.stop ? '<b class="alarm">STOP</b>' : "<b>GOTOWY</b>") : "wyłączony"}</span><span>${przel.precyzja ? "<b>PRECYZJA</b>" : "normalny"}</span>`;
 }
 function rysujListe() {
-  $("#lista").innerHTML = ladunki.map(L => `<div class="z ${L.stan === "na miejscu" ? "ok" : ""}"><i style="background:${L.strefa.kolor}">${L.cel}</i><span><b>${L.nazwa}</b> ${L.masa} t<br><small>${L.stan === "na miejscu" ? `✓ w strefie, odchyłka ${(L.dokladnosc * 100).toFixed(0)} cm` : `→ ${L.strefa.nazwa} · ${L.stan}`}</small></span></div>`).join("");
+  $("#lista").innerHTML = ladunki.map(L => `<div class="z ${L.stan === "na miejscu" ? "ok" : ""}"><i style="background:${L.strefa.kolor}">${L.cel}</i><span><b>${L.nazwa}</b> ${L.masa} t<br><small>${L.stan === "na miejscu" ? `✓ w strefie, ${L.czas.toFixed(0)} s, odchyłka ${(L.dokladnosc * 100).toFixed(0)} cm` : `→ ${L.strefa.nazwa} · ${L.stan}`}</small></span></div>`).join("");
   $("#stat").innerHTML = `Kolizje: <b>${stat.kolizje}</b> · Błędy odczepienia: <b>${stat.bledy}</b> · Przeciążenia: <b>${stat.przeciazenia}</b>`;
 }
 rysujListe();
@@ -324,8 +325,15 @@ function podsumowanie() {
     <tr><td>Próby odczepienia w powietrzu (−5 pkt)</td><td>${stat.bledy}</td></tr><tr><td>Zadziałania ogranicznika udźwigu (−3 pkt)</td><td>${stat.przeciazenia}</td></tr>
     <tr><td><b>Wynik</b></td><td><b>${pkt} / 100 · ocena ${ocena}</b></td></tr></table>
     <div class="rzad"><button class="btn-d" onclick="location.reload()">↺ Jeszcze raz</button><button class="btn-d jasny" id="kKopiuj">📋 Kopiuj wynik</button></div>`;
+  const wynik = { v: 1, id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), uczestnik: ($("#imie").value || "").trim() || "Uczestnik bez imienia", data: new Date().toISOString(), sterowanie: tryb,
+    czas_s: czas, punkty: pkt, ocena, kolizje: stat.kolizje, bledy: stat.bledy, przeciazenia: stat.przeciazenia, odchylka_cm: Math.round(sr * 100),
+    zlecenia: ladunki.map(L => ({ id: L.id, nazwa: L.nazwa, masa: L.masa, strefa: L.cel, czas_s: Math.round(L.czas * 10) / 10, kolejnosc: L.kolejnosc, odchylka_cm: Math.round(L.dokladnosc * 100), proby: L.proby || 1, kolizje: L.kolizje || 0, bledy: L.bledy || 0, przeciazenia: L.przec || 0 })) };
+  try { const k = "dzwig-wyniki", a = JSON.parse(localStorage.getItem(k) || "[]"); a.push(wynik); localStorage.setItem(k, JSON.stringify(a)); } catch {}
+  const kod = "DZWIG1:" + btoa(unescape(encodeURIComponent(JSON.stringify(wynik))));
+  $("#koniecTresc").insertAdjacentHTML("beforeend", `<p style="font-size:13px;margin-top:12px">Wynik zapisano na tym komputerze – zobaczysz go w <a href="dzwig-wyniki.html">📊 Wynikach</a>. Grasz na innym komputerze niż prowadzący? Skopiuj <b>kod wyniku</b> i wyślij go prowadzącemu (wkleja go w Wynikach):</p><textarea readonly style="width:100%;height:64px;font:11px ui-monospace,monospace" onclick="this.select()">${kod}</textarea><div class="rzad"><a class="btn-d" href="dzwig-wyniki.html">📊 Porównaj wyniki</a></div>`);
+  window.__dzwigWynik = wynik;
   $("#koniec").hidden = false;
-  $("#kKopiuj").onclick = () => navigator.clipboard?.writeText(`Operator żurawia: ${pkt}/100, ocena ${ocena}, czas ${czas} s, kolizje ${stat.kolizje}, błędy ${stat.bledy}, przeciążenia ${stat.przeciazenia}`);
+  $("#kKopiuj").onclick = () => navigator.clipboard?.writeText(`Operator żurawia – ${wynik.uczestnik}: ${pkt}/100, ocena ${ocena}, czas ${czas} s, kolizje ${stat.kolizje}, błędy ${stat.bledy}, przeciążenia ${stat.przeciazenia}`);
 }
 let tKom; function komunikat(t, k = "") { const e = $("#kom"); e.textContent = t; e.className = k; e.style.display = "block"; clearTimeout(tKom); tKom = setTimeout(() => e.style.display = "none", 3500); }
 
@@ -370,7 +378,9 @@ function ramka(dlonie) {
 }
 
 /* ------------------------------------------------------------ start i pętla */
+let tryb = "mysz";
 async function start(zKamera) {
+  tryb = zKamera ? "dłonie" : "mysz/klawiatura";
   if (zKamera) {
     try { if (!window.__symulacjaDloni) { await kamera(wideo); document.body.classList.add("kamera"); }
       await uruchomDlonie({ video: wideo, onRamka: ramka, symulacja: window.__symulacjaDloni || null });
@@ -390,6 +400,7 @@ renderer.setAnimationLoop(() => {
 });
 window.__dzwigTest = { z, przel, ladunki: () => ladunki.map(L => ({ id: L.id, stan: L.stan, poz: L.mesh.position.toArray() })), zaczepiony: () => zaczepiony?.id || null, stat, wej, hak, pozycjaHaka: () => pozycjaHaka().toArray(), sztucznaDlon, wynikSymulacji,
   ustaw: o => { Object.assign(z, o); z.o.set(0, 0); z.ov.set(0, 0); z.wozekPop = null; }, joyL: () => { const r = joy.L.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }, joyR: () => { const r = joy.R.el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; } };
+window.__dzwigTest.podsumowanie = podsumowanie;
 window.__dzwigGotowy = true;
 </script>
 </body>
