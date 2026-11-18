@@ -55,6 +55,7 @@
     background: linear-gradient(transparent, rgba(0,0,0,.6)); }
   #testHint { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 5; background: rgba(255,255,255,.95);
     padding: 8px 14px; border-radius: 99px; font-size: 14px; white-space: nowrap; }
+  [hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -101,8 +102,21 @@
   <!-- KROK 3 -->
   <section class="step locked" id="s3">
     <h2><span>3</span>Przetestuj od razu</h2>
-    <p>Otwórz tę stronę na telefonie albo wyświetl obrazek na ekranie komputera i wyceluj w niego telefonem.</p>
-    <button class="btn accent" id="testBtn">📷 Testuj AR teraz</button>
+    <p><b>Uwaga:</b> obrazek i model, które tu wybrałeś, są tylko w tej przeglądarce – telefon ich nie widzi, dopóki nie wgrasz plików na GitHub (krok 4).
+      Sam aparat telefonu też nic nie pokaże: AR działa tylko na tej stronie, otwartej na telefonie.</p>
+    <div class="row">
+      <button class="btn accent" id="testBtn">📷 Testuj AR na tym urządzeniu</button>
+      <button class="btn" id="telBtn">📱 Testuj telefonem (obrazek na ekranie komputera)</button>
+    </div>
+    <div id="telBox" hidden style="margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start">
+      <div id="telQr" style="width:170px;background:#fff;padding:6px;border-radius:12px"></div>
+      <ol style="margin:0;padding-left:18px;line-height:1.55">
+        <li>Zeskanuj kod aparatem telefonu – otworzy się ten kreator na telefonie.</li>
+        <li>Na telefonie w kroku 1 wybierz <b>ten sam obrazek</b> (prześlij go na telefon: AirDrop, mail, komunikator), a w kroku 2 ten sam model.</li>
+        <li>Tu na komputerze kliknij <button class="btn" id="pelnyBtn" style="padding:4px 10px;font-size:13px">🖥 Pokaż obrazek na cały ekran</button> i podkręć jasność.</li>
+        <li>Na telefonie: <b>📷 Testuj AR na tym urządzeniu</b> i wyceluj w ekran komputera z ok. 30–50 cm, prosto, bez odblasków.</li>
+      </ol>
+    </div>
   </section>
 
   <!-- KROK 4 -->
@@ -131,6 +145,10 @@
   </section>
 </div>
 
+<div id="pelny" hidden style="position:fixed;inset:0;z-index:9999;background:#fff;display:grid;place-items:center;cursor:zoom-out">
+  <img id="pelnyImg" alt="Obrazek-znacznik" style="max-width:96vw;max-height:96vh;object-fit:contain">
+  <div style="position:fixed;bottom:12px;left:0;right:0;text-align:center;color:#555;font:14px system-ui">Kliknij albo naciśnij Esc, żeby zamknąć</div>
+</div>
 <div id="test" hidden>
   <div id="testAr"></div>
   <div id="testHint">Skieruj aparat na obrazek</div>
@@ -214,6 +232,21 @@ $("#testBtn").onclick = async () => {
 $("#testOrient").onclick = () => ar && ar.setOrientation(ar.orientation === "stol" ? "sciana" : "stol");
 $("#testClose").onclick = () => { ar?.stop(); ar = null; $("#testAr").innerHTML = ""; $("#test").hidden = true; };
 function alertBox(t) { $("#score").insertAdjacentHTML("beforeend", `<div class="score bad">${t}</div>`); }
+
+/* ---------- test telefonem: kreator na telefonie + obrazek na pełnym ekranie komputera ---------- */
+$("#telBtn").onclick = async () => {
+  const box = $("#telBox"); box.hidden = !box.hidden; if (box.hidden) return;
+  const url = new URL("kreator.html?telefon=1", location.href).href;
+  if (!window.qrcode) await new Promise(r => { const sc = document.createElement("script"); sc.src = "https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"; sc.onload = r; sc.onerror = r; document.head.append(sc); });
+  if (window.qrcode) { const q = qrcode(0, "M"); q.addData(url); q.make(); $("#telQr").innerHTML = q.createSvgTag({ cellSize: 5, margin: 2, scalable: true }); }
+  else $("#telQr").innerHTML = `<small style="word-break:break-all">${url}</small>`;
+};
+$("#pelnyBtn").onclick = () => { if (!state.imgFile) return; $("#pelnyImg").src = URL.createObjectURL(state.imgFile); $("#pelny").hidden = false; document.documentElement.requestFullscreen?.().catch(() => {}); };
+const zamknijPelny = () => { $("#pelny").hidden = true; if (document.fullscreenElement) document.exitFullscreen?.(); };
+$("#pelny").onclick = zamknijPelny; addEventListener("keydown", e => { if (e.key === "Escape" && !$("#pelny").hidden) zamknijPelny(); });
+if (new URLSearchParams(location.search).has("telefon")) {
+  document.querySelector(".lead").insertAdjacentHTML("afterend", `<div class="score" style="background:#eef4fb;border:1px solid #bcd3ea;border-radius:12px;padding:10px 12px;margin:8px 0">📱 <b>Test na telefonie:</b> wybierz ten sam obrazek i model co na komputerze, potem kliknij <b>📷 Testuj AR na tym urządzeniu</b> i wyceluj w obrazek na ekranie komputera.</div>`);
+}
 
 /* ---------- KROK 4: pliki i kod ---------- */
 $("#mode").innerHTML = `<option value="__new">➕ Nowa atrakcja</option>` +
