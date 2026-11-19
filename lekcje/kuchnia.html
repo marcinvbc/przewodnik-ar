@@ -6,6 +6,7 @@
 <title>Mistrz Kanapek – szkolenie i gra</title>
 <meta name="theme-color" content="#da291c">
 <script src="konfiguracja.js"></script>
+<script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.min.js", "three/addons/": "../lib/three/examples/jsm/" } }</script>
 <script src="../wersja.js"></script>
 <style>
   :root { --czerwony: #da291c; --czerwony2: #a51c12; --zolty: #ffc72c; --zolty2: #ffb000; --ink: #27170e; --krem: #fff8e6; --ok: #2f8f4e; }
@@ -21,7 +22,12 @@
   header .pill { background: rgba(255,255,255,.18); border-radius: 99px; padding: 4px 10px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
   #krok { position: fixed; left: 8px; right: 8px; z-index: 9; background: var(--krem); border-radius: 0 0 14px 14px; padding: 7px 12px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,.15); display: flex; gap: 8px; align-items: center; }
   #krok b { color: var(--czerwony); } #krok .nr { background: var(--czerwony); color: #fff; border-radius: 99px; padding: 1px 8px; font-weight: 800; font-size: 12px; white-space: nowrap; }
-  #scena { position: fixed; left: 0; top: 0; display: block; }
+  #scena { position: fixed; left: 0; top: 0; display: block; touch-action: none; }
+  #nak { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 55; }
+  #podglad { position: fixed; right: 10px; bottom: 10px; width: 150px; border-radius: 12px; transform: scaleX(-1); opacity: .8; z-index: 54; display: none; border: 3px solid var(--zolty); }
+  body.kamera #podglad { display: block; }
+  .przelacznik { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 14px; padding: 10px 12px; margin: 8px 0; font-weight: 700; cursor: pointer; }
+  .przelacznik input { width: 22px; height: 22px; accent-color: var(--czerwony); }
   #receptura { position: fixed; z-index: 8; right: 12px; width: 300px; background: var(--krem); border-radius: 16px; padding: 12px 14px; box-shadow: 0 6px 20px rgba(0,0,0,.2); max-height: calc(100vh - 90px); overflow: auto; }
   #receptura h3 { margin: 0 0 6px; color: var(--czerwony); } #receptura ol { margin: 0; padding-left: 20px; } #receptura li { padding: 2px 0; } #receptura li.ok { color: var(--ok); text-decoration: line-through; } #receptura li.teraz { font-weight: 800; color: var(--czerwony); }
   #receptura .skl { font-size: 13px; color: #6b5444; margin-top: 8px; border-top: 1px dashed #e3cfae; padding-top: 6px; }
@@ -48,6 +54,8 @@
 </head>
 <body>
 <canvas id="scena"></canvas>
+<canvas id="nak"></canvas>
+<video id="podglad" autoplay muted playsinline></video>
 <header id="naglowek" hidden><button class="btn maly bialy" id="bMenu">☰</button><span class="danie" id="hDanie"></span><span class="pill" id="hCzas">0,0 s</span><span class="pill" id="hKcal">0 kcal</span></header>
 <div id="krok" hidden></div>
 <div id="receptura" hidden></div>
@@ -63,10 +71,11 @@
     <button data-t="gra"><span>🏁</span>Gra na czas<small>dla gości przy stoliku – kilka osób jednocześnie, ranking według czasu</small></button>
   </div>
   <div id="sStolik" hidden><input class="nick" id="nick" maxlength="16" placeholder="Twoja nazwa w grze"><div class="male" id="stolikInfo"></div></div>
+  <label class="przelacznik"><input type="checkbox" id="sReka"> 🖐 Steruj dłońmi przed kamerą <small style="font-weight:400;color:#6b5444">(szczypnięcie kciuk + palec wskazujący = chwyć)</small></label>
   <div><b>Wybierz pozycję z menu:</b></div>
   <div class="dania" id="dania"></div>
   <div class="wiersz"><button class="btn zolty" id="bStart">Do kuchni ➜</button></div>
-  <p class="male">Kalorie to wartości orientacyjne dla typowych gramatur – restauracja może je zastąpić danymi ze swojego menu. Sterowanie: przeciągaj palcem lub myszą; sosy dozujesz, przytrzymując butelkę nad kanapką.</p>
+  <p class="male">Kalorie to wartości orientacyjne dla typowych gramatur – restauracja może je zastąpić danymi ze swojego menu. Sterowanie: przeciągaj palcem lub myszą, albo dłońmi przed kamerą (szczypnięcie = chwyt); sosy dozujesz, przytrzymując butelkę nad kanapką.</p>
 </div></div>
 
 <!-- POCZEKALNIA (gra przy stoliku) -->
@@ -85,12 +94,14 @@
 <div class="ekran" id="eKoniec" hidden><div class="karta" id="koniecTresc"></div></div>
 
 <script type="module">
-import { SKLADNIKI, MENU, KARY, CZASY, kcalDania } from "./kuchnia/menu.js?v=39";
-import * as D from "./kuchnia/rysuj.js?v=39";
+import * as THREE from "three";
+import { SKLADNIKI, MENU, KARY, CZASY, kcalDania } from "./kuchnia/menu.js?v=40";
+import { Kuchnia3D, stworzSkladnik, butelka, WYS, R_BULKI, SKALA_STOSU, SOS_KOL } from "./kuchnia/scena3d.js?v=40";
+import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=40";
 import { backend, uid, esc, DEMO } from "./wspolne.js";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
-const cv = $("#scena"), g = cv.getContext("2d");
+const cv = $("#scena");
 const qp = new URLSearchParams(location.search);
 const STOL = (qp.get("stol") || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 24);
 let tryb = STOL ? "gra" : (qp.get("tryb") === "gra" ? "gra" : "szkolenie"), danie = MENU[0];
@@ -110,62 +121,269 @@ function odswiezStart() {
 $$("#tryby button").forEach(b => b.onclick = () => { tryb = b.dataset.t; odswiezStart(); });
 try { $("#nick").value = localStorage.getItem("mk-nick") || ""; } catch {}
 odswiezStart();
-$("#bStart").onclick = () => {
+$("#bStart").onclick = async () => {
+  if ($("#sReka").checked && !(await wlaczDlonie())) $("#sReka").checked = false;
   if (tryb === "gra" && STOL) { const n = $("#nick").value.trim(); if (!n) { $("#nick").focus(); komunikat("Podaj nazwę gracza", "zle"); return; } try { localStorage.setItem("mk-nick", n); } catch {} dolaczDoStolika(n); return; }
   $("#eStart").hidden = true; nowaGra();
 };
 
-/* ================= układ sceny ================= */
-let W = 0, H = 0, dpr = 1, L = {};
+
+const KROTKO = { korona: "Korona", spod: "Spód", koronaSez: "Korona sezam", srodek: "Środek bułki", spodDuzy: "Spód duży", tortilla: "Tortilla", ser: "Ser", cebulka: "Cebulka", ogorek: "Ogórek", salata: "Sałata", pomidor: "Pomidor", ketchup: "Ketchup", musztarda: "Musztarda", sosSpec: "Sos specjalny", sosMajo: "Sos majo", wolowina: "Wołowina", kurczak: "Kurczak" };
+
+/* ================= układ ekranu ================= */
+const K = new Kuchnia3D(cv), nak = $("#nak"), ng = nak.getContext("2d");
+let OB = { x: 0, y: 0, w: 0, h: 0 }, dpr = 1, pion = false, P = null;
 function uklad() {
-  dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
-  cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + "px"; cv.style.height = H + "px"; g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const szeroki = W > 900, recW = szeroki && tryb === "szkolenie" ? 320 : 0;
-  const top = ($("#naglowek").offsetHeight || 52) + 40, x0 = 0, w = Math.min(W - recW, 620), xs = (W - recW - w) / 2;
-  const h = H - top;
-  L = { x: xs, w, top, h,
-    cieplo: { x: xs, y: top, w, h: h * 0.3 },
-    stol: { x: xs, y: top + h * 0.3, w, h: h * 0.4 },
-    poj: { x: xs, y: top + h * 0.7, w, h: h * 0.3 } };
-  L.r = Math.min(w * 0.2, L.stol.h * 0.32);                          // promień kanapki na stole
-  L.srodek = { x: xs + w * 0.5, y: L.stol.y + L.stol.h * 0.72 };
-  // sprzęt w strefie ciepła
-  const c = L.cieplo, sl = Math.min(c.h * 0.36, w * 0.09);
-  L.toster = { x: c.x + 8, y: c.y + 8, w: w * 0.26, h: c.h - 16 };
-  L.grill = { x: c.x + w * 0.28, y: c.y + 8, w: w * (danie.id === "wrap" ? 0.24 : 0.5), h: c.h - 16 };
-  L.fryt = danie.id === "wrap" ? { x: c.x + w * 0.54, y: c.y + 8, w: w * 0.24, h: c.h - 16 } : null;
-  L.narz = { x: c.x + w * 0.8, y: c.y + 8, w: w * 0.2 - 8, h: c.h - 16 };
-  L.lopatka = { x: L.narz.x + L.narz.w * 0.3, y: L.narz.y + L.narz.h * 0.55, r: Math.min(34, L.narz.w * 0.45) };
-  L.szczypce = { x: L.narz.x + L.narz.w * 0.75, y: L.narz.y + L.narz.h * 0.55, r: Math.min(30, L.narz.w * 0.4) };
-  L.mroz = { x: L.grill.x + L.grill.w - Math.min(70, L.grill.w * 0.3) - 6, y: L.grill.y + 6, w: Math.min(70, L.grill.w * 0.3), h: L.grill.h - 12 };
-  if (L.fryt) L.mrozK = { x: L.fryt.x + L.fryt.w * 0.62, y: L.fryt.y + 6, w: L.fryt.w * 0.36, h: L.fryt.h - 12 };
-  // pojemniki: 2 rzędy
-  const n = POJEMNIKI.length, kol = Math.ceil(n / 2), pw = (w - 16) / kol, ph = (L.poj.h - 16) / 2;
-  POJEMNIKI.forEach((p, i) => { p.x = L.poj.x + 8 + (i % kol) * pw; p.y = L.poj.y + 6 + Math.floor(i / kol) * ph; p.w = pw - 6; p.h = ph - 6; });
+  dpr = Math.min(2, devicePixelRatio || 1);
+  const szeroki = innerWidth > 900, recW = szeroki && tryb === "szkolenie" && gra ? 330 : 0;
+  const top = gra ? ($("#naglowek").offsetHeight || 52) + ($("#krok").offsetHeight || 40) : 0;
+  OB = { x: 0, y: top, w: innerWidth - recW, h: innerHeight - top };
+  Object.assign(cv.style, { left: OB.x + "px", top: OB.y + "px", width: OB.w + "px", height: OB.h + "px" });
+  nak.width = innerWidth * dpr; nak.height = innerHeight * dpr; ng.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const nowyPion = OB.w / OB.h < 0.95;
+  if (nowyPion !== pion || !P || (gra && K.zFryt !== (gra.danie.id === "wrap"))) { pion = nowyPion; K.zFryt = gra ? gra.danie.id === "wrap" : true; K.zbuduj(pion, K.zFryt); P = K.P; if (gra) odbudujDyn(); }
+  K.rozmiar(OB.w, OB.h);
   $("#krok").style.top = ($("#naglowek").offsetHeight || 52) + "px";
-  const rec = $("#receptura"); rec.hidden = !(tryb === "szkolenie" && szeroki) || !gra; rec.style.top = top + "px";
-  $("#akcje").style.top = (L.stol.y + 8) + "px";
+  const rec = $("#receptura"); rec.hidden = !(tryb === "szkolenie" && szeroki && gra); rec.style.top = top + "px";
+  $("#akcje").style.top = (OB.y + 12) + "px"; $("#akcje").style.left = (OB.x + OB.w / 2) + "px";
 }
-const POJEMNIKI = [
-  { k: "korona" }, { k: "spod" }, { k: "koronaSez" }, { k: "srodek" }, { k: "spodDuzy" }, { k: "tortilla" }, { k: "ser" },
-  { k: "cebulka" }, { k: "ogorek" }, { k: "salata" }, { k: "pomidor" }, { k: "ketchup" }, { k: "musztarda" }, { k: "sosSpec" }, { k: "sosMajo" },
-];
-const KOLOR_BUT = { ketchup: ["#9e130b", "#e2372a"], musztarda: ["#c99a00", "#f6cd1d"], sosSpec: ["#c46a2c", "#f3a466"], sosMajo: ["#d9d2bc", "#fffdf5"] };
-const NAPIS = { ketchup: "KETCHUP", musztarda: "MUSZT.", sosSpec: "SPECJ.", sosMajo: "MAJO" };
-const KROTKO = { korona: "Korona", spod: "Spód", koronaSez: "Korona sez.", srodek: "Środek", spodDuzy: "Spód duży", tortilla: "Tortilla", ser: "Ser", cebulka: "Cebulka", ogorek: "Ogórek", salata: "Sałata", pomidor: "Pomidor", ketchup: "Ketchup", musztarda: "Musztarda", sosSpec: "Sos spec.", sosMajo: "Sos majo", wolowina: "Wołowina", kurczak: "Kurczak" };
 
 /* ================= stan gry ================= */
 let gra = null;
+const MAX_TOSTER = 3, MAX_GRILL = 4;
 function nowaGra(start = performance.now()) {
-  gra = { danie, krok: 0, stos: [], toster: [], grill: [], kosz: { dol: false, el: [] }, narz: "reka", trzymane: null, kary: [], t0: null, tStartRundy: start, koniec: null, odwrocona: false, zawinieta: false, etap: "sklad", kcal: 0 };
+  gra = { danie, krok: 0, stos: [], toster: [], grill: [], kosz: { dol: false, el: [], y: 10 }, narz: "reka", kary: [], t0: null, koniec: null, odwrocona: false, zawinieta: false, etap: "sklad", kcal: 0 };
   $("#naglowek").hidden = false; $("#krok").hidden = false; $("#hDanie").textContent = `${danie.emoji} ${danie.nazwa}`;
   if (tryb === "gra") gra.t0 = start;
-  uklad(); rysujRecepture(); opisKroku();
+  K.dyn.clear(); stosG = null; uklad(); odbudujDyn(); rysujRecepture(); opisKroku();
 }
 const oczekiwany = () => gra.danie.sklad[gra.krok];
 function kara(rodzaj, tekst) { const s = KARY[rodzaj] || 0; gra.kary.push({ rodzaj, s, tekst }); komunikat(`${tekst}${s ? ` (+${s} s)` : ""}`, "zle"); try { navigator.vibrate?.([60, 40, 60]); } catch {} }
 function start() { if (!gra.t0) gra.t0 = performance.now(); }
 
+/* ================= obiekty 3D zależne od stanu ================= */
+let stosG = null;
+const lokTostera = i => { const T = P.toster; return new THREE.Vector3(T.x + (i - 1) * (T.w / 3.3), 6.35, T.z + 2); };
+const lokGrilla = i => { const G = P.grill; return new THREE.Vector3(G.x + (i % 2 ? 1 : -1) * G.w * 0.22, 6.55, G.z + (i < 2 ? -G.d * 0.18 : G.d * 0.2)); };
+function obiekt(k, st, cel) { const o = stworzSkladnik(k, st); o.traverse(x => x.userData.cel = cel); K.dyn.add(o); return o; }
+function odbudujDyn() {
+  K.dyn.clear(); stosG = new THREE.Group(); stosG.position.set(P.papier.x, 0.08, P.papier.z); stosG.scale.setScalar(SKALA_STOSU); K.dyn.add(stosG);
+  stosG.userData.cel = { typ: "stos" };
+  gra.toster.forEach((s, i) => { s.o = obiekt(s.k, { opieczenie: s.p, id: s.id }, { typ: "tost", s }); s.o.position.copy(lokTostera(i)); if (s.k === "tortilla") s.o.scale.setScalar(0.48); });
+  gra.grill.forEach(m => { m.o = obiekt("wolowina", { gora: m.gora, dol: m.dol, id: m.id }, { typ: "kotlet", m }); m.o.position.copy(lokGrilla(m.slot)); });
+  gra.kosz.el.forEach((c, i) => { c.o = stworzSkladnik("kurczak", { smazenie: c.s, id: c.id }); c.o.traverse(x => x.userData.cel = { typ: "kosz" }); c.o.position.set((i % 2 - 0.5) * 7, 0.5 + Math.floor(i / 2) * 1.6, 0); c.o.rotation.y = 0.1 * i; K.kosz?.add(c.o); });
+  let y = 0; for (const w of gra.stos) { w.o = stworzSkladnik(w.k, w.st); w.o.position.set(w.dx * R_BULKI, y, w.dz * R_BULKI); w.o.traverse(x => x.userData.cel = { typ: "stos" }); stosG.add(w.o); y += WYS[w.k]; }
+}
+const wysStosu = () => gra.stos.reduce((s, w) => s + WYS[w.k], 0);
+function slotyWolne(lista, max) { for (let i = 0; i < max; i++) if (!lista.some(x => x.slot === i)) return i; return -1; }
+
+/* ================= aktualizacja ================= */
+function aktualizuj(dt, t) {
+  for (const s of gra.toster) { if (s.p < 1.3) s.p += dt / CZASY.toster; s.o?.userData.ustaw({ opieczenie: s.p }); }
+  for (const m of gra.grill) {
+    if (!m.flip) m.dol += dt / CZASY.stronaGrill;
+    if (m.flip) { const f = Math.min(1, (t - m.flip) / 320); m.o.rotation.x = f * Math.PI; m.o.position.y = lokGrilla(m.slot).y + Math.sin(f * Math.PI) * 5 + (f > 0.5 ? WYS.wolowina : 0); if (f >= 1) { m.flip = 0; const x = m.gora; m.gora = m.dol; m.dol = x; m.o.rotation.x = 0; m.o.position.y = lokGrilla(m.slot).y; } }
+    m.o?.userData.ustaw({ gora: m.flip ? m.dol : m.gora, dol: m.flip ? m.gora : m.dol });
+    if (m.dol > 0.15 && Math.random() < dt * 9) K.emituj(m.o.position.x, 8, m.o.position.z);
+  }
+  if (K.kosz) { const cel = gra.kosz.dol ? 3.6 : 10; gra.kosz.y += (cel - gra.kosz.y) * Math.min(1, dt * 6); K.kosz.position.y = gra.kosz.y; if (gra.kosz.dol) { for (const c of gra.kosz.el) { c.s += dt / CZASY.frytownica; c.o?.userData.ustaw({ smazenie: c.s }); } if (gra.kosz.el.length && Math.random() < dt * 14) K.emituj(P.fryt.x, 9, P.fryt.z); } }
+  for (const w of gra.stos) if (w.k === "ser" && w.st.topnienie !== undefined && w.st.topnienie < 1) { w.st.topnienie = Math.min(1, w.st.topnienie + dt * 0.35); w.o.userData.ustaw(w.st); }
+  // przenoszone przedmioty
+  for (const W of wskazniki.values()) if (W.typ === "niesie" || W.typ === "kotletNiesie") prowadz(W, dt);
+  K.krokPary(dt);
+  // animacje końcowe
+  if (gra.animOdwr) { const f = Math.min(1, (t - gra.animOdwr) / 650), h = wysStosu() * SKALA_STOSU; stosG.rotation.x = f * Math.PI; stosG.position.y = 0.08 + Math.sin(f * Math.PI) * 14 + f * h; }
+  if (gra.animZaw) { const f = Math.min(1, (t - gra.animZaw) / 700); if (!gra.zawO) { gra.zawO = zawiniatko(gra.danie.zawin); K.dyn.add(gra.zawO); } gra.zawO.scale.setScalar(Math.max(0.01, f)); if (gra.danie.zawin === "zwin") stosG.scale.setScalar(SKALA_STOSU * (1 - f)); else stosG.visible = f < 0.85; }
+}
+function zawiniatko(rodzaj) {
+  const g = new THREE.Group(); g.position.set(P.papier.x, 0, P.papier.z);
+  if (rodzaj === "zwin") { const t = stworzSkladnik("tortilla", { opieczenie: 0.5 }), mm = t.children[0].material[1]; const rol = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 4.6, 24, 48), [new THREE.MeshStandardMaterial({ map: mm.map, roughness: 0.85 }), new THREE.MeshStandardMaterial({ color: "#e0c58f" }), new THREE.MeshStandardMaterial({ color: "#e0c58f" })]); rol.rotation.z = Math.PI / 2; rol.position.y = 4.6; rol.castShadow = true; g.add(rol); const pas = new THREE.Mesh(new THREE.CylinderGeometry(4.75, 4.75, 9, 48, 1, true), new THREE.MeshStandardMaterial({ color: "#fbf7ee", side: THREE.DoubleSide, roughness: 0.8 })); pas.rotation.z = Math.PI / 2; pas.position.set(-6, 4.6, 0); g.add(pas); }
+  else { const geo = new THREE.SphereGeometry(10, 40, 20, 0, Math.PI * 2, 0, Math.PI / 2); geo.scale(1, 0.62, 1); const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: "#fbf7ee", roughness: 0.75, side: THREE.DoubleSide, flatShading: true })); m.castShadow = true; g.add(m); const pas = new THREE.Mesh(new THREE.TorusGeometry(8.6, 0.5, 8, 48), new THREE.MeshStandardMaterial({ color: "#da291c" })); pas.rotation.x = Math.PI / 2; pas.position.y = 2.2; g.add(pas); }
+  return g;
+}
+
+/* ================= wskaźniki: mysz, dotyk, dłonie ================= */
+const wskazniki = new Map();
+const wObr = (p, b, m = 0) => p && Math.abs(p.x - b.x) <= b.w / 2 + m && Math.abs(p.z - b.z) <= b.d / 2 + m;
+function trafienie(x, y, tol) {
+  const dod = [...K.dyn.children, ...(K.kosz ? [K.kosz] : [])];
+  let h = K.trafienie(x, y, dod); if (h || !tol) return h;
+  for (let i = 0; i < 12 && !h; i++) { const a = i / 12 * Math.PI * 2, r = tol * (i < 6 ? 0.55 : 1); h = K.trafienie(x + Math.cos(a) * r, y + Math.sin(a) * r, dod); }
+  return h;
+}
+const nadKanapka = W => { const p = K.naPoziom(W.x, W.y - W.ofs, wysStosu() * SKALA_STOSU); return p && Math.hypot(p.x - P.papier.x, p.z - P.papier.z) <= R_BULKI * SKALA_STOSU * 1.55 ? p : null; };
+
+function wDol(id, x, y, ofs, zrodlo) {
+  if (!gra || gra.koniec || gra.etap === "czekaj") return;
+  const W = { id, x, y, x0: x, y0: y, ofs, zrodlo, t0: performance.now(), typ: null }; wskazniki.set(id, W);
+  const h = trafienie(x, y, zrodlo === "dlon" ? 26 : zrodlo === "dotyk" ? 14 : 0), c = h?.cel;
+  if (!c) { wskazniki.delete(id); return; }
+  if (c.typ === "narz") { const n = c.n; gra.narz = gra.narz === n ? "reka" : n; for (const [k, o] of Object.entries(K.narz)) o.visible = gra.narz !== k; komunikat(gra.narz === "lopatka" ? "🍳 Łopatka w ręku – stuknij kotlet, by go przewrócić, przeciągnij, by zdjąć" : gra.narz === "szczypce" ? "🥢 Szczypce w ręku – wyciągnij kurczaka z uniesionego kosza" : "✋ Narzędzie odłożone"); wskazniki.delete(id); return; }
+  start();
+  if (c.typ === "kotlet") { if (gra.narz !== "lopatka") { kara("goraceReka", "🔥 Gorące! Kotlet przewracaj i zdejmuj łopatką"); wskazniki.delete(id); return; } W.typ = "kotlet"; W.m = c.m; return; }
+  if (c.typ === "kosz") { W.typ = "kosz"; return; }
+  if (c.typ === "mroz") { W.typ = "niesie"; W.k = "wolowina"; W.st = { gora: 0, dol: 0, id: uid().slice(0, 6), surowy: true, mrozony: true }; zaczepNiesiony(W); return; }
+  if (c.typ === "mrozK") { W.typ = "niesie"; W.k = "kurczak"; W.st = { smazenie: 0, id: uid().slice(0, 6), surowy: true }; zaczepNiesiony(W); return; }
+  if (c.typ === "tost") { const s = c.s; gra.toster.splice(gra.toster.indexOf(s), 1); K.dyn.remove(s.o); W.typ = "niesie"; W.k = s.k; W.st = { opieczenie: Math.min(1, s.p), id: s.id, zTostera: true }; zaczepNiesiony(W); return; }
+  if (c.typ === "stos" || c.typ === "papier") { if (gra.etap === "odwroc" || gra.etap === "zawin") W.typ = "gest"; else wskazniki.delete(id); return; }
+  if (c.typ === "poj") { W.typ = "niesie"; W.k = c.k; W.st = { id: uid().slice(0, 6), ile: 0 }; W.sos = !!SKLADNIKI[c.k].sos; zaczepNiesiony(W); return; }
+  wskazniki.delete(id);
+}
+function wRuch(id, x, y) {
+  const W = wskazniki.get(id); if (!W) return; W.x = x; W.y = y; const ruch = Math.hypot(x - W.x0, y - W.y0);
+  if (W.typ === "kosz" && ruch > 16) {
+    if (gra.kosz.dol || !gra.kosz.el.length) { W.typ = null; komunikat(gra.kosz.dol ? "Najpierw unieś kosz (stuknij go)" : "Kosz jest pusty"); return; }
+    if (gra.narz !== "szczypce") { kara("goraceReka", "🔥 Gorące! Kurczaka wyjmuj szczypcami"); W.typ = null; return; }
+    const c = gra.kosz.el.pop(); K.kosz.remove(c.o); W.typ = "niesie"; W.k = "kurczak"; W.st = { smazenie: c.s, id: c.id }; zaczepNiesiony(W);
+  }
+  if (W.typ === "kotlet" && ruch > 16) { const m = W.m; gra.grill.splice(gra.grill.indexOf(m), 1); W.typ = "kotletNiesie"; W.k = "wolowina"; W.st = { gora: m.gora, dol: m.dol, id: m.id, przewr: m.przewr || 0 }; W.o = m.o; W.o.traverse(o => o.userData.cel = null); }
+}
+function zaczepNiesiony(W) {
+  W.o = W.sos ? butelka(SOS_KOL[W.k], "") : stworzSkladnik(W.k, { ...W.st, odwrocona: false }); if (W.sos) { W.o.rotation.x = Math.PI; W.o.scale.setScalar(0.8); }
+  if (W.k === "tortilla") W.o.scale.setScalar(0.6);
+  W.o.traverse(o => o.userData.cel = null); K.dyn.add(W.o);
+  if (gra.narz !== "reka" && !(W.k === "wolowina" && !W.st.surowy) && W.k !== "kurczak") { /* narzędzie zostaje w ręku */ }
+}
+function prowadz(W, dt) {
+  const nad = gra.etap === "sklad" ? nadKanapka(W) : null, h = nad ? wysStosu() * SKALA_STOSU + (W.sos ? 16 : 5) : 13, p = K.naPoziom(W.x, W.y - W.ofs, h);
+  if (!p) return; W.o.position.lerp(p, Math.min(1, dt * 22)); W.nad = nad;
+  if (W.sos) { if (nad) { W.st.ile = Math.min(2.4, W.st.ile + dt / 0.55); if (!W.podglad) { W.podglad = stworzSkladnik(W.k, { ile: 0.1, id: W.st.id }); W.podglad.scale.setScalar(SKALA_STOSU); K.dyn.add(W.podglad); } W.podglad.position.set(p.x, wysStosu() * SKALA_STOSU + 0.1, p.z); W.podglad.userData.ustaw({ ile: W.st.ile }); } }
+  else if (W.k === "korona" || W.k === "koronaSez") W.o.userData.ustaw({ ...W.st, odwrocona: !!nad && gra.danie.odwroc && gra.krok === 0 });
+  // celownik na kanapce
+  pierscien.visible = !!nad && !W.sos; if (nad) { const dx = (nad.x - P.papier.x) / SKALA_STOSU, dz = (nad.z - P.papier.z) / SKALA_STOSU, off = Math.hypot(dx, dz) / R_BULKI; pierscien.position.set(P.papier.x, wysStosu() * SKALA_STOSU + 0.25, P.papier.z); pierscien.material.color.set(off < 0.45 ? "#34c759" : "#ff9500"); if (off >= 0.45) pierscien.position.set(nad.x, pierscien.position.y, nad.z); }
+}
+const pierscien = new THREE.Mesh(new THREE.RingGeometry(R_BULKI * SKALA_STOSU * 0.92, R_BULKI * SKALA_STOSU * 1.02, 64), new THREE.MeshBasicMaterial({ color: "#34c759", transparent: true, opacity: 0.85, depthTest: false })); pierscien.rotation.x = -Math.PI / 2; pierscien.renderOrder = 9; pierscien.visible = false; K.sc.add(pierscien);
+
+function wGora(id) {
+  const W = wskazniki.get(id); if (!W) return; wskazniki.delete(id); pierscien.visible = false;
+  const ruch = Math.hypot(W.x - W.x0, W.y - W.y0), krotko = ruch < 16;
+  const usun = () => { if (W.o && W.typ === "niesie") K.dyn.remove(W.o); if (W.podglad) K.dyn.remove(W.podglad); };
+  if (W.typ === "gest") { const dx = W.x - W.x0, dy = W.y - W.y0; if (gra.etap === "odwroc" && dy < -35) odwroc(); else if (gra.etap === "zawin" && Math.abs(dx) > 45) zawin(); return; }
+  if (W.typ === "kosz") { if (krotko && gra.kosz.el.length) { gra.kosz.dol = !gra.kosz.dol; komunikat(gra.kosz.dol ? "Kosz w oleju – smaży się" : "Kosz uniesiony – ociekanie"); } else if (krotko) komunikat("Włóż kurczaka z zamrażarki do kosza"); return; }
+  if (W.typ === "kotlet") { const m = W.m; if (krotko && !m.flip) { m.flip = performance.now(); m.przewr = (m.przewr || 0) + 1; komunikat(m.dol < 0.85 ? "Przewrócono – spód był jeszcze surowy!" : "Przewrócono ✔", m.dol < 0.85 ? "zle" : "dobrze"); } return; }
+  if (W.typ === "kotletNiesie") {
+    const nad = nadKanapka(W); K.dyn.remove(W.o);
+    if (nad) { dodajWarstwe("wolowina", W.st, nad); return; }
+    const p6 = K.naPoziom(W.x, W.y - W.ofs, 6.5), sl = wObr(p6, P.grill, 4) ? slotyWolne(gra.grill, MAX_GRILL) : -1;
+    const m = { slot: sl >= 0 ? sl : slotyWolne(gra.grill, MAX_GRILL), gora: W.st.gora, dol: W.st.dol, id: W.st.id, przewr: W.st.przewr };
+    gra.grill.push(m); m.o = obiekt("wolowina", m, { typ: "kotlet", m }); m.o.position.copy(lokGrilla(m.slot)); return;
+  }
+  if (W.typ !== "niesie") return;
+  const k = W.k, sk = SKLADNIKI[k], st = W.st, p6 = K.naPoziom(W.x, W.y - W.ofs, 6.5), p8 = K.naPoziom(W.x, W.y - W.ofs, 8), nad = gra.etap === "sklad" ? nadKanapka(W) : null;
+  usun();
+  if (sk.gdzie === "toster" && !st.zTostera && wObr(p6, P.toster, 3)) { const sl = slotyWolne(gra.toster, MAX_TOSTER); if (sl < 0) { komunikat("Toster pełny"); return; } const s = { k, p: 0, id: st.id, slot: sl }; gra.toster.push(s); s.o = obiekt(k, { opieczenie: 0, id: s.id }, { typ: "tost", s }); s.o.position.copy(lokTostera(sl)); if (k === "tortilla") s.o.scale.setScalar(0.48); komunikat(`${KROTKO[k]} w tosterze`); return; }
+  if (k === "wolowina" && st.surowy && wObr(p6, P.grill, 3)) { const sl = slotyWolne(gra.grill, MAX_GRILL); if (sl < 0) { komunikat("Grill pełny"); return; } const m = { slot: sl, gora: 0, dol: 0, id: st.id }; gra.grill.push(m); m.o = obiekt("wolowina", m, { typ: "kotlet", m }); m.o.position.copy(lokGrilla(sl)); komunikat("Kotlet na grillu – gdy spód się zrumieni, przewróć go łopatką"); return; }
+  if (k === "wolowina" && st.surowy) { if (nad) kara("niedopieczone", "Surowe mięso! Najpierw usmaż je na grillu"); return; }
+  if (k === "kurczak" && st.surowy && P.fryt && wObr(p8, P.fryt, 3) && K.kosz) { if (gra.kosz.dol) { komunikat("Najpierw unieś kosz"); return; } if (gra.kosz.el.length >= 4) { komunikat("Kosz pełny"); return; } const c = { s: 0, id: st.id }; gra.kosz.el.push(c); c.o = stworzSkladnik("kurczak", { smazenie: 0, id: c.id }); c.o.traverse(x => x.userData.cel = { typ: "kosz" }); const i = gra.kosz.el.length - 1; c.o.position.set((i % 2 - 0.5) * 7, 0.5 + Math.floor(i / 2) * 1.6, 0); K.kosz.add(c.o); komunikat("Kurczak w koszu – stuknij kosz, by opuścić go do oleju"); return; }
+  if (k === "kurczak" && st.surowy) { if (nad) kara("niedopieczone", "Surowy kurczak! Najpierw do frytownicy"); return; }
+  if (sk.sos) { if (st.ile > 0.05 && nad) dodajWarstwe(k, { ...st }, nad); return; }
+  if (nad) { dodajWarstwe(k, st, nad); return; }
+  if (st.zTostera) { const sl = slotyWolne(gra.toster, MAX_TOSTER), s = { k, p: st.opieczenie, id: st.id, slot: sl }; gra.toster.push(s); s.o = obiekt(k, { opieczenie: s.p, id: s.id }, { typ: "tost", s }); s.o.position.copy(lokTostera(sl)); if (k === "tortilla") s.o.scale.setScalar(0.48); }
+  else if (k === "kurczak" && K.kosz) { const c = { s: st.smazenie, id: st.id }; gra.kosz.el.push(c); c.o = stworzSkladnik("kurczak", { smazenie: c.s, id: c.id }); c.o.traverse(x => x.userData.cel = { typ: "kosz" }); c.o.position.set(0, 0.5, 0); K.kosz.add(c.o); }
+}
+
+/* ================= składanie ================= */
+function dodajWarstwe(k, st, nad) {
+  if (gra.etap !== "sklad") return;
+  const ocz = oczekiwany();
+  if (k !== ocz) {
+    kara("zlySkladnik", `To nie teraz – potrzebny: ${SKLADNIKI[ocz].nazwa}`);
+    if (k === "wolowina") { const m = { slot: slotyWolne(gra.grill, MAX_GRILL), gora: st.gora, dol: st.dol, id: st.id, przewr: st.przewr }; gra.grill.push(m); m.o = obiekt("wolowina", m, { typ: "kotlet", m }); m.o.position.copy(lokGrilla(m.slot)); }
+    if (st.zTostera) { const s = { k, p: st.opieczenie, id: st.id, slot: slotyWolne(gra.toster, MAX_TOSTER) }; gra.toster.push(s); s.o = obiekt(k, { opieczenie: s.p, id: s.id }, { typ: "tost", s }); s.o.position.copy(lokTostera(s.slot)); if (k === "tortilla") s.o.scale.setScalar(0.48); }
+    return;
+  }
+  let dx = (nad.x - P.papier.x) / SKALA_STOSU / R_BULKI, dz = (nad.z - P.papier.z) / SKALA_STOSU / R_BULKI; const off = Math.hypot(dx, dz), dok = Math.max(0, 1 - off / 0.7);
+  const bl = [];
+  if (off < 0.45) { dx *= 0.15; dz *= 0.15; }                 // magnes: blisko środka = równo
+  else { bl.push(["krzywo", "Krzywo – celuj w zielony okrąg"]); const s = 0.4 / off; dx *= s; dz *= s; }
+  if (SKLADNIKI[k].gdzie === "toster" && !st.zTostera) bl.push(["bezOpiekania", "Bułka nieopieczona – najpierw do tostera"]);
+  if (st.zTostera && st.opieczenie < 0.85) bl.push(["bezOpiekania", "Za krótko w tosterze"]);
+  if (k === "wolowina") { if (Math.min(st.gora, st.dol) < 0.85) bl.push(["niedopieczone", "Kotlet niedosmażony z jednej strony"]); if (Math.max(st.gora, st.dol) > 1.4) bl.push(["przypalone", "Kotlet przypalony"]); if (!st.przewr) bl.push(["niedopieczone", "Kotlet nieprzewrócony"]); }
+  if (k === "kurczak") { if (st.smazenie < 0.85) bl.push(["niedopieczone", "Kurczak za krótko we frytownicy"]); if (st.smazenie > 1.45) bl.push(["przypalone", "Kurczak przypalony"]); }
+  if (SKLADNIKI[k].sos) { if (st.ile < 0.6) bl.push(["sosZaMalo", "Za mało sosu"]); else if (st.ile > 1.5) bl.push(["sosZaDuzo", "Za dużo sosu"]); }
+  for (const [r, t] of bl) kara(r, t);
+  const w = { k, dx, dz, st: { ...st }, dok };
+  if (k === "ser" && gra.stos.at(-1)?.k === "wolowina") w.st.topnienie = 0.05;
+  if (k === "wolowina" && gra.stos.at(-1)?.k === "ser") { const s = gra.stos.at(-1); s.st.topnienie = 0.05; }
+  if (k === "korona" || k === "koronaSez") w.st.odwrocona = gra.danie.odwroc && gra.krok === 0;
+  if (k === "kurczak" || k === "pomidor" || k === "ogorek") { const n = gra.stos.filter(q => q.k === k).length; if (n % 2) { w.dx += k === "kurczak" ? 0 : 0.42; w.dz += k === "kurczak" ? 0.55 : 0; } else { w.dx -= k === "kurczak" ? 0 : 0.42; w.dz -= k === "kurczak" ? 0.55 : 0; } }
+  w.o = stworzSkladnik(k, w.st); w.o.position.set(w.dx * R_BULKI, wysStosu(), w.dz * R_BULKI); w.o.traverse(x => x.userData.cel = { typ: "stos" }); stosG.add(w.o);
+  w.o.position.y += 6; w.anim = performance.now();
+  gra.stos.push(w); gra.krok++; gra.kcal += SKLADNIKI[k].kcal * (SKLADNIKI[k].sos ? st.ile : 1);
+  if (!bl.length) komunikat(`✔ ${KROTKO[k] || SKLADNIKI[k].nazwa}`, "dobrze");
+  try { navigator.vibrate?.(25); } catch {}
+  if (gra.krok >= gra.danie.sklad.length) gra.etap = gra.danie.odwroc ? "odwroc" : "zawin";
+  opisKroku();
+}
+function opadanie(t) { let y = 0; for (const w of gra.stos) { if (w.anim) { const f = Math.min(1, (t - w.anim) / 220); w.o.position.y = y + (1 - f) * (1 - f) * 6; if (f >= 1) w.anim = 0; } y += WYS[w.k]; } }
+function odwroc() { if (gra.etap !== "odwroc") return; gra.odwrocona = true; gra.animOdwr = performance.now(); gra.etap = "zawin"; komunikat("↻ Odwrócona!", "dobrze"); opisKroku(); }
+function zawin() { if (gra.etap !== "zawin") return; gra.zawinieta = true; gra.animZaw = performance.now(); gra.etap = "czekaj"; opisKroku(); setTimeout(koniec, 1000); }
+
+/* ================= nakładka: podpisy, paski postępu, podpowiedzi, dłonie ================= */
+function napis(t, x, y, o = {}) { ng.font = `800 ${o.r || 12}px system-ui`; ng.textAlign = "center"; ng.textBaseline = "middle"; const w = ng.measureText(t).width + 12; ng.fillStyle = o.tlo || "rgba(39,23,14,.78)"; ng.beginPath(); ng.roundRect(x - w / 2, y - (o.r || 12) * 0.8, w, (o.r || 12) * 1.6, 7); ng.fill(); ng.fillStyle = o.kol || "#fff"; ng.fillText(t, x, y + 0.5); }
+function pasek(x, y, w, v, kol) { ng.fillStyle = "rgba(0,0,0,.55)"; ng.beginPath(); ng.roundRect(x - w / 2, y, w, 7, 4); ng.fill(); ng.fillStyle = kol; ng.beginPath(); ng.roundRect(x - w / 2, y, w * Math.min(1, v), 7, 4); ng.fill(); }
+const ekr = v => { const p = K.rzut(v); return { x: p.x + OB.x, y: p.y + OB.y }; };
+function celSzkolenia() {
+  const k = oczekiwany(); if (!k || gra.etap !== "sklad") return null; const sk = SKLADNIKI[k];
+  if (sk.gdzie === "toster") return gra.toster.some(s => s.k === k) ? P.toster : P.poj.find(p => p.k === k);
+  if (k === "wolowina") return gra.grill.length ? (gra.narz === "lopatka" ? P.grill : { ...P.lopatka, w: 14, d: 14 }) : P.mroz;
+  if (k === "kurczak") return gra.kosz.el.length ? (gra.kosz.dol ? P.fryt : gra.narz === "szczypce" ? P.fryt : { ...P.szczypce, w: 14, d: 14 }) : P.mrozK;
+  return P.poj.find(p => p.k === k);
+}
+function rysujNakladke(t) {
+  ng.clearRect(0, 0, innerWidth, innerHeight);
+  if (gra && P && !$("#naglowek").hidden && $("#eKoniec").hidden && $("#ePoczekalnia").hidden && $("#eStart").hidden && $("#eOdliczanie").hidden) {
+    const l = (b, tekst, dz = 0) => { const p = ekr(new THREE.Vector3(b.x, 0, b.z + b.d / 2 + dz)); napis(tekst, p.x, p.y + 10, { r: pion ? 10.5 : 12 }); };
+    l(P.toster, "TOSTER"); l(P.grill, "GRILL"); l(P.mroz, "MROŻONE"); if (K.zFryt) { l(P.fryt, "FRYTOWNICA"); l(P.mrozK, "MROŻONE"); }
+    for (const p of P.poj) { const q = ekr(new THREE.Vector3(p.x, 0, p.z + p.d / 2)); napis(KROTKO[p.k], q.x, q.y + (pion && p.sos ? 0 : 9), { r: pion ? 10 : 11.5, tlo: "rgba(255,255,255,.88)", kol: "#27170e" }); }
+    for (const [n, o] of Object.entries(K.narz)) if (o.visible) { const q = ekr(o.position); napis(n === "lopatka" ? "łopatka" : "szczypce", q.x, q.y + 26, { r: 11, tlo: "rgba(218,41,28,.9)" }); }
+    for (const s of gra.toster) { const q = ekr(s.o.position.clone().add(new THREE.Vector3(0, 4, 0))); pasek(q.x, q.y - 16, 46, s.p, s.p >= 1 ? "#4cd964" : "#ffcc00"); if (s.p >= 1) napis("✔ GOTOWE", q.x, q.y - 28, { r: 10, tlo: "rgba(47,143,78,.95)" }); }
+    for (const m of gra.grill) { const q = ekr(m.o.position.clone().add(new THREE.Vector3(0, 3, 0))), spal = m.dol > 1.4, got = m.dol >= 0.85; pasek(q.x, q.y - 16, 50, m.dol / 0.85, spal ? "#ff3b30" : got ? "#4cd964" : "#ffcc00"); if (got) napis(spal ? "PRZYPALA SIĘ!" : m.przewr ? "GOTOWY – ZDEJMIJ" : "PRZEWRÓĆ!", q.x, q.y - 29, { r: 10.5, tlo: spal ? "rgba(192,57,43,.95)" : "rgba(47,143,78,.95)" }); }
+    if (K.kosz && gra.kosz.el.length) { const s = gra.kosz.el[0].s, q = ekr(new THREE.Vector3(P.fryt.x, 14, P.fryt.z)); pasek(q.x, q.y - 12, 56, s / 0.85, s > 1.45 ? "#ff3b30" : s >= 0.85 ? "#4cd964" : "#ffcc00"); napis(gra.kosz.dol ? (s >= 0.85 ? "UNIEŚ KOSZ" : "smaży się…") : (s >= 0.85 ? "wyjmij szczypcami" : "stuknij kosz"), q.x, q.y - 25, { r: 10.5 }); }
+    if (tryb === "szkolenie") { const c = celSzkolenia(); if (c) { const a = 0.55 + 0.45 * Math.sin(t / 180), q1 = ekr(new THREE.Vector3(c.x - (c.w || 14) / 2, 0, c.z)), q2 = ekr(new THREE.Vector3(c.x + (c.w || 14) / 2, 0, c.z)), q = ekr(new THREE.Vector3(c.x, 0, c.z)); ng.save(); ng.strokeStyle = `rgba(47,180,90,${a})`; ng.lineWidth = 5; ng.setLineDash([10, 7]); ng.beginPath(); ng.ellipse(q.x, q.y, Math.max(30, (q2.x - q1.x) * 0.62), Math.max(22, (q2.x - q1.x) * 0.42), 0, 0, 7); ng.stroke(); ng.restore(); } }
+    for (const W of wskazniki.values()) if (W.sos && W.typ === "niesie") { const ile = W.st.ile, ok = ile >= 0.6 && ile <= 1.5, x = W.x + OB.x + 40, y = W.y + OB.y - W.ofs - 40; ng.fillStyle = "rgba(0,0,0,.5)"; ng.beginPath(); ng.roundRect(x, y - 70, 14, 80, 7); ng.fill(); ng.fillStyle = ok ? "#4cd964" : ile > 1.5 ? "#ff3b30" : "#ffcc00"; const hh = 80 * Math.min(1, ile / 2.4); ng.beginPath(); ng.roundRect(x, y + 10 - hh, 14, hh, 7); ng.fill(); ng.strokeStyle = "#fff"; ng.lineWidth = 2; for (const v of [0.6, 1.5]) { const yy = y + 10 - 80 * v / 2.4; ng.beginPath(); ng.moveTo(x - 3, yy); ng.lineTo(x + 17, yy); ng.stroke(); } napis(W.nad ? `${ile.toFixed(1)} porcji` : "trzymaj nad kanapką", x + 7, y - 84, { r: 11 }); }
+  }
+  if (rece.aktywne) rysujDlonie();
+}
+
+/* ================= wejście: mysz i dotyk ================= */
+const pkt = e => ({ x: e.clientX - OB.x, y: e.clientY - OB.y });
+cv.addEventListener("pointerdown", e => { cv.setPointerCapture(e.pointerId); const p = pkt(e); wDol("p" + e.pointerId, p.x, p.y, e.pointerType === "touch" ? 54 : 0, e.pointerType === "touch" ? "dotyk" : "mysz"); });
+cv.addEventListener("pointermove", e => { const p = pkt(e); wRuch("p" + e.pointerId, p.x, p.y); });
+cv.addEventListener("pointerup", e => wGora("p" + e.pointerId));
+cv.addEventListener("pointercancel", e => { const W = wskazniki.get("p" + e.pointerId); if (W) { W.x = W.x0; W.y = W.y0; } wGora("p" + e.pointerId); });
+
+/* ================= wejście: dłonie przed kamerą ================= */
+const rece = { aktywne: false, dlonie: [], stan: {} };
+async function wlaczDlonie() {
+  if (rece.aktywne) return true;
+  try { if (!window.__symulacjaDloni) { await kamera($("#podglad")); document.body.classList.add("kamera"); }
+    await uruchomDlonie({ video: $("#podglad"), onRamka: ramkaDloni, symulacja: window.__symulacjaDloni || null }); rece.aktywne = true; return true;
+  } catch (e) { komunikat(/Permission|NotAllowed/i.test(e.name + e.message) ? "Brak zgody na kamerę – steruj myszą lub dotykiem" : "Kamera niedostępna: " + e.message, "zle"); return false; }
+}
+function ramkaDloni(dlonie) {
+  rece.dlonie = dlonie; const widziane = new Set();
+  for (const d of dlonie) {
+    const s = rece.stan[d.strona] || (rece.stan[d.strona] = { x: d.chwyt.x * innerWidth, y: d.chwyt.y * innerHeight, trzyma: false });
+    const tx = d.chwyt.x * innerWidth, ty = d.chwyt.y * innerHeight; if (d.szczypie !== s.bylo) { s.x = tx; s.y = ty; } else { s.x += (tx - s.x) * 0.55; s.y += (ty - s.y) * 0.55; } s.bylo = d.szczypie; widziane.add(d.strona);   // wygładzanie drżenia; w chwili szczypnięcia – dokładna pozycja palców
+    const id = "h" + d.strona, lx = s.x - OB.x, ly = s.y - OB.y;
+    const el = document.elementFromPoint(s.x, s.y), btn = el?.closest("button, a, .dania button");
+    s.nad = btn && !el.closest("#nak") ? btn : null; s.nadScena = !s.nad && lx >= 0 && ly >= 0 && lx <= OB.w && ly <= OB.h;
+    if (d.szczypie && !s.trzyma) { s.trzyma = true; if (s.nad) { s.nad.click(); s.klik = true; } else if (s.nadScena) wDol(id, lx, ly, 0, "dlon"); }
+    else if (!d.szczypie && s.trzyma) { s.trzyma = false; if (!s.klik) wGora(id); s.klik = false; }
+    else if (s.trzyma && !s.klik) wRuch(id, lx, ly);
+    s.d = d;
+  }
+  for (const k of Object.keys(rece.stan)) if (!widziane.has(k)) { if (rece.stan[k].trzyma && !rece.stan[k].klik) wGora("h" + k); delete rece.stan[k]; }
+}
+function rysujDlonie() {
+  for (const [k, s] of Object.entries(rece.stan)) { if (!s.d) continue; const P2 = s.d.punkty.map(p => ({ x: p.x * innerWidth, y: p.y * innerHeight })); rysujDlon(ng, P2, k === "Lewa" ? [255, 140, 90] : [76, 201, 240], { szczypie: s.d.szczypie, nadCzyms: !!(s.nad || wskazniki.get("h" + k)) });
+    ng.strokeStyle = s.trzyma ? "#ffd23f" : "rgba(255,255,255,.9)"; ng.lineWidth = 3; ng.beginPath(); ng.arc(s.x, s.y, s.trzyma ? 9 : 14, 0, 7); ng.stroke();
+    if (!s.trzyma && s.nadScena && gra) { const h = trafienie(s.x - OB.x, s.y - OB.y, 26)?.cel; const NZ = { toster: "Toster", grill: "Grill", kosz: "Kosz frytownicy", mroz: "Mrożona wołowina", mrozK: "Mrożony kurczak", tost: "Z tostera", kotlet: "Kotlet (łopatką!)", stos: "Kanapka", papier: "Stół montażowy" };
+      const t = h ? (h.typ === "poj" ? KROTKO[h.k] : h.typ === "narz" ? (h.n === "lopatka" ? "Łopatka" : "Szczypce") : NZ[h.typ]) : null; if (t) napis("👌 " + t, s.x, s.y - 30, { r: 13, tlo: "rgba(218,41,28,.95)" }); } if (s.nad) { const r = s.nad.getBoundingClientRect(); ng.strokeStyle = "#ffd23f"; ng.lineWidth = 3; ng.beginPath(); ng.roundRect(r.left - 3, r.top - 3, r.width + 6, r.height + 6, 12); ng.stroke(); } }
+}
+
+/* ================= receptura i podpowiedzi ================= */
 /* ================= receptura i podpowiedzi ================= */
 function rysujRecepture() {
   const d = gra.danie;
@@ -189,231 +407,6 @@ function opisKroku() {
 }
 let tKom; function komunikat(t, k = "") { const e = $("#kom"); e.textContent = t; e.className = k; e.style.display = "block"; clearTimeout(tKom); tKom = setTimeout(() => e.style.display = "none", 2000); }
 
-/* ================= logika urządzeń ================= */
-const MAX_TOSTER = 3, MAX_GRILL = 4;
-function slotyGrilla() { const G = L.grill, wol = G.w - L.mroz.w - 18, kol = Math.min(MAX_GRILL, 2), r = Math.min(wol / (kol * 2.3), G.h / 4.2); return Array.from({ length: MAX_GRILL }, (_, i) => ({ x: G.x + 12 + r * 1.15 + (i % kol) * r * 2.3, y: G.y + G.h * 0.32 + Math.floor(i / kol) * r * 1.5, r })); }
-function slotyTostera() { const T = L.toster, r = Math.min(T.w / 2.6, T.h / 5.2); return Array.from({ length: MAX_TOSTER }, (_, i) => ({ x: T.x + T.w / 2, y: T.y + T.h * 0.28 + i * r * 0.95, r })); }
-function aktualizuj(dt) {
-  for (const s of gra.toster) if (s.p < 1.25) s.p += dt / CZASY.toster;
-  for (const m of gra.grill) { m.dol += dt / CZASY.stronaGrill; }
-  if (gra.kosz.dol) for (const c of gra.kosz.el) c.s += dt / CZASY.frytownica;
-  if (wsk?.sos && gra.etap === "sklad" && naKanapce({ x: wsk.x, y: wsk.y - wsk.ofs })) wsk.st.ile = Math.min(2.4, wsk.st.ile + dt / 0.55);   // 1 porcja ≈ 0,55 s przytrzymania
-}
-
-/* ================= wskaźnik: przeciąganie ================= */
-let wsk = null;           // { id, x, y, typ, przes }
-const OFS = e => e.pointerType === "touch" ? 46 : 0;     // przesunięcie podglądu nad palec
-const w = (p, b) => p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
-const blisko = (p, c, r) => Math.hypot(p.x - c.x, p.y - c.y) <= r;
-const naKanapce = p => Math.hypot((p.x - L.srodek.x) / (L.r * 1.6), (p.y - (L.srodek.y - wysStosu())) / (L.r * 1.1)) <= 1;
-function wysStosu() { return gra.stos.reduce((s, w) => s + (w.st.odwrocona ? L.r * 0.04 : L.r * (D.GRUBOSC[w.k] || 0.05)) + 1, 0); }
-function punkt(e) { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
-
-cv.addEventListener("pointerdown", e => {
-  if (!gra || gra.koniec || gra.etap === "czekaj") return;
-  cv.setPointerCapture(e.pointerId); const p = punkt(e); wsk = { x: p.x, y: p.y, x0: p.x, y0: p.y, ofs: OFS(e), t: performance.now() };
-  // narzędzia
-  const dL = Math.hypot(p.x - L.lopatka.x, p.y - L.lopatka.y), dS = L.fryt ? Math.hypot(p.x - L.szczypce.x, p.y - L.szczypce.y) : 1e9;   // wygrywa narzędzie najbliższe palca
-  if (dL <= L.lopatka.r * 1.4 && dL <= dS) { gra.narz = gra.narz === "lopatka" ? "reka" : "lopatka"; komunikat(gra.narz === "lopatka" ? "🍳 Łopatka w ręku: dotknij kotleta, by go przewrócić; przeciągnij, by zdjąć." : "✋ Odłożono łopatkę"); wsk = null; return; }
-  if (L.fryt && dS <= L.szczypce.r * 1.4) { gra.narz = gra.narz === "szczypce" ? "reka" : "szczypce"; komunikat(gra.narz === "szczypce" ? "🥢 Szczypce w ręku: chwyć kurczaka z kosza." : "✋ Odłożono szczypce"); wsk = null; return; }
-  start();
-  // grill
-  for (const m of gra.grill) { if (blisko(p, m, m.r * 1.15)) {
-    if (gra.narz !== "lopatka") { kara("goraceReka", "🔥 Gorące! Kotlet przewracaj i zdejmuj łopatką"); wsk = null; return; }
-    wsk.typ = "kotlet"; wsk.obj = m; return; } }
-  // frytownica
-  if (L.fryt) {
-    const kosz = { x: L.fryt.x + 6, y: L.fryt.y + 6, w: L.fryt.w * 0.58, h: L.fryt.h - 12 };
-    if (w(p, kosz)) { wsk.typ = "kosz"; return; }        // dotknięcie = opuść/unieś kosz, przeciągnięcie = wyjmij kurczaka
-    if (w(p, L.mrozK)) { wsk.typ = "niesie"; wsk.k = "kurczak"; wsk.st = { smazenie: 0, id: uid().slice(0, 6), surowy: true }; return; }
-  }
-  if (w(p, L.mroz)) { wsk.typ = "niesie"; wsk.k = "wolowina"; wsk.st = { gora: 0, dol: 0, id: uid().slice(0, 6), surowy: true }; return; }
-  // toster – wyjmowanie
-  for (const s of gra.toster) if (blisko(p, s, s.r * 1.1)) { gra.toster.splice(gra.toster.indexOf(s), 1); wsk.typ = "niesie"; wsk.k = s.k; wsk.st = { opieczenie: Math.min(1, s.p), id: s.id, zTostera: true }; return; }
-  // kanapka – gest odwrócenia/zawinięcia
-  if ((gra.etap === "odwroc" || gra.etap === "zawin") && naKanapce(p)) { wsk.typ = "gest"; return; }
-  // pojemniki
-  for (const pj of POJEMNIKI) if (w(p, pj)) { wsk.typ = "niesie"; wsk.k = pj.k; wsk.st = { id: uid().slice(0, 6), ile: 0 }; if (SKLADNIKI[pj.k].sos) wsk.sos = true; return; }
-  wsk = null;
-});
-cv.addEventListener("pointermove", e => {
-  if (!wsk) return; const p = punkt(e); wsk.x = p.x; wsk.y = p.y;
-  if (wsk.typ === "kosz" && Math.hypot(wsk.x - wsk.x0, wsk.y - wsk.y0) > 14) {
-    if (gra.kosz.dol || !gra.kosz.el.length) { wsk.typ = null; komunikat(gra.kosz.dol ? "Najpierw unieś kosz (dotknij go)" : "Kosz jest pusty"); return; }
-    if (gra.narz !== "szczypce") { kara("goraceReka", "🔥 Gorące! Kurczaka wyjmuj szczypcami"); wsk.typ = null; return; }
-    const c = gra.kosz.el.pop(); wsk.typ = "niesie"; wsk.k = "kurczak"; wsk.st = { smazenie: c.s, id: c.id };
-  }
-});
-cv.addEventListener("pointerup", e => { if (!wsk) return; const p = punkt(e); wsk.x = p.x; wsk.y = p.y; upusc(); wsk = null; });
-cv.addEventListener("pointercancel", () => { wsk = null; });
-
-function upusc() {
-  const P = { x: wsk.x, y: wsk.y - wsk.ofs }, ruch = Math.hypot(wsk.x - wsk.x0, wsk.y - wsk.y0);
-  if (wsk.typ === "kosz") { if (ruch < 14 && gra.kosz.el.length) { gra.kosz.dol = !gra.kosz.dol; komunikat(gra.kosz.dol ? "Kosz w oleju – smaży się" : "Kosz uniesiony – ociekanie"); } return; }
-  if (wsk.typ === "gest") { const dx = wsk.x - wsk.x0, dy = wsk.y - wsk.y0; if (gra.etap === "odwroc" && dy < -40) odwroc(); else if (gra.etap === "zawin" && Math.abs(dx) > 50) zawin(); return; }
-  if (wsk.typ === "kotlet") {
-    const m = wsk.obj;
-    if (ruch < 14) { const t = m.gora; m.gora = m.dol; m.dol = t; m.flip = performance.now(); m.przewr = (m.przewr || 0) + 1; komunikat(m.gora < 0.85 ? "Przewrócono – ta strona jest jeszcze surowa!" : "Przewrócono ✔", m.gora < 0.85 ? "zle" : "dobrze"); return; }
-    if (naKanapce(P)) { gra.grill.splice(gra.grill.indexOf(m), 1); dodajWarstwe("wolowina", { gora: m.gora, dol: m.dol, id: m.id, przewr: m.przewr || 0 }, P); }
-    return;
-  }
-  if (wsk.typ !== "niesie") return;
-  const k = wsk.k, sk = SKLADNIKI[k], st = wsk.st;
-  // do tostera
-  if (sk.gdzie === "toster" && w(P, L.toster) && !st.zTostera) { if (gra.toster.length >= MAX_TOSTER) { komunikat("Toster pełny"); return; } const sl = slotyTostera(); gra.toster.push({ k, p: 0, id: st.id, ...sl[gra.toster.length] }); komunikat(`${KROTKO[k]} w tosterze`); ulozToster(); return; }
-  // na grill
-  if (k === "wolowina" && w(P, L.grill)) { if (gra.grill.length >= MAX_GRILL) { komunikat("Grill pełny"); return; } const wolne = slotyGrilla().find(s => !gra.grill.some(m => Math.hypot(m.x - s.x, m.y - s.y) < 2)); gra.grill.push({ ...wolne, gora: 0, dol: 0, id: st.id }); komunikat("Kotlet na grillu – po chwili przewróć go łopatką"); return; }
-  if (k === "wolowina" && st.surowy) { if (naKanapce(P)) kara("niedopieczone", "Surowe mięso! Najpierw usmaż je na grillu"); return; }
-  // do frytownicy
-  if (k === "kurczak" && L.fryt && w(P, L.fryt) && st.surowy) { if (gra.kosz.dol) { komunikat("Najpierw unieś kosz"); return; } if (gra.kosz.el.length >= 4) { komunikat("Kosz pełny"); return; } gra.kosz.el.push({ s: 0, id: st.id }); komunikat("Kurczak w koszu – dotknij kosza, by go opuścić do oleju"); return; }
-  if (k === "kurczak" && st.surowy) { if (naKanapce(P)) kara("niedopieczone", "Surowy kurczak! Najpierw do frytownicy"); return; }
-  // na kanapkę
-  if (sk.sos) { if (st.ile > 0.05 && naKanapce(P)) dodajWarstwe(k, { ...st }, P); return; }
-  if (naKanapce(P)) dodajWarstwe(k, st, P);
-  else if (st.zTostera) { const sl = slotyTostera(); gra.toster.push({ k, p: st.opieczenie, id: st.id, ...sl[gra.toster.length] }); ulozToster(); }
-  else if (k === "kurczak") gra.kosz.el.push({ s: st.smazenie, id: st.id });
-}
-function ulozToster() { const sl = slotyTostera(); gra.toster.forEach((s, i) => Object.assign(s, { x: sl[i].x, y: sl[i].y, r: sl[i].r })); }
-
-function dodajWarstwe(k, st, P) {
-  if (gra.etap !== "sklad") return;
-  const ocz = oczekiwany();
-  if (k !== ocz) { kara("zlySkladnik", `To nie teraz – potrzebny: ${SKLADNIKI[ocz].nazwa}`); if (k === "wolowina") gra.grill.push({ ...slotyGrilla()[gra.grill.length], gora: st.gora, dol: st.dol, id: st.id }); if (st.zTostera) { gra.toster.push({ k, p: st.opieczenie, id: st.id }); ulozToster(); } return; }
-  const dx = (P.x - L.srodek.x) / L.r, dok = Math.max(0, 1 - Math.abs(dx) / 0.6);
-  const w = { k, dx: Math.max(-0.45, Math.min(0.45, dx)), st: { ...st }, dok };
-  const bl = [];
-  if (SKLADNIKI[k].gdzie === "toster" && !st.zTostera) bl.push(["bezOpiekania", "Bułka nieopieczona – najpierw do tostera"]);
-  if (st.zTostera && st.opieczenie < 0.85) bl.push(["bezOpiekania", "Bułka za krótko w tosterze"]);
-  if (k === "wolowina") { if (Math.min(st.gora, st.dol) < 0.85) bl.push(["niedopieczone", "Kotlet niedosmażony z jednej strony"]); if (Math.max(st.gora, st.dol) > 1.4) bl.push(["przypalone", "Kotlet przypalony"]); if (!st.przewr) bl.push(["niedopieczone", "Kotlet nieprzewrócony"]); }
-  if (k === "kurczak") { if (st.smazenie < 0.85) bl.push(["niedopieczone", "Kurczak za krótko we frytownicy"]); if (st.smazenie > 1.45) bl.push(["przypalone", "Kurczak przypalony"]); }
-  if (SKLADNIKI[k].sos) { if (st.ile < 0.6) bl.push(["sosZaMalo", "Za mało sosu"]); else if (st.ile > 1.5) bl.push(["sosZaDuzo", "Za dużo sosu"]); }
-  if (Math.abs(dx) > 0.25) bl.push(["krzywo", "Krzywo – połóż bliżej środka"]);
-  for (const [r, t] of bl) kara(r, t);
-  if (k === "ser" && gra.stos.at(-1)?.k === "wolowina") w.st.topnienie = 0.1;
-  if (k === "wolowina" && gra.stos.at(-1)?.k === "ser") gra.stos.at(-1).st.topnienie = 0.1;
-  if (k === "korona" || k === "koronaSez") w.st.odwrocona = gra.danie.odwroc;
-  gra.stos.push(w); gra.krok++; gra.kcal += SKLADNIKI[k].kcal * (SKLADNIKI[k].sos ? st.ile : 1);
-  if (!bl.length) komunikat(`✔ ${KROTKO[k] || SKLADNIKI[k].nazwa}`, "dobrze");
-  try { navigator.vibrate?.(25); } catch {}
-  if (gra.krok >= gra.danie.sklad.length) gra.etap = gra.danie.odwroc ? "odwroc" : "zawin";
-  opisKroku();
-}
-function odwroc() { if (gra.etap !== "odwroc") return; gra.odwrocona = true; gra.animOdwr = performance.now(); gra.etap = "zawin"; komunikat("↻ Odwrócona!", "dobrze"); opisKroku(); }
-function zawin() { if (gra.etap !== "zawin") return; gra.zawinieta = true; gra.animZaw = performance.now(); gra.etap = "czekaj"; opisKroku(); setTimeout(koniec, 900); }
-
-/* ================= rysowanie ================= */
-function prostokat(x, y, w, h, r, f, s) { g.beginPath(); g.roundRect(x, y, w, h, r); if (f) { g.fillStyle = f; g.fill(); } if (s) { g.strokeStyle = s; g.lineWidth = 2; g.stroke(); } }
-function stal(x, y, w, h, r = 12) { const gr = g.createLinearGradient(x, y, x, y + h); gr.addColorStop(0, "#e9edf0"); gr.addColorStop(1, "#aeb6bd"); prostokat(x, y, w, h, r, gr, "#8f979e"); }
-function etykieta(t, x, y, kol = "#27170e", roz = 11) { g.font = `800 ${roz}px system-ui`; g.textAlign = "center"; g.textBaseline = "middle"; g.lineWidth = 3; g.strokeStyle = "rgba(255,255,255,.85)"; g.strokeText(t, x, y); g.fillStyle = kol; g.fillText(t, x, y); }
-function podswietl(b, kol = "#2f8f4e") { if (tryb !== "szkolenie") return; const a = 0.5 + 0.5 * Math.sin(performance.now() / 200); g.save(); g.strokeStyle = kol; g.globalAlpha = 0.5 + a * 0.5; g.lineWidth = 4; g.setLineDash([8, 6]); g.beginPath(); g.roundRect(b.x - 3, b.y - 3, b.w + 6, b.h + 6, 12); g.stroke(); g.restore(); }
-function cel() { // co podświetlić w trybie szkolenia
-  const k = oczekiwany(); if (!k || gra.etap !== "sklad") return null; const sk = SKLADNIKI[k];
-  if (sk.gdzie === "toster") return gra.toster.some(s => s.k === k) ? L.toster : POJEMNIKI.find(p => p.k === k);
-  if (k === "wolowina") return gra.grill.length ? { x: L.lopatka.x - 30, y: L.lopatka.y - 40, w: 60, h: 80 } : L.mroz;
-  if (k === "kurczak") return gra.kosz.el.length ? (gra.kosz.dol ? L.fryt : { x: L.szczypce.x - 25, y: L.szczypce.y - 45, w: 50, h: 90 }) : L.mrozK;
-  return POJEMNIKI.find(p => p.k === k);
-}
-function rysuj() {
-  g.clearRect(0, 0, W, H); if (!gra) return;
-  const t = performance.now();
-  // blat
-  const gb = g.createLinearGradient(0, L.top, 0, H); gb.addColorStop(0, "#d7dbdf"); gb.addColorStop(1, "#b5bcc2"); prostokat(L.x, L.top - 4, L.w, H - L.top + 4, 18, gb);
-  // --- TOSTER
-  const T = L.toster; stal(T.x, T.y, T.w, T.h); prostokat(T.x + 8, T.y + 18, T.w - 16, T.h - 26, 8, "#2a2a2a");
-  const ciep = g.createLinearGradient(0, T.y + 18, 0, T.y + T.h); ciep.addColorStop(0, "rgba(255,90,20,.35)"); ciep.addColorStop(1, "rgba(255,150,40,.08)"); prostokat(T.x + 8, T.y + 18, T.w - 16, T.h - 26, 8, ciep);
-  etykieta("TOSTER", T.x + T.w / 2, T.y + 10);
-  for (const s of gra.toster) { if (s.k === "tortilla") D.tortilla(g, s.x, s.y, s.r * 0.75, { opieczenie: Math.min(1, s.p), id: s.id }); else D.warstwa(g, s.k, s.x, s.y, s.r, { opieczenie: Math.min(1, s.p), id: s.id, odwrocona: true }); const pr = Math.min(1, s.p); prostokat(s.x - s.r, s.y + s.r * 0.42, s.r * 2, 5, 3, "#555"); prostokat(s.x - s.r, s.y + s.r * 0.42, s.r * 2 * pr, 5, 3, pr >= 1 ? "#4cd964" : "#ffcc00"); if (pr >= 1) etykieta("✔", s.x + s.r + 8, s.y, "#2f8f4e", 14); }
-  // --- GRILL
-  const G = L.grill; stal(G.x, G.y, G.w, G.h); const plyta = { x: G.x + 8, y: G.y + 18, w: G.w - L.mroz.w - 22, h: G.h - 26 };
-  const gp = g.createLinearGradient(0, plyta.y, 0, plyta.y + plyta.h); gp.addColorStop(0, "#3b3b3b"); gp.addColorStop(1, "#1d1d1d"); prostokat(plyta.x, plyta.y, plyta.w, plyta.h, 8, gp);
-  g.strokeStyle = "rgba(255,255,255,.05)"; for (let i = 0; i < plyta.w; i += 10) { g.beginPath(); g.moveTo(plyta.x + i, plyta.y); g.lineTo(plyta.x + i, plyta.y + plyta.h); g.stroke(); }
-  etykieta("GRILL", plyta.x + plyta.w / 2, G.y + 10);
-  stal(L.mroz.x, L.mroz.y, L.mroz.w, L.mroz.h, 8); prostokat(L.mroz.x + 4, L.mroz.y + 14, L.mroz.w - 8, L.mroz.h - 18, 6, "#cfe3f0");
-  for (let i = 0; i < 3; i++) D.kotlet(g, L.mroz.x + L.mroz.w / 2, L.mroz.y + L.mroz.h - 14 - i * 7, L.mroz.w * 0.36, { gora: 0, mrozony: true, id: "z" + i });
-  etykieta("MROŻONE", L.mroz.x + L.mroz.w / 2, L.mroz.y + 8, "#1b4a6b", 9);
-  for (const m of gra.grill) {
-    const f = m.flip ? Math.min(1, (t - m.flip) / 260) : 1, sk = f < 1 ? Math.abs(Math.cos(f * Math.PI)) : 1;
-    g.save(); g.translate(m.x, m.y); g.scale(1, Math.max(0.15, sk)); D.kotlet(g, 0, 0, m.r, { gora: m.gora, dol: m.dol, id: m.id, para: m.dol > 0.2 }); g.restore();
-    const gotowy = m.dol >= 0.85, spal = m.dol > 1.4;
-    prostokat(m.x - m.r, m.y + m.r * 0.55, m.r * 2, 5, 3, "#555"); prostokat(m.x - m.r, m.y + m.r * 0.55, m.r * 2 * Math.min(1, m.dol / 0.85), 5, 3, spal ? "#ff3b30" : gotowy ? "#4cd964" : "#ffcc00");
-    if (gotowy) etykieta(spal ? "PRZYPALA SIĘ!" : (m.przewr ? "GOTOWY" : "PRZEWRÓĆ!"), m.x, m.y - m.r * 0.65, spal ? "#c0392b" : "#2f8f4e", 10);
-  }
-  // --- FRYTOWNICA
-  if (L.fryt) { const F = L.fryt; stal(F.x, F.y, F.w, F.h); const olej = { x: F.x + 6, y: F.y + 18, w: F.w * 0.58, h: F.h - 26 };
-    const go = g.createLinearGradient(0, olej.y, 0, olej.y + olej.h); go.addColorStop(0, "#d9a521"); go.addColorStop(1, "#8a5a10"); prostokat(olej.x, olej.y, olej.w, olej.h, 6, go);
-    if (gra.kosz.dol) for (let i = 0; i < 8; i++) { g.fillStyle = "rgba(255,240,180,.6)"; g.beginPath(); g.arc(olej.x + ((i * 37 + t / 9) % olej.w), olej.y + 6 + ((i * 13 + t / 30) % (olej.h - 12)), 2 + (i % 3), 0, 7); g.fill(); }
-    etykieta("FRYTOWNICA", olej.x + olej.w / 2, F.y + 10, "#27170e", 9);
-    const ky = gra.kosz.dol ? olej.y + olej.h * 0.35 : olej.y - 2; g.strokeStyle = "#ccc"; g.lineWidth = 2; prostokat(olej.x + 6, ky, olej.w - 12, olej.h * 0.55, 6, gra.kosz.dol ? "rgba(80,50,10,.35)" : "rgba(220,220,220,.25)", "#ddd");
-    gra.kosz.el.forEach((c, i) => D.kurczak(g, olej.x + olej.w / 2, ky + 14 + i * 10, olej.w * 0.42, { smazenie: c.s, id: c.id }));
-    if (gra.kosz.el.length) { const s = gra.kosz.el[0].s; prostokat(olej.x + 6, olej.y + olej.h - 8, olej.w - 12, 5, 3, "#555"); prostokat(olej.x + 6, olej.y + olej.h - 8, (olej.w - 12) * Math.min(1, s / 0.85), 5, 3, s > 1.45 ? "#ff3b30" : s >= 0.85 ? "#4cd964" : "#ffcc00"); etykieta(gra.kosz.dol ? (s >= 0.85 ? "UNIEŚ KOSZ" : "smaży się…") : "dotknij kosza", olej.x + olej.w / 2, olej.y + olej.h * 0.5, "#fff", 10); }
-    stal(L.mrozK.x, L.mrozK.y, L.mrozK.w, L.mrozK.h, 8); prostokat(L.mrozK.x + 4, L.mrozK.y + 14, L.mrozK.w - 8, L.mrozK.h - 18, 6, "#cfe3f0");
-    for (let i = 0; i < 3; i++) D.kurczak(g, L.mrozK.x + L.mrozK.w / 2, L.mrozK.y + L.mrozK.h - 14 - i * 9, L.mrozK.w * 0.8, { smazenie: 0, id: "zk" + i }); etykieta("MROŻ.", L.mrozK.x + L.mrozK.w / 2, L.mrozK.y + 8, "#1b4a6b", 9); }
-  // --- NARZĘDZIA
-  const N = L.narz; prostokat(N.x, N.y, N.w, N.h, 12, "rgba(255,255,255,.35)"); etykieta("NARZĘDZIA", N.x + N.w / 2, N.y + 10, "#27170e", 9);
-  if (gra.narz !== "lopatka") D.lopatka(g, L.lopatka.x, L.lopatka.y, 0.5, -0.2); else { g.globalAlpha = 0.3; D.lopatka(g, L.lopatka.x, L.lopatka.y, 0.5, -0.2); g.globalAlpha = 1; }
-  etykieta("łopatka", L.lopatka.x, L.lopatka.y + 46, "#27170e", 10);
-  if (L.fryt) { if (gra.narz !== "szczypce") D.szczypce(g, L.szczypce.x, L.szczypce.y, 0.5); else { g.globalAlpha = 0.3; D.szczypce(g, L.szczypce.x, L.szczypce.y, 0.5); g.globalAlpha = 1; } etykieta("szczypce", L.szczypce.x, L.szczypce.y + 46, "#27170e", 10); }
-  // --- STÓŁ MONTAŻOWY: papier i stos
-  const S = L.stol, sx = L.srodek.x, sy = L.srodek.y, r = L.r;
-  g.fillStyle = "rgba(0,0,0,.08)"; g.beginPath(); g.ellipse(sx, sy + 8, r * 2.1, r * 2.1 * D.P, 0, 0, 7); g.fill();
-  g.save(); g.translate(sx, sy); g.scale(1, D.P); g.rotate(0.3); const pap = gra.zawinieta ? 1 : 0; prostokat(-r * 1.7, -r * 1.7, r * 3.4, r * 3.4, 4, "#fbf7ef", "#e2d8c4"); g.fillStyle = "rgba(218,41,28,.13)"; for (let i = -3; i <= 3; i++) g.fillRect(i * r * 0.5 - 4, -r * 1.7, 8, r * 3.4); g.restore();
-  etykieta("STÓŁ MONTAŻOWY", S.x + S.w / 2, S.y + 10, "#27170e", 11);
-  rysujStos(sx, sy, r, t);
-  // --- POJEMNIKI
-  const cl = cel();
-  for (const p of POJEMNIKI) {
-    const sk = SKLADNIKI[p.k];
-    if (sk.sos) { prostokat(p.x, p.y, p.w, p.h, 10, "rgba(255,255,255,.3)"); D.butelka(g, p.x + p.w / 2, p.y + p.h * 0.6, Math.min(p.h / 120, p.w / 60), KOLOR_BUT[p.k], NAPIS[p.k]); }
-    else { stal(p.x, p.y, p.w, p.h, 10); prostokat(p.x + 4, p.y + 4, p.w - 8, p.h - 18, 7, "#3a3f44"); const rr = Math.min(p.w, p.h) * 0.36;
-      g.save(); g.beginPath(); g.roundRect(p.x + 4, p.y + 4, p.w - 8, p.h - 18, 7); g.clip();
-      if (p.k === "tortilla") D.tortilla(g, p.x + p.w / 2, p.y + p.h * 0.42, rr * 0.75, { id: "pt" });
-      else for (let i = 0; i < (["korona", "spod", "koronaSez", "srodek", "spodDuzy"].includes(p.k) ? 2 : 3); i++) D.warstwa(g, p.k, p.x + p.w / 2 + (i - 1) * rr * 0.25, p.y + p.h * 0.5 - i * rr * 0.18, rr * (["ogorek", "pomidor"].includes(p.k) ? 1.3 : 1), { id: p.k + i, opieczenie: 0 });
-      g.restore(); }
-    etykieta(KROTKO[p.k], p.x + p.w / 2, p.y + p.h - 7, "#27170e", Math.max(9, Math.min(11, p.w / 7)));
-  }
-  if (cl) podswietl(cl);
-  // --- trzymany przedmiot
-  if (wsk?.typ === "niesie") {
-    const x = wsk.x, y = wsk.y - wsk.ofs, k = wsk.k, sk = SKLADNIKI[k];
-    if (sk.sos) {
-      const nad = naKanapce({ x, y });
-      g.save(); g.translate(x, y - 40); g.rotate(Math.PI); D.butelka(g, 0, 0, 0.8, KOLOR_BUT[k], NAPIS[k]); g.restore();
-      if (nad) { g.strokeStyle = D.SOSY[k][1]; g.lineWidth = 5; g.beginPath(); g.moveTo(x, y - 2); g.lineTo(x + Math.sin(t / 80) * 3, y + 14); g.stroke(); }
-      const ile = wsk.st.ile, ok = ile >= 0.6 && ile <= 1.5; prostokat(x + 34, y - 60, 12, 70, 6, "rgba(0,0,0,.4)"); prostokat(x + 34, y + 10 - 70 * Math.min(1, ile / 2.4), 12, 70 * Math.min(1, ile / 2.4), 6, ok ? "#4cd964" : ile > 1.5 ? "#ff3b30" : "#ffcc00");
-      g.strokeStyle = "#fff"; g.lineWidth = 2; for (const v of [0.6, 1.5]) { const yy = y + 10 - 70 * v / 2.4; g.beginPath(); g.moveTo(x + 32, yy); g.lineTo(x + 48, yy); g.stroke(); }
-      etykieta(nad ? `${ile.toFixed(1)} porcji` : "nad kanapkę i trzymaj", x, y - 100, "#27170e", 12);
-    } else {
-      if (k === "wolowina") D.kotlet(g, x, y, r * 0.95, { ...wsk.st, mrozony: wsk.st.surowy });
-      else D.warstwa(g, k, x, y, ["ogorek"].includes(k) ? r : r, { ...wsk.st, odwrocona: (k === "korona" || k === "koronaSez") && gra.danie.odwroc && !gra.stos.length });
-      if (naKanapce({ x, y }) && gra.etap === "sklad") { const dx = (x - sx) / r; g.strokeStyle = Math.abs(dx) <= 0.25 ? "#2f8f4e" : "#ff9500"; g.setLineDash([6, 5]); g.lineWidth = 3; g.beginPath(); g.ellipse(sx, sy - wysStosu(), r, r * D.P, 0, 0, 7); g.stroke(); g.setLineDash([]); }
-    }
-  }
-  if (wsk?.typ === "kotlet") { const m = wsk.obj, x = wsk.x, y = wsk.y - wsk.ofs; if (Math.hypot(wsk.x - wsk.x0, wsk.y - wsk.y0) > 14) { D.kotlet(g, x, y - 6, m.r * 1.05, { gora: m.gora, dol: m.dol, id: m.id }); D.lopatka(g, x, y + 22, 0.55, 0); } }
-  else if (gra.narz === "lopatka" && wsk) D.lopatka(g, wsk.x, wsk.y - wsk.ofs + 20, 0.55, -0.1);
-}
-function rysujStos(sx, sy, r, t) {
-  let lista = gra.stos;
-  // animacja odwracania
-  let skY = 1; if (gra.animOdwr) { const f = Math.min(1, (t - gra.animOdwr) / 420); skY = Math.abs(Math.cos(f * Math.PI)); }
-  if (gra.odwrocona && (!gra.animOdwr || t - gra.animOdwr > 210)) lista = [...gra.stos].reverse();
-  g.save(); g.translate(sx, sy); g.scale(1, Math.max(0.12, skY)); g.translate(-sx, -sy);
-  if (gra.zawinieta && gra.danie.zawin === "zwin") { const f = Math.min(1, (t - gra.animZaw) / 600); g.translate(sx, sy); g.scale(1 - f * 0.45, 1); g.translate(-sx, -sy); }
-  let y = sy;
-  for (const w of lista) {
-    const k = w.k, x = sx + w.dx * r, st = { ...w.st };
-    if (gra.odwrocona && (k === "korona" || k === "koronaSez")) st.odwrocona = false;
-    if (st.topnienie !== undefined && st.topnienie < 1) st.topnienie = Math.min(1, st.topnienie + 0.004);
-    w.st.topnienie = st.topnienie;
-    if (k === "korona" || k === "koronaSez") { D.warstwa(g, k, x, y, r, st); if (st.odwrocona) { y -= r * 0.04 + 1; continue; } }
-    else if (k === "kurczak") D.kurczak(g, x, y - 2, r * 1.2, { smazenie: st.smazenie, id: st.id });
-    else if (k === "ogorek") { const i = gra.stos.filter(q => q.k === "ogorek").indexOf(w); D.ogorek(g, x + (i % 2 ? r * 0.25 : -r * 0.25), y, r, st.id); }
-    else if (k === "pomidor") { const i = gra.stos.filter(q => q.k === "pomidor").indexOf(w); D.pomidor(g, x + (i % 2 ? r * 0.28 : -r * 0.28), y, r * 0.75, st.id); }
-    else D.warstwa(g, k, x, y, r, st);
-    y -= r * (D.GRUBOSC[k] || 0.05) + 1;
-  }
-  g.restore();
-  if (gra.zawinieta && gra.danie.zawin === "papier") { const f = Math.min(1, (t - gra.animZaw) / 600); g.fillStyle = `rgba(251,247,239,${f})`; g.beginPath(); g.moveTo(sx - r * 1.3, sy + 10); g.lineTo(sx, sy - r * 1.5 * f - 10); g.lineTo(sx + r * 1.3, sy + 10); g.closePath(); g.fill(); g.strokeStyle = `rgba(218,41,28,${f * 0.4})`; g.lineWidth = 3; g.stroke(); }
-}
 
 /* ================= podsumowanie ================= */
 function koniec() {
@@ -463,7 +456,7 @@ async function dolaczDoStolika(nick) {
   pokazPoczekalnie();
 }
 function zapiszWynik(w) { const l = stolik.wyniki[w.runda] || (stolik.wyniki[w.runda] = []); const i = l.findIndex(x => x.uid === w.uid); if (i >= 0) l[i] = w; else l.push(w); }
-function pokazPoczekalnie() { $("#ePoczekalnia").hidden = false; $("#naglowek").hidden = true; $("#krok").hidden = true; $("#receptura").hidden = true; $("#akcje").hidden = true; gra = null; rysujPoczekalnie(); }
+function pokazPoczekalnie() { K.dyn.clear(); $("#ePoczekalnia").hidden = false; $("#naglowek").hidden = true; $("#krok").hidden = true; $("#receptura").hidden = true; $("#akcje").hidden = true; gra = null; rysujPoczekalnie(); }
 function rysujPoczekalnie() {
   if (!stolik) return; $("#pStol").textContent = STOL;
   const lista = stolik.gracze.length ? stolik.gracze : [stolik.ja];
@@ -490,17 +483,18 @@ function rysujRankingW(el) {
 }
 function rysujRanking() { if (STOL) { rysujRankingW($("#rankingBox")); const rp = $("#rankPocz"); if (rp) rysujRankingW(rp); } }
 
+
 /* ================= pętla ================= */
 let tp = performance.now();
 function petla() {
   const t = performance.now(), dt = Math.min(0.1, (t - tp) / 1000); tp = t;
-  if (gra && !gra.koniec) { aktualizuj(dt); if (gra.t0) { $("#hCzas").textContent = (((t - gra.t0) / 1000) + gra.kary.reduce((s, k) => s + k.s, 0)).toFixed(1).replace(".", ",") + " s"; } $("#hKcal").textContent = Math.round(gra.kcal) + " kcal"; }
-  rysuj(); requestAnimationFrame(petla);
+  if (gra) { aktualizuj(dt, t); opadanie(t); if (!gra.koniec) { if (gra.t0) $("#hCzas").textContent = (((t - gra.t0) / 1000) + gra.kary.reduce((s, k) => s + k.s, 0)).toFixed(1).replace(".", ",") + " s"; $("#hKcal").textContent = Math.round(gra.kcal) + " kcal"; } }
+  if (gra) K.render(); rysujNakladke(t); requestAnimationFrame(petla);
 }
-addEventListener("resize", () => { if (gra) { uklad(); ulozToster(); } });
+addEventListener("resize", () => uklad());
 uklad(); petla();
 if (STOL) { tryb = "gra"; odswiezStart(); }
-window.__mk = { stan: () => gra, L: () => L, POJEMNIKI, slotyGrilla, stolik: () => stolik, MENU };
+window.__mk = { stan: () => gra, wsk: () => [...wskazniki.values()].map(W => ({ typ: W.typ, k: W.k, ile: W.st?.ile, nad: !!W.nad })), K, P: () => P, OB: () => OB, ekr, wDol, wRuch, wGora, rece, wlaczDlonie, stolik: () => stolik, MENU, sztucznaDlon, wynikSymulacji };
 window.__mkGotowa = true;
 </script>
 </body>
