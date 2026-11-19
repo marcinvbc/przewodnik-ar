@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mistrz Kanapek – kody QR na stoliki i paragony</title>
+<script src="../anioly/lib/qrcode.js"></script>
+<style>
+  body { margin: 0; font: 15px/1.4 system-ui, sans-serif; color: #27170e; background: #fff8e6; }
+  .panel { max-width: 900px; margin: 0 auto; padding: 20px; }
+  h1 { color: #da291c; margin: 0 0 6px; } label { display: inline-flex; flex-direction: column; gap: 3px; margin: 6px 12px 6px 0; font-weight: 700; font-size: 13px; }
+  input, select { font: 15px system-ui; padding: 8px 10px; border-radius: 10px; border: 2px solid #f0dcb8; }
+  button { font: 800 15px system-ui; border: 0; border-radius: 12px; padding: 10px 16px; background: #da291c; color: #fff; cursor: pointer; }
+  code { background: #fff; padding: 2px 6px; border-radius: 6px; word-break: break-all; }
+  .arkusz { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10mm; padding: 10mm; background: #fff; }
+  .naklejka { border: 2px dashed #e0c9a0; border-radius: 6mm; padding: 6mm; text-align: center; background: linear-gradient(160deg, #ffc72c, #ffb000 55%, #da291c); color: #27170e; break-inside: avoid; }
+  .naklejka .biale { background: #fff; border-radius: 4mm; padding: 4mm; display: inline-block; } .naklejka svg { width: 45mm; height: 45mm; display: block; }
+  .naklejka h2 { margin: 2mm 0 1mm; font-size: 20pt; } .naklejka p { margin: 1mm 0; font-size: 10.5pt; } .naklejka .nr { font-weight: 900; font-size: 13pt; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+  .paragony { display: flex; flex-wrap: wrap; gap: 8mm; padding: 8mm; background: #fff; }
+  .paragon { width: 58mm; font: 9pt ui-monospace, Menlo, monospace; text-align: center; border: 1px dashed #bbb; padding: 3mm; }
+  .paragon svg { width: 34mm; height: 34mm; }
+  @media print { .panel { display: none; } body { background: #fff; } .arkusz, .paragony { padding: 0; gap: 8mm; } }
+</style></head><body>
+<div class="panel">
+  <h1>🍔 Mistrz Kanapek – kody do gry przy stoliku</h1>
+  <p>Każdy stolik ma własny kod QR. Goście przy tym samym stoliku skanują ten sam kod, podają swoją nazwę i grają razem – ranking według czasu złożenia kanapki.
+  Do gry z kilku telefonów potrzebny jest wpisany projekt Supabase w <code>lekcje/konfiguracja.js</code> (bez niego – tryb demo na jednym urządzeniu).</p>
+  <label>Kod restauracji<input id="kod" value="R1" maxlength="10"></label>
+  <label>Liczba stolików<input id="ile" type="number" min="1" max="60" value="6"></label>
+  <label>Format<select id="format"><option value="naklejka">Naklejki na stoliki (A4)</option><option value="paragon">Pasek na paragon 58 mm</option></select></label>
+  <button id="bGen">Generuj</button> <button id="bDruk" style="background:#27170e">🖨 Drukuj</button>
+  <p style="font-size:13px">Druk kodu z kasy (POS): wstaw na paragonie kod QR z adresem<br><code id="wzor"></code><br>
+  gdzie <code>{nr}</code> to numer stolika (gra wspólna dla stolika) albo numer zamówienia (gra wspólna dla osób z jednego zamówienia).</p>
+</div>
+<div id="wynik"></div>
+<script>
+const $ = s => document.querySelector(s);
+const baza = new URL("kuchnia.html", location.href).href;
+function svg(t, cell = 4) { const q = qrcode(0, "M"); q.addData(t); q.make(); return q.createSvgTag({ cellSize: cell, margin: 2, scalable: true }); }
+function generuj() {
+  const kod = ($("#kod").value || "R1").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 10), ile = Math.max(1, Math.min(60, +$("#ile").value || 1)), f = $("#format").value;
+  $("#wzor").textContent = `${baza}?stol=${kod}-{nr}`;
+  const url = n => `${baza}?stol=${kod}-T${n}`;
+  if (f === "naklejka") $("#wynik").innerHTML = `<div class="arkusz">${Array.from({ length: ile }, (_, i) => `<div class="naklejka"><div class="nr">STOLIK ${i + 1}</div><h2>🍔 Mistrz Kanapek</h2><p>Czekasz na zamówienie? Zeskanuj kod, wpisz swoją nazwę<br>i złóż kanapkę szybciej niż znajomi przy stoliku!</p><div class="biale">${svg(url(i + 1))}</div><p style="font-size:8pt">Gra działa w przeglądarce telefonu – bez instalowania aplikacji.</p></div>`).join("")}</div>`;
+  else $("#wynik").innerHTML = `<div class="paragony">${Array.from({ length: ile }, (_, i) => `<div class="paragon">--------------------------------<br><b>🍔 ZAGRAJ, ZANIM PODAMY!</b><br>Złóż kanapkę na czas<br>z osobami przy stoliku ${i + 1}<br>${svg(url(i + 1), 3)}Zeskanuj i wpisz swoją nazwę<br>--------------------------------</div>`).join("")}</div>`;
+}
+$("#bGen").onclick = generuj; $("#bDruk").onclick = () => print();
+generuj(); window.__ok = true;
+</script></body></html>
