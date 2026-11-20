@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel szkoleniowca – Mistrz Kanapek</title>
+<script src="konfiguracja.js"></script>
+<script src="../wersja.js"></script>
+<script src="../anioly/lib/qrcode.js"></script>
+<style>
+  :root { --czerwony: #da291c; --zolty: #ffc72c; --ink: #27170e; --tlo: #f4f1ea; --karta: #fffdf8; --linia: #ece4d2; --t2: #6b5a48; --ok: #2f8f4e; --nie: #c0392b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: var(--tlo); }
+  header { background: var(--ink); color: #fff; padding: 10px 18px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; }
+  header h1 { margin: 0; font-size: 18px; } header .kod { background: var(--zolty); color: var(--ink); border-radius: 8px; padding: 3px 10px; font-weight: 800; letter-spacing: .08em; }
+  .pill { border-radius: 99px; padding: 3px 10px; font-weight: 700; font-size: 12.5px; background: rgba(255,255,255,.14); }
+  nav { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; } nav button { border: 0; background: transparent; color: #fff; font: 600 14px system-ui; padding: 7px 12px; border-radius: 9px; cursor: pointer; } nav button.wyb { background: #fff; color: var(--ink); }
+  main { max-width: 1250px; margin: 0 auto; padding: 16px 18px 50px; }
+  .karta { background: var(--karta); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; box-shadow: 0 1px 0 var(--linia); }
+  .karta h2 { margin: 0 0 4px; font-size: 16px; } .pod { margin: 0 0 10px; color: var(--t2); font-size: 13px; }
+  .btn { border: 0; border-radius: 10px; padding: 9px 14px; font: 700 14px system-ui; background: var(--czerwony); color: #fff; cursor: pointer; } .btn.jasny { background: #fff; color: var(--ink); border: 1px solid var(--linia); } .btn.zolty { background: var(--zolty); color: var(--ink); } .btn.maly { padding: 5px 9px; font-size: 12.5px; } .btn:disabled { opacity: .45; cursor: default; }
+  .btn.potw { background: var(--nie) !important; color: #fff !important; }
+  input, select, textarea { font: 14px system-ui; padding: 8px 10px; border: 1px solid #d9cdb3; border-radius: 9px; background: #fff; } textarea { width: 100%; min-height: 90px; }
+  label.pole { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 13px; }
+  .rzad { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+  .siatka2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } @media (max-width: 900px) { .siatka2 { grid-template-columns: 1fr; } }
+  .opcje { display: flex; flex-wrap: wrap; gap: 6px; } .opcje label { display: flex; gap: 6px; align-items: center; background: #fff; border: 1px solid var(--linia); border-radius: 10px; padding: 6px 10px; cursor: pointer; font-size: 13.5px; } .opcje label:has(input:checked) { border-color: var(--ink); background: #fff7df; }
+  .poziomy { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; } @media (max-width: 900px) { .poziomy { grid-template-columns: 1fr 1fr; } }
+  .poziomy label { background: #fff; border: 2px solid var(--linia); border-radius: 12px; padding: 8px 10px; cursor: pointer; font-size: 12.5px; color: var(--t2); } .poziomy label b { display: block; color: var(--ink); font-size: 14px; } .poziomy input { display: none; } .poziomy label:has(input:checked) { border-color: var(--ink); background: #fff7df; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; } th { text-align: left; color: var(--t2); font-weight: 600; font-size: 12px; border-bottom: 1px solid var(--linia); padding: 6px; white-space: nowrap; } td { padding: 6px; border-bottom: 1px solid #f1ebdc; vertical-align: middle; } td.n, th.n { text-align: right; }
+  .kropka { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #c9c1b0; margin-right: 6px; } .kropka.on { background: var(--ok); }
+  .pasek { position: relative; height: 16px; background: #efe8d8; border-radius: 8px; overflow: hidden; min-width: 120px; } .pasek i { position: absolute; inset: 0 auto 0 0; background: var(--zolty); border-radius: 8px; } .pasek i.ok { background: #7cc48f; } .pasek span { position: relative; font-size: 11px; font-weight: 700; padding-left: 7px; line-height: 16px; }
+  .karty { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; }
+  .uczestnik { background: #fff; border: 1px solid var(--linia); border-radius: 12px; padding: 10px; display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; }
+  .uczestnik .qr svg { width: 96px; height: 96px; display: block; } .uczestnik h3 { margin: 0; font-size: 15px; } .uczestnik small { color: var(--t2); }
+  .uczestnik input.link { width: 100%; font-size: 11px; padding: 4px 6px; margin: 4px 0; }
+  .wejscie { display: grid; grid-template-columns: 170px 1fr; gap: 16px; align-items: center; } .wejscie svg { width: 170px; height: 170px; }
+  .tag { display: inline-block; border-radius: 99px; padding: 1px 8px; font-size: 12px; font-weight: 700; background: #efe8d8; } .tag.ok { background: #dff1e4; color: #1f6b38; } .tag.nie { background: #fbe1dd; color: #8e2a1f; } .tag.trwa { background: #fff1c2; }
+  .kafle { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px; } @media (max-width: 900px) { .kafle { grid-template-columns: 1fr 1fr; } }
+  .kafel { background: var(--karta); border-radius: 12px; padding: 10px 12px; } .kafel h3 { margin: 0; font-size: 11.5px; color: var(--t2); text-transform: uppercase; letter-spacing: .03em; } .kafel b { display: block; font-size: 24px; } .kafel small { color: var(--t2); }
+  .macierz td.kom { text-align: center; font-size: 12px; white-space: nowrap; } .macierz td.kom b { font-size: 13px; }
+  .kryt li { margin-bottom: 6px; }
+  .pusto { color: var(--t2); padding: 8px 0; }
+  .ukryty { display: none !important; }
+  @media print { header, nav, .bezDruku, .btn { display: none !important; } body { background: #fff; } .karta { box-shadow: none; break-inside: avoid; } .uczestnik { break-inside: avoid; } main { padding: 0; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎓 Panel szkoleniowca</h1>
+  <span class="kod" id="hKod" hidden></span><span id="hNazwa"></span>
+  <span class="pill" id="hPol" hidden>🟡 Łączenie…</span>
+  <nav id="nav" hidden>
+    <button data-z="uczestnicy" class="wyb">👥 Uczestnicy</button><button data-z="zadania">▶ Zadania na żywo</button><button data-z="podsumowanie">📊 Podsumowanie</button><button data-z="kryteria">✔ Kryteria</button><button data-z="sesje">☰ Szkolenia</button>
+  </nav>
+</header>
+<main>
+  <!-- LISTA SZKOLEŃ / NOWE -->
+  <section id="zSesje">
+    <div class="karta"><h2>Nowe szkolenie zdalne</h2>
+      <p class="pod">Każdy uczestnik dostaje własny kod QR i link. Pracuje na swoim tablecie lub telefonie, a Ty z tego panelu wysyłasz zadania, ustawiasz poziom podpowiedzi i widzisz postępy na żywo.</p>
+      <div class="rzad"><label class="pole" style="flex:1">Nazwa szkolenia<input id="nNazwa" placeholder="np. Szkolenie nowych pracowników – zmiana poranna"></label></div>
+      <p style="margin:12px 0 4px"><b>Program szkolenia</b> – pozycje, które uczestnicy mają opanować:</p><div class="opcje" id="nProgram"></div>
+      <p style="margin-top:12px"><button class="btn" id="bNowe">Utwórz szkolenie ➜</button></p>
+    </div>
+    <div class="karta"><h2>Twoje szkolenia</h2><p class="pod">Zapisane na tym komputerze. Możesz wrócić do szkolenia w dowolnej chwili – uczestnicy zachowują swoje linki.</p><div id="listaSesji"></div></div>
+  </section>
+
+  <!-- UCZESTNICY -->
+  <section id="zUczestnicy" hidden>
+    <div class="siatka2 bezDruku">
+      <div class="karta"><h2>Dodaj uczestników</h2><p class="pod">Jedna osoba w wierszu. Po przecinku możesz dopisać zespół, np. <i>Anna Kowalska, Zespół A</i>.</p>
+        <textarea id="dLista" placeholder="Anna Kowalska, Zespół A&#10;Piotr Nowak, Zespół A&#10;Ola Wiśniewska, Zespół B"></textarea>
+        <div class="rzad" style="margin-top:8px"><label class="pole">Poziom startowy<select id="dPoziom"></select></label><button class="btn" id="bDodaj">➕ Dodaj i wygeneruj kody</button></div>
+      </div>
+      <div class="karta"><h2>Wspólny kod szkolenia</h2><p class="pod">Uczestnik skanuje i wybiera swoje imię z listy. Przydatne na wideorozmowie – pokaż kod na ekranie.</p><div class="wejscie" id="wspolny"></div></div>
+    </div>
+    <div class="karta"><div class="rzad" style="justify-content:space-between"><div><h2>Uczestnicy i ich kody</h2><p class="pod">Osobisty kod QR / link dla każdego uczestnika. Poziom możesz zmieniać w każdej chwili.</p></div><button class="btn jasny bezDruku" onclick="print()">🖨 Drukuj karty z kodami</button></div><div class="karty" id="karty"></div></div>
+  </section>
+
+  <!-- ZADANIA -->
+  <section id="zZadania" hidden>
+    <div class="karta bezDruku" id="nowyZad"><h2>Nowe zadanie</h2>
+      <p style="margin:6px 0 4px"><b>Rodzaj zadania</b></p>
+      <div class="opcje" id="zTyp">
+        <label><input type="radio" name="typ" value="indyw" checked> 👤 Indywidualne – każdy składa na swoim tablecie</label>
+        <label><input type="radio" name="typ" value="zespol"> 👥 Zespołowe zamówienie – pozycje rozdzielone w zespole</label>
+      </div>
+      <div id="zIndyw"><p style="margin:10px 0 4px"><b>Pozycja</b></p><div class="opcje" id="zDanie"></div></div>
+      <div id="zZesp" hidden><p style="margin:10px 0 4px"><b>Zamówienie dla każdego zespołu</b> – zaznacz pozycje; każdy członek zespołu dostaje inną, zespół kończy, gdy całe zamówienie jest gotowe.</p><div class="opcje" id="zZamow"></div></div>
+      <p style="margin:12px 0 4px"><b>Poziom podpowiedzi</b></p><div class="poziomy" id="zPoziom"></div>
+      <div class="rzad" style="margin-top:12px">
+        <label class="pole">Kto<select id="zKto"></select></label>
+        <label class="pole">Limit czasu (egzamin) [s]<input type="number" id="zLimit" min="20" max="900" style="width:120px"></label>
+        <button class="btn" id="bStartZad">▶ Rozpocznij zadanie</button>
+      </div>
+    </div>
+    <div class="karta"><div class="rzad" style="justify-content:space-between"><div><h2 id="zNaglowek">Na żywo</h2><p class="pod" id="zOpis">Brak trwającego zadania. Utwórz zadanie powyżej – tablety uczestników uruchomią je same po odliczaniu.</p></div><button class="btn jasny" id="bStop" hidden>⏹ Zakończ zadanie</button></div>
+      <div id="zywo"></div><div id="zespoly"></div></div>
+    <div class="karta"><h2>Historia zadań</h2><div id="historia"></div></div>
+  </section>
+
+  <!-- PODSUMOWANIE -->
+  <section id="zPodsumowanie" hidden>
+    <div class="rzad bezDruku" style="justify-content:flex-end;margin-bottom:10px"><button class="btn jasny" id="bCsv">⬇ CSV z próbami</button><button class="btn jasny" onclick="print()">🖨 Drukuj raport</button></div>
+    <div class="kafle" id="kafle"></div>
+    <div class="karta"><h2>Wyniki uczestników</h2><p class="pod">Dla każdej pozycji programu: ✅ zaliczona · 🧠 kolejność opanowana pamięciowo (liczba prób bez pomyłki) · trafność kolejności · najlepszy wynik.</p><div id="macierz"></div></div>
+    <div class="siatka2">
+      <div class="karta"><h2>Najczęściej mylone kroki</h2><p class="pod">Gdzie grupa myli kolejność – warto omówić te miejsca.</p><div id="mylone"></div></div>
+      <div class="karta"><h2>Rodzaje błędów</h2><p class="pod">Wszystkie próby w szkoleniu.</p><div id="rodzaje"></div></div>
+    </div>
+    <div class="karta"><h2>Zespoły</h2><div id="tabZesp"></div></div>
+    <div class="karta"><h2>Kryteria zaliczenia</h2><ul class="kryt" id="krytPods"></ul></div>
+  </section>
+
+  <!-- KRYTERIA -->
+  <section id="zKryteria" hidden>
+    <div class="karta"><h2>Kryteria zaliczenia szkolenia</h2><p class="pod">Te same kryteria widzą uczestnicy po każdej próbie. Zmiana przelicza podsumowanie od razu.</p>
+      <div class="rzad">
+        <label class="pole">Limit wyniku [s]<input type="number" id="kLimit" min="20" max="900"></label>
+        <label class="pole">Pomyłki kolejności (maks.)<input type="number" id="kKol" min="0" max="10"></label>
+        <label class="pole">Inne błędy (maks.)<input type="number" id="kInne" min="0" max="20"></label>
+        <label class="pole">Równość układania (min. %)<input type="number" id="kDok" min="0" max="100"></label>
+        <label class="pole">Próby z pamięci bez pomyłki<input type="number" id="kPam" min="1" max="10"></label>
+      </div>
+      <ul class="kryt" id="krytOpis" style="margin-top:14px"></ul>
+      <p style="margin:12px 0 4px"><b>Program szkolenia</b></p><div class="opcje" id="kProgram"></div>
+    </div>
+    <div class="karta"><h2>Poziomy podpowiedzi</h2><div id="opisPoziomow"></div></div>
+  </section>
+</main>
+<script type="module">
+import { MENU, SKLADNIKI } from "./kuchnia/menu.js?v=47";
+import { POZIOMY, KRYTERIA_DOMYSLNE, OPIS_KRYTERIOW, ocenProbe, ocenUczestnika, trafnosc, nazwaDania } from "./kuchnia/szkolenie.js?v=47";
+import { backend, DEMO } from "./wspolne.js";
+import { kanal, zglos } from "./przekaznik.js?v=44";
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const losKod = (n, a = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789") => Array.from(crypto.getRandomValues(new Uint8Array(n)), b => a[b % a.length]).join("");
+const KLUCZ = "mk-szkolenia-v1";
+let baza = (() => { try { return JSON.parse(localStorage.getItem(KLUCZ) || "{}"); } catch { return {}; } })();
+let S = null, ch = null, online = new Set(), postep = {}, zakladka = "uczestnicy";
+const zapisz = () => { try { localStorage.setItem(KLUCZ, JSON.stringify(baza)); } catch {} };
+const qr = (tekst, cel = 4) => { try { const q = qrcode(0, "M"); q.addData(tekst); q.make(); return q.createSvgTag({ cellSize: cel, margin: 2, scalable: true }); } catch { return ""; } };
+const linkGry = (u, imie) => { const l = new URL("kuchnia.html", location.href); l.searchParams.set("szk", S.kod); if (u) { l.searchParams.set("u", u); l.searchParams.set("n", imie); } return l.href; };
+const fmt = s => s == null ? "–" : `${(+s).toFixed(1).replace(".", ",")} s`;
+const POZ_OPCJE = (wyb, extra = "") => extra + Object.entries(POZIOMY).map(([k, p]) => `<option value="${k}" ${+k === +wyb ? "selected" : ""}>${p.ikona} ${k} – ${p.nazwa}</option>`).join("");
+
+/* ---------------- szkolenia: tworzenie i wybór ---------------- */
+function rysujSesje() {
+  $("#nProgram").innerHTML = MENU.map(d => `<label><input type="checkbox" value="${d.id}" checked> ${d.emoji} ${esc(d.nazwa)}</label>`).join("");
+  const l = Object.values(baza).sort((a, b) => b.utworzono - a.utworzono);
+  $("#listaSesji").innerHTML = l.length ? `<table><tr><th>Szkolenie</th><th>Kod</th><th class="n">Uczestnicy</th><th class="n">Próby</th><th>Utworzono</th><th></th></tr>${l.map(s => `<tr><td><b>${esc(s.nazwa)}</b></td><td>${s.kod}</td><td class="n">${s.uczestnicy.length}</td><td class="n">${Object.keys(s.proby).length}</td><td>${new Date(s.utworzono).toLocaleString("pl-PL", { dateStyle: "short", timeStyle: "short" })}</td><td style="white-space:nowrap"><button class="btn maly" data-otworz="${s.kod}">Otwórz</button> <button class="btn maly jasny" data-usun="${s.kod}">Usuń</button></td></tr>`).join("")}</table>` : `<div class="pusto">Nie masz jeszcze żadnego szkolenia.</div>`;
+  $$("[data-otworz]").forEach(b => b.onclick = () => otworz(b.dataset.otworz));
+  $$("[data-usun]").forEach(b => b.onclick = () => potwierdz(b, () => { delete baza[b.dataset.usun]; zapisz(); if (S?.kod === b.dataset.usun) location.hash = ""; rysujSesje(); }));
+}
+function potwierdz(b, fn) { if (!b.classList.contains("potw")) { const t = b.textContent; b.classList.add("potw"); b.textContent = "Na pewno?"; setTimeout(() => { b.classList.remove("potw"); b.textContent = t; }, 3000); return; } fn(); }
+$("#bNowe").onclick = () => {
+  const program = $$("#nProgram input:checked").map(i => i.value); if (!program.length) return alertBox("Zaznacz co najmniej jedną pozycję programu");
+  const kod = losKod(5); baza[kod] = { kod, nazwa: $("#nNazwa").value.trim() || `Szkolenie ${new Date().toLocaleDateString("pl-PL")}`, utworzono: Date.now(), program, kryteria: { ...KRYTERIA_DOMYSLNE }, uczestnicy: [], zadania: [], proby: {}, aktywne: null };
+  zapisz(); otworz(kod);
+};
+function alertBox(t) { const d = document.createElement("div"); d.textContent = t; d.style.cssText = "position:fixed;left:50%;top:70px;transform:translateX(-50%);background:#c0392b;color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;z-index:20"; document.body.append(d); setTimeout(() => d.remove(), 2600); }
+
+async function otworz(kod) {
+  S = baza[kod]; if (!S) return; location.hash = kod; ch?.close?.(); online = new Set(); postep = {};
+  $("#hKod").hidden = false; $("#hKod").textContent = kod; $("#hNazwa").textContent = S.nazwa; $("#hPol").hidden = false; $("#nav").hidden = false;
+  const otw = DEMO ? kanal : (await backend()).channel.bind(await backend());
+  ch = otw("szkolenie-" + kod, {
+    zdarzenia: ["hej", "postep", "wynik", "wyniki"],
+    onPresence: l => { online = new Set(l.filter(x => x.rola === "uczestnik").map(x => x.uid)); odswiezZywo(); if (zakladka === "uczestnicy") rysujUczestnikow(); },
+    onMessage: (ev, p) => {
+      if (ev === "hej") wyslijStanZaraz();
+      else if (ev === "postep") { postep[p.u] = { ...p, t: Date.now() }; odswiezZywo(); }
+      else if (ev === "wynik") dodajProbe(p);
+      else if (ev === "wyniki") (p.lista || []).forEach(x => dodajProbe(x, true));
+    },
+    onReady: () => { $("#hPol").textContent = "🟢 Połączono"; wyslijStan(); },
+    onError: () => { $("#hPol").textContent = "🔴 Brak połączenia"; },
+  }, { uid: "trener-" + kod, nick: "Szkoleniowiec", rola: "trener", od: Date.now() });
+  pokaz(S.uczestnicy.length ? (S.aktywne ? "zadania" : "uczestnicy") : "uczestnicy");
+}
+function dodajProbe(p, cicho) {
+  if (!p?.id || S.proby[p.id] || !S.uczestnicy.some(u => u.id === p.u)) return; S.proby[p.id] = p; zapisz();
+  if (!cicho) { postep[p.u] = { ...(postep[p.u] || {}), u: p.u, zad: p.zad, krok: p.n, n: p.n, etap: "koniec", t: Date.now() }; }
+  odswiezZywo(); if (zakladka === "podsumowanie") rysujPodsumowanie(); wyslijStan();
+}
+let tStan = 0; function wyslijStan() { clearTimeout(tStan); tStan = setTimeout(wyslijStanZaraz, 250); }
+function wyslijStanZaraz() {
+  if (!ch || !S) return; const znane = {}; for (const p of Object.values(S.proby)) znane[p.u] = (znane[p.u] || 0) + 1;
+  const z = S.zadania.find(x => x.id === S.aktywne);
+  ch.send("stan", { nazwa: S.nazwa, program: S.program, kryteria: S.kryteria, uczestnicy: S.uczestnicy, zadanie: z ? { id: z.id, typ: z.typ, limit: z.limit, przydzial: z.przydzial, za: 1500 } : null, znane });
+}
+setInterval(() => S && wyslijStanZaraz(), 12000);
+
+/* ---------------- zakładki ---------------- */
+$$("#nav button").forEach(b => b.onclick = () => pokaz(b.dataset.z));
+function pokaz(z) {
+  zakladka = z; $$("#nav button").forEach(b => b.classList.toggle("wyb", b.dataset.z === z));
+  for (const id of ["Sesje", "Uczestnicy", "Zadania", "Podsumowanie", "Kryteria"]) $("#z" + id).hidden = id.toLowerCase() !== z;
+  if (z === "sesje") rysujSesje(); if (z === "uczestnicy") rysujUczestnikow(); if (z === "zadania") rysujZadania(); if (z === "podsumowanie") rysujPodsumowanie(); if (z === "kryteria") rysujKryteria();
+}
+
+/* ---------------- uczestnicy ---------------- */
+$("#dPoziom").innerHTML = POZ_OPCJE(1);
+$("#bDodaj").onclick = () => {
+  const linie = $("#dLista").value.split("\n").map(x => x.trim()).filter(Boolean); if (!linie.length) return alertBox("Wpisz imiona uczestników");
+  for (const l of linie) { const [imie, zespol = ""] = l.split(",").map(x => x.trim()); if (!imie) continue; S.uczestnicy.push({ id: losKod(7, "abcdefghjkmnpqrstuvwxyz23456789"), imie: imie.slice(0, 40), zespol: zespol.slice(0, 30), poziom: +$("#dPoziom").value }); }
+  $("#dLista").value = ""; zapisz(); wyslijStan(); rysujUczestnikow();
+};
+function rysujUczestnikow() {
+  const wsp = linkGry();
+  $("#wspolny").innerHTML = `<div>${qr(wsp, 5)}</div><div><div style="font-size:13px;color:var(--t2)">Kod szkolenia</div><div style="font-size:30px;font-weight:900;letter-spacing:.1em">${S.kod}</div><input class="link" readonly value="${esc(wsp)}" style="width:100%;font-size:12px" onclick="this.select()"><p class="pod" style="margin-top:6px">${S.uczestnicy.length} uczestników · ${online.size} online</p></div>`;
+  $("#karty").innerHTML = S.uczestnicy.length ? S.uczestnicy.map(u => { const l = linkGry(u.id, u.imie); return `<div class="uczestnik"><div class="qr">${qr(l, 3)}</div><div><h3><span class="kropka ${online.has(u.id) ? "on" : ""}"></span>${esc(u.imie)}</h3><small>${u.zespol ? (/^zesp/i.test(u.zespol) ? "" : "Zespół: ") + esc(u.zespol) : "bez zespołu"}</small>
+    <input class="link" readonly value="${esc(l)}" onclick="this.select()">
+    <div class="rzad bezDruku" style="gap:6px"><select data-poz="${u.id}" style="font-size:12px;padding:4px;flex:1;min-width:0;width:100%">${POZ_OPCJE(u.poziom)}</select><button class="btn maly jasny" data-kop="${esc(l)}">📋</button><button class="btn maly jasny" data-usunU="${u.id}">🗑</button></div></div></div>`; }).join("")
+    : `<div class="pusto">Dodaj uczestników powyżej – każdy dostanie własny kod QR i link.</div>`;
+  $$("[data-poz]").forEach(s => s.onchange = () => { S.uczestnicy.find(u => u.id === s.dataset.poz).poziom = +s.value; zapisz(); wyslijStan(); });
+  $$("[data-kop]").forEach(b => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.kop); b.textContent = "✔"; } catch {} });
+  $$("[data-usunU]").forEach(b => b.onclick = () => potwierdz(b, () => { S.uczestnicy = S.uczestnicy.filter(u => u.id !== b.dataset.usunu); zapisz(); wyslijStan(); rysujUczestnikow(); }));
+}
+
+/* ---------------- zadania ---------------- */
+const zespoly = () => [...new Set(S.uczestnicy.map(u => u.zespol).filter(Boolean))];
+function rysujZadania() {
+  const prog = MENU.filter(d => S.program.includes(d.id));
+  $("#zDanie").innerHTML = prog.map((d, i) => `<label><input type="radio" name="danie" value="${d.id}" ${i ? "" : "checked"}> ${d.emoji} ${esc(d.nazwa)}</label>`).join("") + `<label><input type="radio" name="danie" value="*"> 🔄 Każdy inna (rotacja z programu)</label>`;
+  $("#zZamow").innerHTML = prog.map((d, i) => `<label><input type="checkbox" value="${d.id}" ${i < 3 ? "checked" : ""}> ${d.emoji} ${esc(d.nazwa)}</label>`).join("");
+  $("#zPoziom").innerHTML = Object.entries(POZIOMY).map(([k, p]) => `<label><input type="radio" name="poz" value="${k}" ${k === "1" ? "checked" : ""}><b>${p.ikona} ${p.nazwa}</b>${p.dla}</label>`).join("") + `<label style="grid-column:1/-1"><input type="radio" name="poz" value="u"><b>👤 Według poziomu uczestnika</b>każdy dostaje poziom ustawiony przy jego nazwisku (początkujący z podpowiedzią, zaawansowani bez)</label>`;
+  $("#zKto").innerHTML = `<option value="*">Wszyscy uczestnicy (${S.uczestnicy.length})</option><option value="online">Tylko online</option>${zespoly().map(z => `<option value="z:${esc(z)}">Zespół: ${esc(z)}</option>`).join("")}`;
+  $("#zLimit").value = S.kryteria.limitCzasu;
+  $$('[name="typ"]').forEach(r => r.onchange = () => { const z = $('[name="typ"]:checked').value === "zespol"; $("#zIndyw").hidden = z; $("#zZesp").hidden = !z; });
+  odswiezZywo(); rysujHistorie();
+}
+$("#bStartZad").onclick = () => {
+  if (!S.uczestnicy.length) return alertBox("Najpierw dodaj uczestników");
+  const typ = $('[name="typ"]:checked').value, poz = $('[name="poz"]:checked').value, kto = $("#zKto").value, limit = Math.max(20, +$("#zLimit").value || S.kryteria.limitCzasu);
+  let lud = S.uczestnicy.filter(u => kto === "*" || (kto === "online" ? online.has(u.id) : u.zespol === kto.slice(2)));
+  if (!lud.length) return alertBox(kto === "online" ? "Nikt nie jest teraz online" : "Brak uczestników w tej grupie");
+  const przydzial = {}, pozU = u => poz === "u" ? u.poziom : +poz;
+  if (typ === "indyw") {
+    const d = $('[name="danie"]:checked').value; lud.forEach((u, i) => przydzial[u.id] = { danie: d === "*" ? S.program[i % S.program.length] : d, poziom: pozU(u) });
+  } else {
+    const zam = $$("#zZamow input:checked").map(i => i.value); if (!zam.length) return alertBox("Zaznacz pozycje zamówienia");
+    const grupy = {}; for (const u of lud) (grupy[u.zespol || "bez zespołu"] ||= []).push(u);
+    for (const [z, l] of Object.entries(grupy)) l.forEach((u, i) => przydzial[u.id] = { danie: zam[i % zam.length], poziom: pozU(u), info: `Zamówienie zespołu ${z}: ${zam.map(nazwaDania).join(", ")}` });
+  }
+  if (S.aktywne) zakonczZadanie();
+  const z = { id: "z" + Date.now().toString(36), nr: S.zadania.length + 1, typ, poziom: poz, limit, przydzial, start: Date.now(), koniec: null };
+  S.zadania.push(z); S.aktywne = z.id; postep = {}; zapisz();
+  ch.send("zadanie", { id: z.id, typ, limit, przydzial, za: 3500 }); wyslijStan();
+  zglos("kuchnia", "start", { gracz: "Szkoleniowiec", grupa: "Szkolenie " + S.kod, pozycja: "zadanie " + z.nr, tryb: "szkolenie" });
+  odswiezZywo(); rysujHistorie();
+};
+$("#bStop").onclick = () => { zakonczZadanie(); odswiezZywo(); rysujHistorie(); };
+function zakonczZadanie() { const z = S.zadania.find(x => x.id === S.aktywne); if (z) { z.koniec = Date.now(); ch?.send("stop", { id: z.id }); } S.aktywne = null; zapisz(); wyslijStan(); }
+const probaZad = (u, zid) => Object.values(S.proby).filter(p => p.u === u && p.zad === zid).sort((a, b) => a.t - b.t)[0];
+function odswiezZywo() {
+  if (!S || zakladka !== "zadania") return;
+  const z = S.zadania.find(x => x.id === S.aktywne); $("#bStop").hidden = !z;
+  if (!z) { $("#zNaglowek").textContent = "Na żywo"; $("#zOpis").textContent = "Brak trwającego zadania. Utwórz zadanie powyżej – tablety uczestników uruchomią je same po odliczaniu."; $("#zywo").innerHTML = rysujSamodzielne(); $("#zespoly").innerHTML = ""; return; }
+  $("#zNaglowek").textContent = `Na żywo – zadanie ${z.nr} (${z.typ === "zespol" ? "zespołowe zamówienie" : "indywidualne"})`;
+  const ids = Object.keys(z.przydzial), gotowe = ids.filter(u => probaZad(u, z.id)).length;
+  $("#zOpis").innerHTML = `Ukończyło <b>${gotowe}/${ids.length}</b> · online ${ids.filter(u => online.has(u)).length}/${ids.length} · trwa ${Math.round((Date.now() - z.start) / 1000)} s`;
+  $("#zywo").innerHTML = `<table><tr><th>Uczestnik</th><th>Zespół</th><th>Pozycja</th><th>Poziom</th><th>Postęp</th><th class="n">Pomyłki kol.</th><th class="n">Błędy</th><th class="n">Czas</th><th>Status</th><th></th></tr>${ids.map(id => {
+    const u = S.uczestnicy.find(x => x.id === id) || { imie: "?", zespol: "" }, pz = z.przydzial[id], p = probaZad(id, z.id), pp = postep[id]?.zad === z.id ? postep[id] : null;
+    const n = (MENU.find(d => d.id === pz.danie) || { sklad: [] }).sklad.length, krok = p ? n : pp?.krok || 0;
+    let st = `<span class="tag">czeka</span>`; if (p) { const o = ocenProbe(p, S.kryteria); st = `<span class="tag ${o.zaliczona ? "ok" : p.poziom < 3 ? "" : "nie"}">${o.zaliczona ? "✅ zaliczona" : p.poziom < 3 ? "✔ ukończona" : "❌ nie zalicza"}</span>${o.pamiec ? " 🧠" : ""}`; } else if (pp?.etap === "przerwane") st = `<span class="tag nie">przerwane</span>`; else if (pp) st = `<span class="tag trwa">składa${pp.etap === "odwroc" ? " – odwracanie" : pp.etap === "zawin" ? " – pakowanie" : ""}</span>`;
+    return `<tr><td><span class="kropka ${online.has(id) ? "on" : ""}"></span><b>${esc(u.imie)}</b></td><td>${esc(u.zespol) || "–"}</td><td>${esc(nazwaDania(pz.danie))}</td><td>${POZIOMY[pz.poziom].ikona} ${pz.poziom}</td>
+      <td><div class="pasek"><i class="${p ? "ok" : ""}" style="width:${Math.round(krok / Math.max(1, n) * 100)}%"></i><span>${krok}/${n}</span></div></td>
+      <td class="n">${p ? p.bledyKol : pp?.bledyKol ?? "–"}</td><td class="n">${p ? p.bledyKol + p.bledyInne : pp?.bledy ?? "–"}</td><td class="n">${p ? fmt(p.wynik) : pp?.czas ? fmt(pp.czas) : "–"}</td><td>${st}</td>
+      <td>${!p && pp && pp.etap === "sklad" ? `<button class="btn maly jasny" data-podp="${id}" title="Wyślij nazwę następnego składnika na tablet">💡 Podpowiedz</button>` : ""}</td></tr>`; }).join("")}</table>`;
+  $$("[data-podp]").forEach(b => b.onclick = () => { const id = b.dataset.podp, pp = postep[id], d = MENU.find(x => x.id === z.przydzial[id].danie), k = d?.sklad[pp?.krok || 0]; ch.send("podpowiedz", { u: id, tekst: k ? `Następny składnik: ${SKLADNIKI[k].nazwa}` : "Sprawdź recepturę" }); b.textContent = "✔ wysłano"; });
+  if (z.typ === "zespol") {
+    const gr = {}; for (const id of ids) { const u = S.uczestnicy.find(x => x.id === id); (gr[u?.zespol || "bez zespołu"] ||= []).push(id); }
+    $("#zespoly").innerHTML = `<h3 style="margin:14px 0 6px">Zamówienia zespołów</h3><table><tr><th>Zespół</th><th class="n">Gotowe pozycje</th><th class="n">Czas zamówienia</th><th class="n">Pomyłki kolejności</th><th>Status</th></tr>${Object.entries(gr).map(([zn, l]) => { const pr = l.map(id => probaZad(id, z.id)).filter(Boolean), kon = pr.length === l.length;
+      return `<tr><td><b>${esc(zn)}</b></td><td class="n">${pr.length}/${l.length}</td><td class="n">${kon ? fmt(Math.max(...pr.map(p => p.wynik))) : "–"}</td><td class="n">${pr.reduce((s, p) => s + p.bledyKol, 0)}</td><td>${kon ? `<span class="tag ok">🛎 zamówienie gotowe</span>` : `<span class="tag trwa">w trakcie</span>`}</td></tr>`; }).join("")}</table><p class="pod">Czas zamówienia = czas ostatniej gotowej pozycji (zamówienie wydaje się w całości).</p>`;
+  } else $("#zespoly").innerHTML = "";
+}
+function rysujSamodzielne() {
+  const l = Object.entries(postep).filter(([, p]) => p.zad === "wlasne" && Date.now() - p.t < 120000);
+  return l.length ? `<h3 style="margin:6px 0">Ćwiczą samodzielnie</h3><table>${l.map(([id, p]) => `<tr><td><span class="kropka on"></span>${esc(S.uczestnicy.find(u => u.id === id)?.imie || "?")}</td><td>${esc(nazwaDania(p.danie))}</td><td>${POZIOMY[p.poziom]?.ikona || ""} ${p.poziom}</td><td>${p.etap === "koniec" ? "ukończone" : `${p.krok}/${p.n}`}</td></tr>`).join("")}</table>` : "";
+}
+function rysujHistorie() {
+  const l = S.zadania.slice().reverse();
+  $("#historia").innerHTML = l.length ? `<table><tr><th>Nr</th><th>Rodzaj</th><th>Pozycje</th><th>Poziom</th><th class="n">Ukończyło</th><th class="n">Zaliczyło</th><th>Start</th></tr>${l.map(z => { const ids = Object.keys(z.przydzial), pr = ids.map(u => probaZad(u, z.id)).filter(Boolean);
+    return `<tr><td>${z.nr}</td><td>${z.typ === "zespol" ? "👥 zespołowe" : "👤 indywidualne"}</td><td>${[...new Set(Object.values(z.przydzial).map(p => nazwaDania(p.danie)))].map(esc).join(", ")}</td><td>${z.poziom === "u" ? "wg uczestnika" : POZIOMY[z.poziom].ikona + " " + POZIOMY[z.poziom].nazwa}</td><td class="n">${pr.length}/${ids.length}</td><td class="n">${pr.filter(p => ocenProbe(p, S.kryteria).zaliczona).length}</td><td>${new Date(z.start).toLocaleTimeString("pl-PL", { hour: "2-digit", minute: "2-digit" })}${z.id === S.aktywne ? " <span class='tag trwa'>trwa</span>" : ""}</td></tr>`; }).join("")}</table>` : `<div class="pusto">Brak zadań.</div>`;
+}
+setInterval(() => { if (zakladka === "zadania") odswiezZywo(); }, 2000);
+
+/* ---------------- podsumowanie ---------------- */
+function rysujPodsumowanie() {
+  const P = Object.values(S.proby), K = S.kryteria, oc = S.uczestnicy.map(u => ({ u, o: ocenUczestnika(P.filter(p => p.u === u.id), S.program, K), proby: P.filter(p => p.u === u.id) }));
+  const zal = oc.filter(x => x.o.zaliczone).length, bez = P.filter(p => p.poziom >= 3), tr = bez.length ? Math.round(bez.reduce((s, p) => s + trafnosc(p), 0) / bez.length) : null;
+  const pamOpan = oc.reduce((s, x) => s + x.o.pozycje.filter(p => p.pamiec).length, 0), pamWsz = oc.length * S.program.length;
+  const k = (t, v, m = "") => `<div class="kafel"><h3>${t}</h3><b>${v}</b><small>${m}</small></div>`;
+  $("#kafle").innerHTML = k("Uczestnicy", S.uczestnicy.length, (n => `${n} ${n === 1 ? "zespół" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? "zespoły" : "zespołów"}`)(zespoly().length)) + k("Zaliczyło szkolenie", `${zal}/${S.uczestnicy.length}`, S.uczestnicy.length ? Math.round(zal / S.uczestnicy.length * 100) + "%" : "") + k("Kolejność z pamięci", pamWsz ? Math.round(pamOpan / pamWsz * 100) + "%" : "–", `${pamOpan}/${pamWsz} pozycji opanowanych`) + k("Trafność kolejności", tr == null ? "–" : tr + "%", "kroki za 1. razem, bez podpowiedzi") + k("Próby", P.length, `${bez.length} bez podpowiedzi`);
+  const prog = S.program.map(id => MENU.find(d => d.id === id)).filter(Boolean);
+  $("#macierz").innerHTML = oc.length ? `<table class="macierz"><tr><th>Uczestnik</th><th>Zespół</th>${prog.map(d => `<th style="text-align:center">${d.emoji} ${esc(d.nazwa)}</th>`).join("")}<th>Szkolenie</th></tr>${oc.map(({ u, o }) => `<tr><td><b>${esc(u.imie)}</b><br><small>${POZIOMY[u.poziom].ikona} ${POZIOMY[u.poziom].nazwa}</small></td><td>${esc(u.zespol) || "–"}</td>${o.pozycje.map(p => `<td class="kom">${p.prob ? `<b>${p.zaliczona ? "✅" : "▫️"} ${p.pamiec ? "🧠" : `🧠${p.czystePamiec}/${K.probPamieci}`}</b><br>${p.trafnosc == null ? "pamięć –" : `kolejność ${p.trafnosc}%`}<br>${fmt(p.najlepszy)} · ${p.prob} pr.` : "–"}</td>`).join("")}<td>${o.zaliczone ? `<span class="tag ok">✅ ZALICZONE</span>` : `<span class="tag ${o.pozycje.some(p => p.prob) ? "trwa" : ""}">w trakcie</span><br><small>${o.brakuje.slice(0, 3).map(esc).join("<br>")}${o.brakuje.length > 3 ? "<br>…" : ""}</small>`}</td></tr>`).join("")}</table>` : `<div class="pusto">Brak uczestników.</div>`;
+  // najczęściej mylone kroki
+  const myl = {}; for (const p of P) for (const m of p.pomylki || []) { const key = p.danie + "|" + m.krok, x = myl[key] ||= { danie: p.danie, krok: m.krok, ocz: m.ocz, ile: 0, osoby: new Set(), podane: {} }; x.ile++; x.osoby.add(p.u); if (m.podany) x.podane[m.podany] = (x.podane[m.podany] || 0) + 1; }
+  const ml = Object.values(myl).sort((a, b) => b.ile - a.ile).slice(0, 10), maxM = Math.max(1, ...ml.map(x => x.ile));
+  $("#mylone").innerHTML = ml.length ? `<table><tr><th>Pozycja</th><th>Krok</th><th>Powinno być</th><th>Najczęściej brano</th><th>Pomyłki</th></tr>${ml.map(x => { const pod = Object.entries(x.podane).sort((a, b) => b[1] - a[1])[0];
+    return `<tr><td>${esc(nazwaDania(x.danie))}</td><td class="n">${x.krok + 1}</td><td><b>${esc(SKLADNIKI[x.ocz]?.nazwa.split(" (")[0] || x.ocz)}</b></td><td>${pod ? esc(SKLADNIKI[pod[0]]?.nazwa.split(" (")[0] || pod[0]) : "–"}</td><td><div class="pasek" style="min-width:90px"><i style="width:${x.ile / maxM * 100}%;background:#e8a29a"></i><span>${x.ile} (${x.osoby.size} os.)</span></div></td></tr>`; }).join("")}</table>` : `<div class="pusto">Brak pomyłek kolejności 👏</div>`;
+  const NAZWY = { zlySkladnik: "Zła kolejność składnika", bezOpiekania: "Bułka nieopieczona / za krótko", niedopieczone: "Mięso/kurczak niedosmażone", przypalone: "Przypalone", goraceReka: "Gorące gołą ręką", sosZaMalo: "Za mało sosu", sosZaDuzo: "Za dużo sosu", krzywo: "Krzywo położone" };
+  const rodz = {}; for (const p of P) for (const [r, n] of Object.entries(p.rodzaje || {})) rodz[r] = (rodz[r] || 0) + n;
+  const rl = Object.entries(rodz).sort((a, b) => b[1] - a[1]), maxR = Math.max(1, ...rl.map(x => x[1]));
+  $("#rodzaje").innerHTML = rl.length ? `<table>${rl.map(([r, n]) => `<tr><td>${esc(NAZWY[r] || r)}</td><td style="width:55%"><div class="pasek"><i style="width:${n / maxR * 100}%;background:#e8a29a"></i><span>${n}</span></div></td></tr>`).join("")}</table>` : `<div class="pusto">Brak błędów.</div>`;
+  const zz = zespoly(); $("#tabZesp").innerHTML = zz.length ? `<table><tr><th>Zespół</th><th class="n">Osoby</th><th class="n">Zaliczyło</th><th class="n">Trafność kolejności</th><th class="n">Śr. wynik</th><th class="n">Próby</th></tr>${zz.map(z => { const l = oc.filter(x => x.u.zespol === z), pr = l.flatMap(x => x.proby), b = pr.filter(p => p.poziom >= 3);
+    return `<tr><td><b>${esc(z)}</b></td><td class="n">${l.length}</td><td class="n">${l.filter(x => x.o.zaliczone).length}/${l.length}</td><td class="n">${b.length ? Math.round(b.reduce((s, p) => s + trafnosc(p), 0) / b.length) + "%" : "–"}</td><td class="n">${pr.length ? fmt(pr.reduce((s, p) => s + p.wynik, 0) / pr.length) : "–"}</td><td class="n">${pr.length}</td></tr>`; }).join("")}</table>` : `<div class="pusto">Uczestnicy nie mają przypisanych zespołów.</div>`;
+  $("#krytPods").innerHTML = OPIS_KRYTERIOW(K).map(x => `<li>${x}</li>`).join("");
+}
+$("#bCsv").onclick = () => {
+  const kol = ["imie", "zespol", "danie", "poziom", "czas", "kary", "wynik", "dok", "bledyKol", "bledyInne", "trafnosc", "zaliczona", "pamiec", "zad", "data"];
+  const w = Object.values(S.proby).sort((a, b) => a.t - b.t).map(p => { const o = ocenProbe(p, S.kryteria); return [p.imie, p.zespol, nazwaDania(p.danie), p.poziom, p.czas, p.kary, p.wynik, p.dok, p.bledyKol, p.bledyInne, trafnosc(p), o.zaliczona ? "tak" : "nie", o.pamiec ? "tak" : "nie", p.zad, new Date(p.t).toLocaleString("pl-PL")].map(x => String(x ?? "").replace(/[;\n]/g, " ")).join(";"); });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + [kol.join(";"), ...w].join("\n")], { type: "text/csv" })); a.download = `szkolenie-${S.kod}.csv`; a.click();
+};
+
+/* ---------------- kryteria ---------------- */
+function rysujKryteria() {
+  const K = S.kryteria, pola = { kLimit: "limitCzasu", kKol: "maxBledowKolejnosci", kInne: "maxInnychBledow", kDok: "minDokladnosc", kPam: "probPamieci" };
+  for (const [id, k] of Object.entries(pola)) { $("#" + id).value = K[k]; $("#" + id).onchange = e => { K[k] = Math.max(+e.target.min || 0, +e.target.value || 0); zapisz(); wyslijStan(); $("#krytOpis").innerHTML = OPIS_KRYTERIOW(K).map(x => `<li>${x}</li>`).join(""); }; }
+  $("#krytOpis").innerHTML = OPIS_KRYTERIOW(K).map(x => `<li>${x}</li>`).join("");
+  $("#kProgram").innerHTML = MENU.map(d => `<label><input type="checkbox" value="${d.id}" ${S.program.includes(d.id) ? "checked" : ""}> ${d.emoji} ${esc(d.nazwa)}</label>`).join("");
+  $$("#kProgram input").forEach(i => i.onchange = () => { const p = $$("#kProgram input:checked").map(x => x.value); if (!p.length) { i.checked = true; return; } S.program = MENU.map(d => d.id).filter(id => p.includes(id)); zapisz(); wyslijStan(); });
+  $("#opisPoziomow").innerHTML = `<table>${Object.entries(POZIOMY).map(([k, p]) => `<tr><td style="white-space:nowrap"><b>${p.ikona} ${k} – ${p.nazwa}</b><br><small>${p.dla}</small></td><td>${p.opis}</td></tr>`).join("")}</table>`;
+}
+
+/* ---------------- start ---------------- */
+const zHash = location.hash.slice(1).toUpperCase();
+if (baza[zHash]) otworz(zHash); else pokaz("sesje");
+window.__szk = { S: () => S, postep: () => postep, online: () => online };
+window.__szkGotowy = true;
+</script>
+</body>
+</html>

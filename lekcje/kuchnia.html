@@ -48,6 +48,10 @@
   .ranking .m1 td:first-child::before { content: "🥇 "; } .ranking .m2 td:first-child::before { content: "🥈 "; } .ranking .m3 td:first-child::before { content: "🥉 "; } .ranking tr.ja td { background: #fff1d0; font-weight: 800; }
   .odliczanie { font-size: 120px; font-weight: 900; color: #fff; text-shadow: 0 6px 0 var(--czerwony2); }
   .btnAR { display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; width: 100%; margin: 8px 0 4px; font-size: 17px; background: linear-gradient(135deg, #27170e, #5a3519); box-shadow: 0 4px 0 #120a05; }
+  .szkLista { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; } .szkLista button { flex: 1 1 140px; border: 2px solid #f1dfb5; background: #fff; border-radius: 14px; padding: 12px; font: 700 16px system-ui; cursor: pointer; }
+  .szkPoziom { background: #fff; border-radius: 12px; padding: 8px 10px; margin: 8px 0; font-size: 14px; } .szkZad { background: #fff3c4; border: 2px solid var(--zolty); border-radius: 14px; padding: 10px 12px; margin: 8px 0; }
+  .szkOcena { border-radius: 14px; padding: 10px 12px; margin: 10px 0; background: #fdecea; border: 2px solid #f3b6ae; font-size: 14px; } .szkOcena.ok { background: #e8f6ec; border-color: #9fd6ae; } .szkOcena ul { margin: 4px 0 0; padding-left: 18px; }
+  table.proby { width: 100%; border-collapse: collapse; font-size: 13px; } table.proby td { padding: 4px 3px; border-bottom: 1px solid #f1dfb5; }
   .wiersz { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; } .wiersz .btn { flex: 1; }
   .male { font-size: 12.5px; color: #7a6352; }
   .bledy li { color: var(--czerwony2); }
@@ -89,6 +93,12 @@
   <div class="wiersz"><button class="btn zolty" id="bRunda">▶ Start rundy dla wszystkich</button></div>
   <p class="male" id="pTryb"></p>
 </div></div>
+<!-- SZKOLENIE ZDALNE (uczestnik) -->
+<div class="ekran" id="eSzkolenie" hidden><div class="karta">
+  <h2>🎓 <span id="szNazwa">Szkolenie</span></h2>
+  <div id="szTresc"></div>
+  <p class="male" id="szPol">🟡 Łączenie ze szkoleniowcem…</p>
+</div></div>
 <div class="ekran przezr" id="eOdliczanie" hidden><div class="odliczanie" id="odl">3</div></div>
 
 <!-- PODSUMOWANIE -->
@@ -101,6 +111,7 @@ import { Kuchnia3D, stworzSkladnik, butelka, WYS, R_BULKI, SKALA_STOSU, SOS_KOL 
 import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=41";
 import { backend, uid, esc, DEMO } from "./wspolne.js";
 import { kanal, zglos, obecnosc } from "./przekaznik.js?v=44";
+import { POZIOMY, KRYTERIA_DOMYSLNE, ocenProbe, trafnosc } from "./kuchnia/szkolenie.js?v=47";
 zglos("kuchnia", "otwarcie", {});
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -108,6 +119,10 @@ const cv = $("#scena");
 const qp = new URLSearchParams(location.search);
 const STOL = (qp.get("stol") || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 24);
 let tryb = STOL ? "gra" : (qp.get("tryb") === "gra" ? "gra" : "szkolenie"), danie = MENU.find(m => m.id === qp.get("danie")) || MENU[0];   // link z kodu QR może wskazać pozycję i tryb
+const SZK = (qp.get("szk") || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 12).toUpperCase();   // szkolenie zdalne prowadzone z panelu szkoleniowca
+/* poziom podpowiedzi: 1 – z podpowiedzią (receptura, podświetlenie, wskazówki), 2 – tylko nazwa kroku, 3 – z pamięci, 4 – egzamin */
+let poziom = tryb === "szkolenie" ? 1 : 2;
+const bladKolejnosci = () => poziom >= 3 ? "To nie ten składnik – przypomnij sobie kolejność" : `To nie teraz – potrzebny: ${SKLADNIKI[oczekiwany()].nazwa}`;
 
 /* ================= ekran startowy ================= */
 function rysujDania(el, wyb, onWyb) {
@@ -115,7 +130,7 @@ function rysujDania(el, wyb, onWyb) {
   el.querySelectorAll("button").forEach(b => b.onclick = () => onWyb(MENU.find(d => d.id === b.dataset.d)));
 }
 function odswiezStart() {
-  $$("#tryby button").forEach(b => b.classList.toggle("wyb", b.dataset.t === tryb));
+  $$("#tryby button").forEach(b => b.classList.toggle("wyb", b.dataset.t === tryb)); if (!SZK) poziom = tryb === "szkolenie" ? 1 : 2;
   $("#sStolik").hidden = tryb !== "gra";
   $("#stolikInfo").textContent = STOL ? `Stolik ${STOL} – po wejściu zobaczysz innych graczy z tego stolika.` : "Bez kodu stolika grasz sam. Kod QR ze stolika lub paragonu połączy Cię z innymi.";
   rysujDania($("#dania"), danie.id, d => { danie = d; odswiezStart(); });
@@ -139,7 +154,7 @@ const K = new Kuchnia3D(cv), nak = $("#nak"), ng = nak.getContext("2d");
 let OB = { x: 0, y: 0, w: 0, h: 0 }, dpr = 1, pion = false, P = null;
 function uklad() {
   dpr = Math.min(2, devicePixelRatio || 1);
-  const szeroki = innerWidth > 900, recW = szeroki && tryb === "szkolenie" && gra ? 330 : 0;
+  const szeroki = innerWidth > 900, recW = szeroki && poziom === 1 && gra ? 330 : 0;
   const top = gra ? ($("#naglowek").offsetHeight || 52) + ($("#krok").offsetHeight || 40) : 0;
   OB = { x: 0, y: top, w: innerWidth - recW, h: innerHeight - top };
   Object.assign(cv.style, { left: OB.x + "px", top: OB.y + "px", width: OB.w + "px", height: OB.h + "px" });
@@ -148,7 +163,7 @@ function uklad() {
   if (nowyPion !== pion || !P || (gra && K.zFryt !== (gra.danie.id === "wrap"))) { pion = nowyPion; K.zFryt = gra ? gra.danie.id === "wrap" : true; K.zbuduj(pion, K.zFryt); P = K.P; if (gra) odbudujDyn(); }
   K.rozmiar(OB.w, OB.h);
   $("#krok").style.top = ($("#naglowek").offsetHeight || 52) + "px";
-  const rec = $("#receptura"); rec.hidden = !(tryb === "szkolenie" && szeroki && gra); rec.style.top = top + "px";
+  const rec = $("#receptura"); rec.hidden = !(poziom === 1 && szeroki && gra); rec.style.top = top + "px";
   $("#akcje").style.top = (OB.y + 12) + "px"; $("#akcje").style.left = (OB.x + OB.w / 2) + "px";
 }
 
@@ -156,13 +171,13 @@ function uklad() {
 let gra = null;
 const MAX_TOSTER = 3, MAX_GRILL = 4;
 function nowaGra(start = performance.now()) {
-  gra = { danie, krok: 0, stos: [], toster: [], grill: [], kosz: { dol: false, el: [], y: 10 }, narz: "reka", kary: [], t0: null, koniec: null, odwrocona: false, zawinieta: false, etap: "sklad", kcal: 0 };
+  gra = { danie, krok: 0, stos: [], toster: [], grill: [], kosz: { dol: false, el: [], y: 10 }, narz: "reka", kary: [], pomylki: [], t0: null, koniec: null, odwrocona: false, zawinieta: false, etap: "sklad", kcal: 0 };
   $("#naglowek").hidden = false; $("#krok").hidden = false; $("#hDanie").textContent = `${danie.emoji} ${danie.nazwa}`;
-  if (tryb === "gra") gra.t0 = start;
+  if (tryb === "gra" || SZK) gra.t0 = start;
   K.dyn.clear(); stosG = null; uklad(); odbudujDyn(); rysujRecepture(); opisKroku();
 }
 const oczekiwany = () => gra.danie.sklad[gra.krok];
-function kara(rodzaj, tekst) { const s = KARY[rodzaj] || 0; gra.kary.push({ rodzaj, s, tekst }); komunikat(`${tekst}${s ? ` (+${s} s)` : ""}`, "zle"); try { navigator.vibrate?.([60, 40, 60]); } catch {} }
+function kara(rodzaj, tekst, podany) { setTimeout(szkPostep, 0); const s = KARY[rodzaj] || 0; gra.kary.push({ rodzaj, s, tekst }); if (rodzaj === "zlySkladnik") gra.pomylki.push({ krok: gra.krok, ocz: oczekiwany(), podany }); komunikat(`${tekst}${s ? ` (+${s} s)` : ""}`, "zle"); try { navigator.vibrate?.([60, 40, 60]); } catch {} }
 function start() { if (!gra.t0) gra.t0 = performance.now(); }
 
 /* ================= obiekty 3D zależne od stanu ================= */
@@ -284,7 +299,7 @@ function wGora(id) {
   if (k === "kurczak" && st.surowy) { if (nad) kara("niedopieczone", "Surowy kurczak! Najpierw do frytownicy"); return; }
   if (sk.sos) {
     if (st.ile > 0.05 && (nad || W.punktSosu)) dodajWarstwe(k, { ...st }, W.punktSosu || nad);
-    else if (nad && W.zly) kara("zlySkladnik", `To nie teraz – potrzebny: ${SKLADNIKI[oczekiwany()].nazwa}`);
+    else if (nad && W.zly) kara("zlySkladnik", bladKolejnosci(), k);
     else if (nad) komunikat("Przytrzymaj butelkę nad kanapką – sos leci, dopóki trzymasz", "zle");
     return;
   }
@@ -298,7 +313,7 @@ function dodajWarstwe(k, st, nad) {
   if (gra.etap !== "sklad") return;
   const ocz = oczekiwany();
   if (k !== ocz) {
-    kara("zlySkladnik", `To nie teraz – potrzebny: ${SKLADNIKI[ocz].nazwa}`);
+    kara("zlySkladnik", bladKolejnosci(), k);
     if (k === "wolowina") { const m = { slot: slotyWolne(gra.grill, MAX_GRILL), gora: st.gora, dol: st.dol, id: st.id, przewr: st.przewr }; gra.grill.push(m); m.o = obiekt("wolowina", m, { typ: "kotlet", m }); m.o.position.copy(lokGrilla(m.slot)); }
     if (st.zTostera) { const s = { k, p: st.opieczenie, id: st.id, slot: slotyWolne(gra.toster, MAX_TOSTER) }; gra.toster.push(s); s.o = obiekt(k, { opieczenie: s.p, id: s.id }, { typ: "tost", s }); s.o.position.copy(lokTostera(s.slot)); if (k === "tortilla") s.o.scale.setScalar(0.48); }
     return;
@@ -306,7 +321,7 @@ function dodajWarstwe(k, st, nad) {
   let dx = (nad.x - P.papier.x) / SKALA_STOSU / R_BULKI, dz = (nad.z - P.papier.z) / SKALA_STOSU / R_BULKI; const off = Math.hypot(dx, dz), dok = Math.max(0, 1 - off / 0.7);
   const bl = [];
   if (off < 0.45) { dx *= 0.15; dz *= 0.15; }                 // magnes: blisko środka = równo
-  else { bl.push(["krzywo", "Krzywo – celuj w zielony okrąg"]); const s = 0.4 / off; dx *= s; dz *= s; }
+  else { bl.push(["krzywo", poziom === 1 ? "Krzywo – celuj w zielony okrąg" : "Krzywo – połóż na środku kanapki"]); const s = 0.4 / off; dx *= s; dz *= s; }
   if (SKLADNIKI[k].gdzie === "toster" && !st.zTostera) bl.push(["bezOpiekania", "Bułka nieopieczona – najpierw do tostera"]);
   if (st.zTostera && st.opieczenie < 0.85) bl.push(["bezOpiekania", "Za krótko w tosterze"]);
   if (k === "wolowina") { if (Math.min(st.gora, st.dol) < 0.85) bl.push(["niedopieczone", "Kotlet niedosmażony z jednej strony"]); if (Math.max(st.gora, st.dol) > 1.4) bl.push(["przypalone", "Kotlet przypalony"]); if (!st.przewr) bl.push(["niedopieczone", "Kotlet nieprzewrócony"]); }
@@ -343,7 +358,7 @@ function celSzkolenia() {
 }
 function rysujNakladke(t) {
   ng.clearRect(0, 0, innerWidth, innerHeight);
-  if (gra && P && !$("#naglowek").hidden && $("#eKoniec").hidden && $("#ePoczekalnia").hidden && $("#eStart").hidden && $("#eOdliczanie").hidden) {
+  if (gra && P && !$("#naglowek").hidden && $("#eKoniec").hidden && $("#ePoczekalnia").hidden && $("#eStart").hidden && $("#eOdliczanie").hidden && $("#eSzkolenie").hidden) {
     const l = (b, tekst, dz = 0) => { const p = ekr(new THREE.Vector3(b.x, 0, b.z + b.d / 2 + dz)); napis(tekst, p.x, p.y + 10, { r: pion ? 10.5 : 12 }); };
     l(P.toster, "TOSTER"); l(P.grill, "GRILL"); l(P.mroz, "MROŻONE"); if (K.zFryt) { l(P.fryt, "FRYTOWNICA"); l(P.mrozK, "MROŻONE"); }
     for (const p of P.poj) { const q = ekr(new THREE.Vector3(p.x, 0, p.z + p.d / 2)); napis(KROTKO[p.k], q.x, q.y + (pion && p.sos ? 0 : 9), { r: pion ? 10 : 11.5, tlo: "rgba(255,255,255,.88)", kol: "#27170e" }); }
@@ -351,8 +366,8 @@ function rysujNakladke(t) {
     for (const s of gra.toster) { const q = ekr(s.o.position.clone().add(new THREE.Vector3(0, 4, 0))); pasek(q.x, q.y - 16, 46, s.p, s.p >= 1 ? "#4cd964" : "#ffcc00"); if (s.p >= 1) napis("✔ GOTOWE", q.x, q.y - 28, { r: 10, tlo: "rgba(47,143,78,.95)" }); }
     for (const m of gra.grill) { const q = ekr(m.o.position.clone().add(new THREE.Vector3(0, 3, 0))), spal = m.dol > 1.4, got = m.dol >= 0.85; pasek(q.x, q.y - 16, 50, m.dol / 0.85, spal ? "#ff3b30" : got ? "#4cd964" : "#ffcc00"); if (got) napis(spal ? "PRZYPALA SIĘ!" : m.przewr ? "GOTOWY – ZDEJMIJ" : "PRZEWRÓĆ!", q.x, q.y - 29, { r: 10.5, tlo: spal ? "rgba(192,57,43,.95)" : "rgba(47,143,78,.95)" }); }
     if (K.kosz && gra.kosz.el.length) { const s = gra.kosz.el[0].s, q = ekr(new THREE.Vector3(P.fryt.x, 14, P.fryt.z)); pasek(q.x, q.y - 12, 56, s / 0.85, s > 1.45 ? "#ff3b30" : s >= 0.85 ? "#4cd964" : "#ffcc00"); napis(gra.kosz.dol ? (s >= 0.85 ? "UNIEŚ KOSZ" : "smaży się…") : (s >= 0.85 ? "wyjmij szczypcami" : "stuknij kosz"), q.x, q.y - 25, { r: 10.5 }); }
-    if (tryb === "szkolenie") { const c = celSzkolenia(); if (c) { const a = 0.55 + 0.45 * Math.sin(t / 180), q1 = ekr(new THREE.Vector3(c.x - (c.w || 14) / 2, 0, c.z)), q2 = ekr(new THREE.Vector3(c.x + (c.w || 14) / 2, 0, c.z)), q = ekr(new THREE.Vector3(c.x, 0, c.z)); ng.save(); ng.strokeStyle = `rgba(47,180,90,${a})`; ng.lineWidth = 5; ng.setLineDash([10, 7]); ng.beginPath(); ng.ellipse(q.x, q.y, Math.max(30, (q2.x - q1.x) * 0.62), Math.max(22, (q2.x - q1.x) * 0.42), 0, 0, 7); ng.stroke(); ng.restore(); } }
-    for (const W of wskazniki.values()) if (W.sos && W.typ === "niesie") { const ile = W.st.ile, ok = ile >= 0.6 && ile <= 1.5, x = W.x + OB.x + 40, y = W.y + OB.y - W.ofs - 40; ng.fillStyle = "rgba(0,0,0,.5)"; ng.beginPath(); ng.roundRect(x, y - 70, 14, 80, 7); ng.fill(); ng.fillStyle = ok ? "#4cd964" : ile > 1.5 ? "#ff3b30" : "#ffcc00"; const hh = 80 * Math.min(1, ile / 2.4); ng.beginPath(); ng.roundRect(x, y + 10 - hh, 14, hh, 7); ng.fill(); ng.strokeStyle = "#fff"; ng.lineWidth = 2; for (const v of [0.6, 1.5]) { const yy = y + 10 - 80 * v / 2.4; ng.beginPath(); ng.moveTo(x - 3, yy); ng.lineTo(x + 17, yy); ng.stroke(); } napis(W.zly ? `teraz: ${KROTKO[oczekiwany()]}` : W.nad ? `${ile.toFixed(1)} porcji` : "trzymaj nad kanapką", x + 7, y - 84, { r: 11, tlo: W.zly ? "rgba(192,57,43,.95)" : undefined }); }
+    if (poziom === 1) { const c = celSzkolenia(); if (c) { const a = 0.55 + 0.45 * Math.sin(t / 180), q1 = ekr(new THREE.Vector3(c.x - (c.w || 14) / 2, 0, c.z)), q2 = ekr(new THREE.Vector3(c.x + (c.w || 14) / 2, 0, c.z)), q = ekr(new THREE.Vector3(c.x, 0, c.z)); ng.save(); ng.strokeStyle = `rgba(47,180,90,${a})`; ng.lineWidth = 5; ng.setLineDash([10, 7]); ng.beginPath(); ng.ellipse(q.x, q.y, Math.max(30, (q2.x - q1.x) * 0.62), Math.max(22, (q2.x - q1.x) * 0.42), 0, 0, 7); ng.stroke(); ng.restore(); } }
+    for (const W of wskazniki.values()) if (W.sos && W.typ === "niesie") { const ile = W.st.ile, ok = ile >= 0.6 && ile <= 1.5, x = W.x + OB.x + 40, y = W.y + OB.y - W.ofs - 40; ng.fillStyle = "rgba(0,0,0,.5)"; ng.beginPath(); ng.roundRect(x, y - 70, 14, 80, 7); ng.fill(); ng.fillStyle = ok ? "#4cd964" : ile > 1.5 ? "#ff3b30" : "#ffcc00"; const hh = 80 * Math.min(1, ile / 2.4); ng.beginPath(); ng.roundRect(x, y + 10 - hh, 14, hh, 7); ng.fill(); ng.strokeStyle = "#fff"; ng.lineWidth = 2; for (const v of [0.6, 1.5]) { const yy = y + 10 - 80 * v / 2.4; ng.beginPath(); ng.moveTo(x - 3, yy); ng.lineTo(x + 17, yy); ng.stroke(); } napis(W.zly ? (poziom >= 3 ? "nie ten sos" : `teraz: ${KROTKO[oczekiwany()]}`) : W.nad ? `${ile.toFixed(1)} porcji` : "trzymaj nad kanapką", x + 7, y - 84, { r: 11, tlo: W.zly ? "rgba(192,57,43,.95)" : undefined }); }
   }
   if (rece.aktywne) rysujDlonie();
 }
@@ -409,9 +424,10 @@ function opisKroku() {
   if (gra.etap === "odwroc") t = `<span class="nr">Krok</span> <b>Odwróć kanapkę</b> – przesuń ją palcem w górę albo naciśnij przycisk.`;
   else if (gra.etap === "zawin") t = `<span class="nr">Krok</span> <b>${d.zawin === "zwin" ? "Zwiń wrap" : "Zawiń w papier"}</b> – przesuń palcem po kanapce w bok albo naciśnij przycisk.`;
   else if (!k) t = "";
-  else { const w = tryb === "szkolenie" ? (d.wskazowki?.[k] || "") : ""; const sk = SKLADNIKI[k]; const zrodlo = sk.gdzie === "grill" ? "z grilla (łopatką)" : sk.gdzie === "frytownica" ? "z frytownicy (szczypcami)" : sk.gdzie === "toster" ? "z tostera" : sk.sos ? "– przytrzymaj butelkę nad kanapką" : "";
+  else if (poziom >= 3) t = `<span class="nr">${gra.krok + 1}/${d.sklad.length}</span> <span><b>Co teraz?</b> Złóż z pamięci${poziom === 4 ? " – egzamin" : ""}</span>`;
+  else { const w = poziom === 1 ? (d.wskazowki?.[k] || "") : ""; const sk = SKLADNIKI[k]; const zrodlo = sk.gdzie === "grill" ? "z grilla (łopatką)" : sk.gdzie === "frytownica" ? "z frytownicy (szczypcami)" : sk.gdzie === "toster" ? "z tostera" : sk.sos ? "– przytrzymaj butelkę nad kanapką" : "";
     t = `<span class="nr">${gra.krok + 1}/${d.sklad.length}</span> <span><b>${esc(sk.nazwa)}</b> ${zrodlo}${w ? `<br><small>${esc(w)}</small>` : ""}</span>`; }
-  $("#krok").innerHTML = t; if (!$("#receptura").hidden) rysujRecepture();
+  $("#krok").innerHTML = t; if (!$("#receptura").hidden) rysujRecepture(); szkPostep();
   const ak = $("#akcje");
   if (gra.etap === "odwroc") { ak.innerHTML = `<button class="btn zolty" id="aOdwroc">↻ Odwróć kanapkę</button>`; ak.hidden = false; $("#aOdwroc").onclick = odwroc; }
   else if (gra.etap === "zawin") { ak.innerHTML = `<button class="btn zolty" id="aZawin">${d.zawin === "zwin" ? "🌯 Zwiń wrap" : "📄 Zawiń w papier"}</button>`; ak.hidden = false; $("#aZawin").onclick = zawin; }
@@ -445,9 +461,10 @@ function koniec() {
   zglos("kuchnia", "wynik", { gracz: stolik?.ja.nick || $("#nick").value.trim() || (tryb === "szkolenie" ? "kursant" : "bez imienia"), grupa: STOL || null, pozycja: gra.danie.nazwa, tryb, czas: +wynik.toFixed(1), bledy: gra.kary.length, kcal: Math.round(gra.kcal) });
   if (STOL && stolik) { const w = { runda: stolik.runda, nick: stolik.ja.nick, uid: stolik.ja.uid, czas: +t.toFixed(2), kary, wynik: +wynik.toFixed(2), dok, kcal: Math.round(gra.kcal), danie: gra.danie.id }; zapiszWynik(w); stolik.ch?.send("wynik", w); }
   rysujRanking();
+  if (SZK && szk) szkKoniec();
   window.__mkWynik = gra.koniec;
 }
-$("#bMenu").onclick = () => { if (STOL) pokazPoczekalnie(); else location.reload(); };
+$("#bMenu").onclick = () => { if (SZK && szk) { szkPrzerwij("Przerwano"); return; } if (STOL) pokazPoczekalnie(); else location.reload(); };
 
 /* ================= GRA PRZY STOLIKU (kilka telefonów) ================= */
 let stolik = null;
@@ -503,20 +520,122 @@ function rysujRankingW(el) {
 }
 function rysujRanking() { if (STOL) { rysujRankingW($("#rankingBox")); const rp = $("#rankPocz"); if (rp) rysujRankingW(rp); } }
 
+/* ================= SZKOLENIE ZDALNE – tablet uczestnika =================
+   Link z panelu szkoleniowca: kuchnia.html?szk=KOD&u=ID&n=Imię (albo ?szk=KOD i wybór imienia z listy).
+   Szkoleniowiec wysyła zadania (pozycja + poziom podpowiedzi), tablet odsyła postęp na żywo i wynik próby. */
+let szk = null;
+const SZK_KLUCZ = "mk-szk-" + SZK;
+const szkZapisz = () => { try { localStorage.setItem(SZK_KLUCZ, JSON.stringify({ ja: szk.ja, proby: szk.proby.slice(-200) })); } catch {} };
+async function szkStart() {
+  let zap = {}; try { zap = JSON.parse(localStorage.getItem(SZK_KLUCZ) || "{}"); } catch {}
+  const u = (qp.get("u") || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 12), imie = (qp.get("n") || "").slice(0, 40);
+  const ja = u ? { uid: u, nick: imie || (zap.ja?.uid === u ? zap.ja.nick : "") || "uczestnik", rola: "uczestnik", od: Date.now() }
+               : zap.ja?.rola === "uczestnik" ? { ...zap.ja, od: Date.now() } : { uid: "g" + uid().slice(0, 8), nick: "?", rola: "gosc", od: Date.now() };
+  szk = { ja, proby: zap.ja?.uid === ja.uid ? (zap.proby || []) : [], stan: null, trener: false, polaczony: false, aktywne: null, wyslane: 0 };
+  tryb = "gra"; $("#eStart").hidden = true; $("#sReka").checked = false; szPokaz();
+  const otworz = DEMO ? kanal : (await backend()).channel.bind(await backend());
+  szk.ch = otworz("szkolenie-" + SZK, {
+    zdarzenia: ["stan", "zadanie", "podpowiedz", "stop"],
+    onPresence: l => { const by = szk.trener; szk.trener = l.some(x => x.rola === "trener"); if (by !== szk.trener) szRysuj(); },
+    onMessage: (ev, p) => {
+      if (ev === "stan") szkStan(p);
+      else if (ev === "zadanie") szkZadanie(p, false);
+      else if (ev === "podpowiedz" && p.u === szk.ja.uid) { komunikat("💡 " + p.tekst, "dobrze"); clearTimeout(tKom); tKom = setTimeout(() => $("#kom").style.display = "none", 6000); }
+      else if (ev === "stop" && szk.aktywne?.zad === p.id && gra && !gra.koniec) szkPrzerwij("Szkoleniowiec zakończył zadanie");
+      else if (ev === "stop") szRysuj();
+    },
+    onReady: () => { szk.polaczony = true; szk.ch.send("hej", {}); szRysuj(); },
+    onError: () => { $("#szPol").textContent = "🔴 Brak połączenia – sprawdź internet."; },
+  }, szk.ja);
+}
+function szkStan(p) {
+  const pierwszy = !szk.stan; szk.stan = p; $("#szNazwa").textContent = p.nazwa || "Szkolenie";
+  const mnie = p.uczestnicy?.find(x => x.id === szk.ja.uid);
+  if (mnie) { szk.ja.nick = mnie.imie; szk.ja.zespol = mnie.zespol || ""; szk.ja.poziom = mnie.poziom; szkZapisz(); if (pierwszy) obecnosc("kuchnia", { gracz: mnie.imie, grupa: "Szkolenie " + SZK }); }
+  // szkoleniowiec mógł nie widzieć moich wcześniejszych prób (np. miał zamknięty panel) – dośle je
+  if (mnie && (p.znane?.[szk.ja.uid] || 0) < szk.proby.length && Date.now() - szk.wyslane > 4000) { szk.wyslane = Date.now(); szk.ch.send("wyniki", { u: szk.ja.uid, lista: szk.proby }); }
+  if (p.zadanie && !gra) szkZadanie(p.zadanie, true);
+  if (!gra) szRysuj();
+}
+function szkZadanie(z, spozniony) {
+  const moj = z?.przydzial?.[szk.ja.uid]; if (!moj || szk.proby.some(p => p.zad === z.id) || (gra && !gra.koniec && szk.aktywne?.zad === z.id)) return;
+  if (gra && !gra.koniec) szkPrzerwij(null);
+  szk.aktywne = { zad: z.id, limit: z.limit, typ: z.typ, info: moj.info || "" };
+  poziom = moj.poziom; danie = MENU.find(m => m.id === moj.danie) || MENU[0];
+  zglos("kuchnia", "start", { gracz: szk.ja.nick, grupa: "Szkolenie " + SZK, pozycja: danie.nazwa, tryb: "szkolenie-p" + poziom });
+  $("#eSzkolenie").hidden = true; $("#eKoniec").hidden = true; $("#eOdliczanie").hidden = false;
+  const koniecOdl = performance.now() + (spozniony ? 1500 : (z.za || 3000));
+  const tik = () => { const s = Math.ceil((koniecOdl - performance.now()) / 1000); if (s > 0) { $("#odl").innerHTML = `${s}<div style="font-size:22px;line-height:1.2">${danie.emoji} ${esc(danie.nazwa)}<br>${POZIOMY[poziom].ikona} ${POZIOMY[poziom].nazwa}</div>`; requestAnimationFrame(tik); } else { $("#odl").textContent = "START!"; setTimeout(() => { $("#eOdliczanie").hidden = true; }, 350); nowaGra(performance.now()); } };
+  tik();
+}
+function szkCwicz(id, poz = Math.min(3, szk.ja.poziom || 1)) { szk.aktywne = { zad: "wlasne" }; poziom = poz; danie = MENU.find(m => m.id === id) || MENU[0]; $("#eSzkolenie").hidden = true; $("#eKoniec").hidden = true; nowaGra(performance.now()); }
+let szkT = 0;
+function szkPostep() {
+  if (!SZK || !szk?.ch || !gra || szk.ja.rola !== "uczestnik") return; const t = performance.now(); if (t - szkT < 350 && gra.krok < gra.danie.sklad.length) return; szkT = t;
+  szk.ch.send("postep", { u: szk.ja.uid, zad: szk.aktywne?.zad || "wlasne", danie: gra.danie.id, poziom, krok: gra.krok, n: gra.danie.sklad.length, etap: gra.koniec ? "koniec" : gra.etap,
+    bledy: gra.kary.length, bledyKol: gra.kary.filter(x => x.rodzaj === "zlySkladnik").length, czas: gra.t0 ? +((t - gra.t0) / 1000).toFixed(1) : 0 });
+}
+function szkPrzerwij(tekst) {
+  if (gra && !gra.koniec) szk.ch?.send("postep", { u: szk.ja.uid, zad: szk.aktywne?.zad || "wlasne", danie: gra.danie.id, poziom, krok: gra.krok, n: gra.danie.sklad.length, etap: "przerwane", bledy: gra.kary.length, czas: 0 });
+  K.dyn.clear(); gra = null; szk.aktywne = null; $("#naglowek").hidden = true; $("#krok").hidden = true; $("#receptura").hidden = true; $("#akcje").hidden = true; $("#eOdliczanie").hidden = true; $("#eKoniec").hidden = true;
+  szPokaz(); if (tekst) komunikat(tekst);
+}
+function szPokaz() { $("#eSzkolenie").hidden = false; szRysuj(); }
+function szRysuj() {
+  if (!szk || $("#eSzkolenie").hidden) return; const st = szk.stan, ja = szk.ja;
+  $("#szPol").textContent = !szk.polaczony ? "🟡 Łączenie…" : szk.trener ? "🟢 Szkoleniowiec jest online" : "🟠 Połączono – szkoleniowiec nie ma teraz otwartego panelu";
+  if (ja.rola !== "uczestnik") {
+    const l = st?.uczestnicy || [];
+    $("#szTresc").innerHTML = l.length ? `<p><b>Kim jesteś?</b> Wybierz swoje imię z listy uczestników:</p><div class="szkLista">${l.map(x => `<button data-u="${esc(x.id)}">👤 ${esc(x.imie)}${x.zespol ? `<br><small>${esc(x.zespol)}</small>` : ""}</button>`).join("")}</div>`
+      : `<p>Czekam na listę uczestników od szkoleniowca… Panel szkoleniowca musi być otwarty.</p>`;
+    $$("#szTresc [data-u]").forEach(b => b.onclick = () => { const x = l.find(q => q.id === b.dataset.u); Object.assign(ja, { uid: x.id, nick: x.imie, rola: "uczestnik", zespol: x.zespol || "", poziom: x.poziom }); szk.proby = []; szkZapisz(); szk.ch.send("hej", {}); szRysuj(); });
+    return;
+  }
+  const P = POZIOMY[ja.poziom || 1], zad = st?.zadanie, mojeZad = zad?.przydzial?.[ja.uid], kr = st?.kryteria || KRYTERIA_DOMYSLNE;
+  const ost = szk.proby.slice(-8).reverse();
+  $("#szTresc").innerHTML = `<p>Cześć <b>${esc(ja.nick)}</b>!${ja.zespol ? ` Zespół: <b>${esc(ja.zespol)}</b>.` : ""}</p>
+    <div class="szkPoziom">${P.ikona} Twój poziom: <b>${P.nazwa}</b><br><small>${P.opis}</small></div>
+    ${zad && mojeZad && !szk.proby.some(p => p.zad === zad.id) ? `<div class="szkZad">▶ Trwa zadanie – zaraz start…</div>` : `<div class="szkZad">⏳ Czekaj na zadanie od szkoleniowca. Zacznie się samo na tym ekranie.</div>`}
+    ${st?.program?.length ? `<p><b>Ćwicz samodzielnie</b> (poziom ${Math.min(3, ja.poziom || 1)}, wynik też trafia do szkoleniowca):</p><div class="szkLista">${st.program.map(id => { const d = MENU.find(m => m.id === id); return d ? `<button data-cw="${d.id}">${d.emoji} ${esc(d.nazwa)}</button>` : ""; }).join("")}</div>` : ""}
+    ${ost.length ? `<p><b>Twoje próby</b></p><table class="proby">${ost.map(p => { const o = ocenProbe(p, kr); return `<tr><td>${POZIOMY[p.poziom].ikona} ${esc((MENU.find(m => m.id === p.danie) || {}).nazwa || p.danie)}</td><td>${p.wynik.toFixed(1)} s</td><td>kolejność ${trafnosc(p)}%</td><td>${o.zaliczona ? "✅" : ""}${o.pamiec ? "🧠" : ""}</td></tr>`; }).join("")}</table><p class="male">✅ próba zaliczająca · 🧠 kolejność z pamięci bez pomyłki</p>` : ""}`;
+  $$("#szTresc [data-cw]").forEach(b => b.onclick = () => szkCwicz(b.dataset.cw));
+}
+function szkKoniec() {
+  const k = gra.koniec, kol = gra.kary.filter(x => x.rodzaj === "zlySkladnik").length, rodzaje = {};
+  for (const x of gra.kary) rodzaje[x.rodzaj] = (rodzaje[x.rodzaj] || 0) + 1;
+  const p = { id: uid().slice(0, 12), u: szk.ja.uid, imie: szk.ja.nick, zespol: szk.ja.zespol || "", zad: szk.aktywne?.zad || "wlasne", danie: gra.danie.id, poziom, n: gra.danie.sklad.length,
+    czas: +k.czas.toFixed(1), kary: k.kary, wynik: +k.wynik.toFixed(1), dok: k.dok, bledyKol: kol, bledyInne: gra.kary.length - kol, pierwszeProbyZle: new Set(gra.pomylki.map(x => x.krok)).size,
+    pomylki: gra.pomylki.slice(0, 30), rodzaje, t: Date.now() };
+  if (szk.ja.rola === "uczestnik") { szk.proby.push(p); szkZapisz(); szk.ch.send("wynik", p); szkPostep(); }
+  const kr = szk.stan?.kryteria || KRYTERIA_DOMYSLNE, o = ocenProbe(p, kr), czystych = szk.proby.filter(q => q.danie === p.danie && q.poziom >= 3 && q.bledyKol === 0).length;
+  const pom = gra.pomylki.map(x => `<li>Krok ${x.krok + 1}: ${esc(SKLADNIKI[x.podany]?.nazwa || x.podany || "?")} zamiast <b>${esc(SKLADNIKI[x.ocz]?.nazwa || x.ocz)}</b></li>`).join("");
+  const ocena = `<div class="szkOcena ${o.zaliczona || (poziom < 3 && !kol) ? "ok" : ""}"><b>${POZIOMY[poziom].ikona} Poziom: ${POZIOMY[poziom].nazwa}</b><br>
+    Kolejność: <b>${trafnosc(p)}%</b> kroków za pierwszym razem (${p.n - p.pierwszeProbyZle}/${p.n})<br>
+    ${poziom >= 3 ? (o.zaliczona ? "✅ <b>Próba zaliczająca</b> tę pozycję" : `❌ Ta próba nie zalicza pozycji:<ul>${o.powody.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`) : "Próba ćwiczeniowa – do zaliczenia potrzebna próba bez podpowiedzi (poziom 🟠 lub 🔴)."}
+    ${poziom >= 3 ? `<br>🧠 Bez pomyłki z pamięci: <b>${czystych}/${kr.probPamieci}</b>${czystych >= kr.probPamieci ? " – kolejność opanowana!" : ""}` : ""}
+    ${pom ? `<br><b>Pomyłki w kolejności:</b><ul>${pom}</ul>` : ""}</div>`;
+  const wiersze = $$("#koniecTresc .wiersz"), w = wiersze[wiersze.length - 1];
+  w.insertAdjacentHTML("beforebegin", ocena);
+  w.innerHTML = `<button class="btn zolty" id="kSzk">🎓 Wróć do szkolenia</button>${poziom < 4 ? `<button class="btn bialy" id="kSzkPowt">↺ Ćwicz jeszcze raz</button>` : ""}`;
+  $("#kSzk").onclick = () => { K.dyn.clear(); gra = null; szk.aktywne = null; $("#eKoniec").hidden = true; $("#naglowek").hidden = true; $("#krok").hidden = true; $("#receptura").hidden = true; $("#akcje").hidden = true; szPokaz(); };
+  if ($("#kSzkPowt")) $("#kSzkPowt").onclick = () => szkCwicz(gra.danie.id, Math.min(3, poziom));
+}
+
 
 /* ================= pętla ================= */
 let tp = performance.now();
 function petla() {
   const t = performance.now(), dt = Math.min(0.1, (t - tp) / 1000); tp = t;
-  if (gra) { aktualizuj(dt, t); opadanie(t); if (!gra.koniec) { if (gra.t0) $("#hCzas").textContent = (((t - gra.t0) / 1000) + gra.kary.reduce((s, k) => s + k.s, 0)).toFixed(1).replace(".", ",") + " s"; $("#hKcal").textContent = Math.round(gra.kcal) + " kcal"; } }
+  if (gra) { aktualizuj(dt, t); opadanie(t); if (!gra.koniec) { if (gra.t0) $("#hCzas").textContent = (((t - gra.t0) / 1000) + gra.kary.reduce((s, k) => s + k.s, 0)).toFixed(1).replace(".", ",") + " s" + (SZK && poziom === 4 && szk?.aktywne?.limit ? ` / ${szk.aktywne.limit} s` : ""); $("#hKcal").textContent = Math.round(gra.kcal) + " kcal"; } }
   if (gra) K.render(); rysujNakladke(t); requestAnimationFrame(petla);
 }
 addEventListener("resize", () => uklad());
 uklad(); petla();
 if (STOL) { tryb = "gra"; odswiezStart(); }
+if (SZK) szkStart();
 // telefon/tablet: gra dotykiem – opcja kamery tylko na komputerze
 if (matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches) { $("#sReka").checked = false; $("#sReka").closest("label").hidden = true; }
-window.__mk = { stan: () => gra, wsk: () => [...wskazniki.values()].map(W => ({ typ: W.typ, k: W.k, ile: W.st?.ile, nad: !!W.nad })), K, P: () => P, OB: () => OB, ekr, wDol, wRuch, wGora, rece, wlaczDlonie, stolik: () => stolik, MENU, sztucznaDlon, wynikSymulacji };
+window.__mk = { szk: () => szk, poziom: () => poziom, dodajWarstwe, odwroc, zawin, stan: () => gra, wsk: () => [...wskazniki.values()].map(W => ({ typ: W.typ, k: W.k, ile: W.st?.ile, nad: !!W.nad })), K, P: () => P, OB: () => OB, ekr, wDol, wRuch, wGora, rece, wlaczDlonie, stolik: () => stolik, MENU, sztucznaDlon, wynikSymulacji };
 window.__mkGotowa = true;
 </script>
 </body>
