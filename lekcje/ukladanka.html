@@ -98,6 +98,7 @@
 
 <script type="module">
 import { backend, uid, esc, DEMO } from "./wspolne.js";
+import { kanal } from "./przekaznik.js?v=43";
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const qp = new URLSearchParams(location.search);
 
@@ -243,8 +244,10 @@ let pokoj = null;
 async function dolacz(n, kod) {
   $("#eStart").hidden = true;
   pokoj = { kod, ja: { uid: uid(), nick: n, od: Date.now() }, gracze: [], runda: null, burger: burger.id, tryb, wyniki: {}, pierwszy: {} };
-  const b = await backend();
-  pokoj.ch = b.channel("ukladanka-" + kod, {
+  // bez Supabase: publiczny przekaźnik (telefony łączą się bez konfiguracji); z Supabase: kanał Supabase
+  const otworz = DEMO ? kanal : (await backend()).channel.bind(await backend());
+  pokoj.polaczony = false;
+  pokoj.ch = otworz("ukladanka-" + kod, {
     zdarzenia: ["start", "wynik", "hej", "stan", "wybor"],
     onPresence: l => { pokoj.gracze = l.filter((x, i, a) => a.findIndex(y => y.uid === x.uid) === i); rysujPokoj(); },
     onMessage: (ev, p) => {
@@ -254,13 +257,14 @@ async function dolacz(n, kod) {
       else if (ev === "hej") pokoj.ch.send("stan", { burger: pokoj.burger, tryb: pokoj.tryb, runda: pokoj.runda, wyniki: pokoj.wyniki[pokoj.runda] || [] });
       else if (ev === "stan") { if (!pokoj.runda && p.runda) { pokoj.runda = p.runda; (p.wyniki || []).forEach(zapiszWynik); } pokoj.burger = p.burger; pokoj.tryb = p.tryb; burger = BURGERY.find(x => x.id === p.burger) || burger; tryb = p.tryb; rysujPokoj(); }
     },
-    onReady: () => pokoj.ch.send("hej", {}),
+    onReady: () => { pokoj.polaczony = true; pokoj.ch.send("hej", {}); odswiezPolaczenie(); },
     onError: () => kom("Brak połączenia – sprawdź internet", "zle"),
   }, pokoj.ja);
   pokazPokoj();
 }
 function zapiszWynik(w) { const l = pokoj.wyniki[w.runda] || (pokoj.wyniki[w.runda] = []); const i = l.findIndex(x => x.uid === w.uid); if (i >= 0) l[i] = w; else l.push(w);
   const pierwszy = l.slice().sort((a, b) => a.wynik - b.wynik)[0]; if (gra && !gra.koniec && w.runda === pokoj.runda && pierwszy && w.uid !== pokoj.ja.uid && !pokoj.pierwszy[w.runda]) { pokoj.pierwszy[w.runda] = true; const b = $("#baner"); b.textContent = `🏆 ${w.nick} już skończył(a)! Dokończ swojego burgera!`; b.hidden = false; setTimeout(() => b.hidden = true, 3500); } }
+function odswiezPolaczenie() { rysujPokoj(); }
 function pokazPokoj() { schowajPlansze(); $("#ePokoj").hidden = false; rysujPokoj(); }
 function rysujPokoj() {
   if (!pokoj || $("#ePokoj").hidden) return;
@@ -271,7 +275,7 @@ function rysujPokoj() {
   const url = new URL("ukladanka.html", location.href); url.searchParams.set("stol", pokoj.kod); url.searchParams.set("danie", burger.id);
   const q = qrcode(0, "M"); q.addData(url.href); q.make();
   $("#pQr").innerHTML = `${q.createSvgTag({ cellSize: 4, margin: 1, scalable: true })}<div><b>Zaproś innych:</b> niech zeskanują ten kod telefonem i wpiszą swoje imię.<br><code>${esc(url.href)}</code></div>`;
-  $("#pDemo").innerHTML = DEMO ? "Tryb demo: gracze łączą się tylko w kartach tej samej przeglądarki. Gra z kilku telefonów wymaga wpisania danych Supabase w <code>lekcje/konfiguracja.js</code>." : "";
+  $("#pDemo").innerHTML = pokoj.polaczony ? "🟢 Połączono – wszyscy w pokoju widzą ten sam start i wspólny ranking." : "🟡 Łączenie z innymi graczami…";
   rysujRankingW($("#pWyniki"));
 }
 $("#bStartRazem").onclick = () => { const p = { runda: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), burger: burger.id, tryb, za: 3000 }; pokoj.ch.send("start", p); startRundy(p); };

@@ -99,6 +99,7 @@ import { SKLADNIKI, MENU, KARY, CZASY, kcalDania } from "./kuchnia/menu.js?v=41"
 import { Kuchnia3D, stworzSkladnik, butelka, WYS, R_BULKI, SKALA_STOSU, SOS_KOL } from "./kuchnia/scena3d.js?v=41";
 import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=41";
 import { backend, uid, esc, DEMO } from "./wspolne.js";
+import { kanal } from "./przekaznik.js?v=43";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const cv = $("#scena");
@@ -447,8 +448,10 @@ let stolik = null;
 async function dolaczDoStolika(nick) {
   $("#eStart").hidden = true;
   stolik = { ja: { uid: uid(), nick, od: Date.now() }, gracze: [], runda: null, danie: danie.id, wyniki: {} };
-  const b = await backend();
-  stolik.ch = b.channel("kuchnia-" + STOL, {
+  // bez Supabase: publiczny przekaźnik (telefony łączą się bez konfiguracji); z Supabase: kanał Supabase
+  const otworz = DEMO ? kanal : (await backend()).channel.bind(await backend());
+  stolik.polaczony = false;
+  stolik.ch = otworz("kuchnia-" + STOL, {
     zdarzenia: ["start", "wynik", "hej", "stan", "wybor"],
     onPresence: lista => { stolik.gracze = lista.filter((x, i, a) => a.findIndex(y => y.uid === x.uid) === i); rysujPoczekalnie(); },
     onMessage: (ev, p) => {
@@ -458,12 +461,13 @@ async function dolaczDoStolika(nick) {
       else if (ev === "hej") stolik.ch.send("stan", { danie: stolik.danie, runda: stolik.runda, wyniki: stolik.wyniki[stolik.runda] || [] });
       else if (ev === "stan") { if (!stolik.runda && p.runda) { stolik.runda = p.runda; stolik.danie = p.danie; (p.wyniki || []).forEach(zapiszWynik); } rysujPoczekalnie(); }
     },
-    onReady: () => stolik.ch.send("hej", {}),
+    onReady: () => { stolik.polaczony = true; stolik.ch.send("hej", {}); odswiezPolaczenie(); },
     onError: () => komunikat("Brak połączenia ze stolikiem – sprawdź internet", "zle"),
   }, stolik.ja);
   pokazPoczekalnie();
 }
 function zapiszWynik(w) { const l = stolik.wyniki[w.runda] || (stolik.wyniki[w.runda] = []); const i = l.findIndex(x => x.uid === w.uid); if (i >= 0) l[i] = w; else l.push(w); }
+function odswiezPolaczenie() { rysujPoczekalnie(); }
 function pokazPoczekalnie() { K.dyn.clear(); $("#ePoczekalnia").hidden = false; $("#naglowek").hidden = true; $("#krok").hidden = true; $("#receptura").hidden = true; $("#akcje").hidden = true; gra = null; rysujPoczekalnie(); }
 function rysujPoczekalnie() {
   if (!stolik) return; $("#pStol").textContent = STOL;
@@ -471,7 +475,7 @@ function rysujPoczekalnie() {
   $("#pGracze").innerHTML = lista.map(x => `<span class="${x.uid === stolik.ja.uid ? "ja" : ""}">👤 ${esc(x.nick)}</span>`).join("");
   const d = MENU.find(m => m.id === stolik.danie) || MENU[0]; $("#pDanie").textContent = `${d.emoji} ${d.nazwa}`;
   rysujDania($("#pDania"), d.id, nd => { stolik.danie = nd.id; stolik.ch.send("wybor", { danie: nd.id }); rysujPoczekalnie(); });
-  $("#pTryb").innerHTML = (DEMO ? "Tryb demo: gracze łączą się tylko w kartach tej samej przeglądarki. Aby grać z kilku telefonów, organizator wpisuje dane Supabase w <code>lekcje/konfiguracja.js</code>." : "Wszyscy przy stoliku widzą tę samą rundę. Wygrywa najkrótszy czas (z karami za błędy).");
+  $("#pTryb").innerHTML = (stolik.polaczony ? "🟢 Połączono – wszyscy przy stoliku dostają ten sam start i wspólny ranking. Wygrywa najkrótszy czas (z karami za błędy)." : "🟡 Łączenie z innymi graczami…");
   const wyn = stolik.wyniki[stolik.runda]; if (wyn?.length && $("#ePoczekalnia") && !$("#ePoczekalnia").hidden) $("#pTryb").insertAdjacentHTML("beforebegin", "");
   rysujRankingW($("#pDania").parentElement.querySelector("#rankPocz") || (() => { const e = document.createElement("div"); e.id = "rankPocz"; $("#pDania").before(e); return e; })());
 }
