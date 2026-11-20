@@ -19,7 +19,7 @@ function tx() {
   TX.stal = tekstura(512, 512, (g, w, h) => { g.fillStyle = "#c9ced3"; g.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { const y = R() * h, a = 0.03 + R() * 0.08; g.strokeStyle = R() > 0.5 ? `rgba(255,255,255,${a})` : `rgba(60,65,70,${a})`; g.lineWidth = R() * 1.4; g.beginPath(); g.moveTo(R() * w - 80, y); g.lineTo(R() * w + 200, y + (R() - 0.5) * 2); g.stroke(); } }, { powt: [3, 3] });
   TX.stalSzorstk = tekstura(256, 256, (g, w, h) => { g.fillStyle = "#6a6a6a"; g.fillRect(0, 0, w, h); for (let i = 0; i < 1500; i++) { g.fillStyle = `rgba(${R() > 0.5 ? 255 : 0},${R() > 0.5 ? 255 : 0},${R() > 0.5 ? 255 : 0},.06)`; g.fillRect(R() * w, R() * h, 60 * R(), 1); } }, { powt: [3, 3], dane: true });
   TX.miaz = tekstura(512, 512, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 10, w / 2, h / 2, w / 2); gr.addColorStop(0, "#fbf1d6"); gr.addColorStop(0.82, "#f3e2b8"); gr.addColorStop(0.93, "#d9b276"); gr.addColorStop(1, "#b77a35"); g.fillStyle = gr; g.fillRect(0, 0, w, h); plamki(g, w, h, 900, R => `rgba(${170 + R() * 40},${130 + R() * 30},${70 + R() * 30},${0.12 + R() * 0.2})`, 1, 5, R); plamki(g, w, h, 300, () => "rgba(255,255,250,.35)", 1, 3, R); });
-  TX.skorka = tekstura(512, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#f2d39b"); gr.addColorStop(0.12, "#e0a456"); gr.addColorStop(0.5, "#c98436"); gr.addColorStop(1, "#a9631f"); g.fillStyle = gr; g.fillRect(0, 0, w, h); plamki(g, w, h, 700, R => `rgba(${120 + R() * 60},${60 + R() * 30},20,${0.06 + R() * 0.12})`, 1, 6, R); plamki(g, w, h, 120, () => "rgba(255,235,190,.18)", 4, 14, R); });
+  TX.skorka = tekstura(512, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#f2d39b"); gr.addColorStop(0.12, "#e0a456"); gr.addColorStop(0.5, "#c98436"); gr.addColorStop(1, "#a9631f"); g.fillStyle = gr; g.fillRect(0, 0, w, h); plamki(g, w, h, 700, R => `rgba(${120 + R() * 60},${60 + R() * 30},20,${0.06 + R() * 0.12})`, 1, 6, R); plamki(g, w, h, 160, () => "rgba(255,235,190,.07)", 2, 6, R); });
   TX.skorkaBump = tekstura(256, 128, (g, w, h) => { g.fillStyle = "#808080"; g.fillRect(0, 0, w, h); plamki(g, w, h, 900, R => `rgba(${R() > 0.5 ? 255 : 0},${R() > 0.5 ? 255 : 0},${R() > 0.5 ? 255 : 0},.12)`, 1, 3, R); }, { dane: true });
   const mieso = (smaz) => tekstura(512, 512, (g, w, h) => {
     g.fillStyle = "#ffffff"; g.fillRect(0, 0, w, h);
@@ -68,7 +68,7 @@ export const R_BULKI = 5.5;
 export const SKALA_STOSU = 1.85;      // kanapka na stole montażowym pokazana większa – lepiej widać warstwy
 export { SOS_KOL, lopatka, szczypce };
 const SOS_KOL = { ketchup: "#c41c10", musztarda: "#e9b30c", sosSpec: "#ee9a5d", sosMajo: "#f4eedb" };
-const kolSmaz = s => { const c = new THREE.Color(); if (s < 0.05) c.set("#e58a8f"); else if (s < 0.85) c.set("#e58a8f").lerp(new THREE.Color("#7a4a30"), s / 0.85); else if (s < 1.25) c.set("#7a4a30").lerp(new THREE.Color("#55331f"), (s - 0.85) / 0.4); else c.set("#55331f").lerp(new THREE.Color("#1e130c"), Math.min(1, (s - 1.25) / 0.35)); return c; };
+const kolSmaz = s => { const c = new THREE.Color(); if (s < 0.05) c.set("#e58a8f"); else if (s < 0.85) c.set("#e58a8f").lerp(new THREE.Color("#6a3d26"), s / 0.85); else if (s < 1.25) c.set("#6a3d26").lerp(new THREE.Color("#4a2b19"), (s - 0.85) / 0.4); else c.set("#55331f").lerp(new THREE.Color("#1e130c"), Math.min(1, (s - 1.25) / 0.35)); return c; };
 const kolTost = (p, baza = "#ffffff") => new THREE.Color(baza).lerp(new THREE.Color("#d39a52"), Math.min(1, p) * 0.75);
 
 function kopula(r, h, sezam, id) {
@@ -87,7 +87,7 @@ function kopula(r, h, sezam, id) {
   return g;
 }
 function krazekBulki(r, h, gornyMiaz = true, dolnyMiaz = false) {
-  const T = tx(), skorka = new THREE.MeshStandardMaterial({ map: T.skorka, bumpMap: T.skorkaBump, bumpScale: 0.3, roughness: 0.6 }), miaz = new THREE.MeshStandardMaterial({ map: T.miaz, roughness: 0.9 });
+  const T = tx(), skorka = new THREE.MeshStandardMaterial({ map: T.skorka, bumpMap: T.skorkaBump, bumpScale: 0.3, roughness: 0.6, color: "#d79a5c" }), miaz = new THREE.MeshStandardMaterial({ map: T.miaz, roughness: 0.9 });
   const geo = new THREE.CylinderGeometry(r, r * 0.97, h, 64, 1); const m = new THREE.Mesh(geo, [skorka, gornyMiaz ? miaz : skorka, dolnyMiaz ? miaz : skorka]); m.position.y = h / 2; m.castShadow = m.receiveShadow = true;
   const g = new THREE.Group(); g.add(m); g.userData.miaz = miaz; g.userData.skorka = skorka; return g;
 }

@@ -104,7 +104,7 @@ const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAl
 const cv = $("#scena");
 const qp = new URLSearchParams(location.search);
 const STOL = (qp.get("stol") || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 24);
-let tryb = STOL ? "gra" : (qp.get("tryb") === "gra" ? "gra" : "szkolenie"), danie = MENU[0];
+let tryb = STOL ? "gra" : (qp.get("tryb") === "gra" ? "gra" : "szkolenie"), danie = MENU.find(m => m.id === qp.get("danie")) || MENU[0];   // link z kodu QR może wskazać pozycję i tryb
 
 /* ================= ekran startowy ================= */
 function rysujDania(el, wyb, onWyb) {

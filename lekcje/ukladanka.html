@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Burgerowa układanka – kto pierwszy, ten lepszy!</title>
+<meta name="theme-color" content="#da291c">
+<script src="konfiguracja.js"></script>
+<script src="../wersja.js"></script>
+<script src="../anioly/lib/qrcode.js"></script>
+<style>
+  :root { --czerwony: #da291c; --czerwony2: #a51c12; --zolty: #ffc72c; --zolty2: #ffb000; --ink: #27170e; --krem: #fff8e6; --ok: #2f8f4e; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: radial-gradient(circle at 50% 30%, #ffd55c 0%, var(--zolty2) 45%, var(--czerwony) 100%); color: var(--ink); font: 16px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
+  [hidden] { display: none !important; }
+  button { font: inherit; }
+  .btn { border: 0; border-radius: 16px; padding: 14px 18px; background: var(--czerwony); color: #fff; font-weight: 900; cursor: pointer; box-shadow: 0 4px 0 var(--czerwony2); font-size: 17px; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--czerwony2); } .btn.zolty { background: var(--zolty); color: var(--ink); box-shadow: 0 4px 0 #c99200; } .btn.bialy { background: #fff; color: var(--czerwony); box-shadow: 0 4px 0 #e0c9b0; }
+  .btn.maly { padding: 8px 12px; font-size: 14px; border-radius: 12px; }
+  header { position: fixed; left: 0; right: 0; top: 0; z-index: 10; display: flex; align-items: center; gap: 8px; padding: calc(8px + env(safe-area-inset-top)) 10px 8px; background: var(--czerwony); color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+  header .t { font-weight: 900; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 17px; }
+  header .pill { background: rgba(255,255,255,.2); border-radius: 99px; padding: 5px 12px; font-weight: 900; font-variant-numeric: tabular-nums; font-size: 18px; }
+  #plansza { position: fixed; inset: 0; }
+  #talerz { position: absolute; border-radius: 50%; background: radial-gradient(ellipse at 50% 40%, #ffffff 0%, #f4efe6 55%, #d9d1c3 72%, rgba(0,0,0,.12) 74%, transparent 76%); }
+  #stos { position: absolute; pointer-events: none; }
+  #stos img, .kawalek img { position: absolute; width: 100%; pointer-events: none; -webkit-user-drag: none; }
+  #wzor { position: absolute; background: rgba(255,255,255,.92); border-radius: 18px; padding: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.18); text-align: center; font-weight: 900; font-size: 12px; color: var(--czerwony); }
+  #wzor .obraz { position: relative; }
+  #taca { position: absolute; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); border-radius: 22px; background: linear-gradient(#b67a43, #8d5a2b); box-shadow: inset 0 4px 10px rgba(0,0,0,.35), 0 4px 14px rgba(0,0,0,.25); }
+  .kawalek { position: absolute; touch-action: none; cursor: grab; transition: transform .12s; }
+  .kawalek.trzymany { z-index: 30; transition: none; cursor: grabbing; filter: drop-shadow(0 14px 10px rgba(0,0,0,.35)); }
+  .kawalek.podpowiedz { animation: hop .9s infinite; } @keyframes hop { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  .kawalek.zle { animation: trzes .35s; } @keyframes trzes { 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+  .kawalek .podpis { position: absolute; left: 0; right: 0; bottom: -4px; text-align: center; font: 800 12px system-ui; color: #fff; text-shadow: 0 1px 2px #000; }
+  #cel { position: absolute; border: 4px dashed rgba(255,255,255,.0); border-radius: 50%; pointer-events: none; transition: border-color .15s; }
+  #cel.aktywny { border-color: rgba(47,143,78,.85); }
+  .ekran { position: fixed; inset: 0; z-index: 40; overflow: auto; display: grid; place-items: center; padding: 16px; touch-action: pan-y; background: radial-gradient(circle at 50% 20%, #ffd55c, var(--zolty2) 50%, var(--czerwony) 100%); }
+  .ekran.przezr { background: rgba(39,23,14,.55); }
+  .karta { background: var(--krem); border-radius: 26px; padding: 20px; width: min(560px, 100%); box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+  .karta h1 { margin: 0 0 4px; color: var(--czerwony); font-size: 30px; line-height: 1.1; } .karta h2 { margin: 0 0 8px; color: var(--czerwony); }
+  .karta p { margin: 6px 0; color: #5a4535; }
+  .burgery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 10px 0; }
+  .burgery button { border: 4px solid transparent; background: #fff; border-radius: 20px; padding: 8px; cursor: pointer; font-weight: 900; color: var(--ink); }
+  .burgery button.wyb { border-color: var(--czerwony); background: #fff1d0; }
+  .burgery .mini { position: relative; height: 92px; overflow: hidden; } .burgery small { display: block; font-weight: 600; color: #6b5444; }
+  .tryby { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .tryby button { border: 4px solid transparent; background: #fff; border-radius: 18px; padding: 10px; cursor: pointer; font-weight: 900; } .tryby button.wyb { border-color: var(--czerwony); background: #fff1d0; } .tryby span { font-size: 30px; display: block; } .tryby small { display: block; font-weight: 500; color: #6b5444; }
+  input.nick { width: 100%; padding: 14px; border-radius: 16px; border: 3px solid #f0dcb8; font: 18px system-ui; margin: 8px 0; }
+  .gracze { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; } .gracze span { background: #fff; border-radius: 99px; padding: 6px 12px; font-weight: 800; border: 3px solid #f0dcb8; } .gracze span.ja { border-color: var(--czerwony); }
+  .wiersz { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; } .wiersz .btn { flex: 1; }
+  .male { font-size: 13px; color: #7a6352; } .qr { background: #fff; border-radius: 16px; padding: 10px; display: flex; gap: 12px; align-items: center; margin-top: 10px; } .qr svg { width: 120px; height: 120px; flex: none; } .qr code { font-size: 11px; word-break: break-all; }
+  table { width: 100%; border-collapse: collapse; font-size: 16px; } td, th { padding: 7px 6px; border-bottom: 1px solid #f0dcb8; text-align: left; } td.n { text-align: right; font-variant-numeric: tabular-nums; } tr.ja td { background: #fff1d0; font-weight: 900; }
+  .m1 td:first-child::before { content: "🥇 "; } .m2 td:first-child::before { content: "🥈 "; } .m3 td:first-child::before { content: "🥉 "; }
+  .odliczanie { font-size: 140px; font-weight: 900; color: #fff; text-shadow: 0 7px 0 var(--czerwony2); }
+  #baner { position: fixed; left: 50%; top: 70px; transform: translateX(-50%); z-index: 35; background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 16px; font-weight: 900; box-shadow: 0 6px 18px rgba(0,0,0,.3); text-align: center; }
+  #kom { position: fixed; left: 50%; top: 45%; transform: translate(-50%, -50%); z-index: 36; background: rgba(39,23,14,.9); color: #fff; padding: 10px 18px; border-radius: 16px; font-weight: 900; display: none; pointer-events: none; font-size: 18px; }
+  #kom.zle { background: rgba(192,57,43,.95); } #kom.dobrze { background: rgba(47,143,78,.95); }
+  canvas#konfetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+</style>
+</head>
+<body>
+<div id="plansza" hidden>
+  <div id="talerz"></div><div id="cel"></div><div id="stos"></div>
+  <div id="wzor"><div>WZÓR</div><div class="obraz" id="wzorObraz"></div></div>
+  <div id="taca"></div>
+</div>
+<header id="naglowek" hidden><span class="t" id="hTytul"></span><span class="pill" id="hCzas">0,0 s</span></header>
+<div id="baner" hidden></div>
+<div id="kom"></div>
+<canvas id="konfetti"></canvas>
+
+<!-- START -->
+<div class="ekran" id="eStart"><div class="karta">
+  <h1>🍔 Burgerowa układanka</h1>
+  <p>Ułóż burgera od spodu do góry – tak jak na wzorze. Kto pierwszy, ten wygrywa!</p>
+  <div class="tryby" id="tryby">
+    <button data-t="maluch" class="wyb"><span>🧒</span>Maluch<small>podpowiedź skacze, bez kar</small></button>
+    <button data-t="starszak"><span>🧑</span>Starszak<small>bez podpowiedzi, dodatkowe kawałki, +2 s za pomyłkę</small></button>
+  </div>
+  <div class="burgery" id="burgery"></div>
+  <input class="nick" id="nick" maxlength="14" placeholder="Twoje imię">
+  <div class="wiersz"><button class="btn zolty" id="bSolo">▶ Graj sam</button><button class="btn" id="bRazem">👥 Zagraj z innymi</button></div>
+  <p class="male" id="stolInfo"></p>
+</div></div>
+
+<!-- POCZEKALNIA -->
+<div class="ekran" id="ePokoj" hidden><div class="karta">
+  <h2>👥 Pokój <span id="pKod"></span></h2>
+  <div class="gracze" id="pGracze"></div>
+  <div><b>Burger:</b> <span id="pBurger"></span> · <b>Tryb:</b> <span id="pTryb"></span></div>
+  <div class="burgery" id="pBurgery"></div>
+  <div class="wiersz"><button class="btn zolty" id="bStartRazem">🏁 START dla wszystkich</button></div>
+  <div class="qr" id="pQr"></div>
+  <div id="pWyniki"></div>
+  <p class="male" id="pDemo"></p>
+</div></div>
+<div class="ekran przezr" id="eOdl" hidden><div class="odliczanie" id="odl">3</div></div>
+<div class="ekran" id="eKoniec" hidden><div class="karta" id="koniecTresc"></div></div>
+
+<script type="module">
+import { backend, uid, esc, DEMO } from "./wspolne.js";
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const qp = new URLSearchParams(location.search);
+
+/* ===== grafiki: render 3D, a jeśli są – obrazy z folderu gemini/ ===== */
+const WYS = { korona: 3.3, koronaSez: 3.5, spod: 1.4, spodDuzy: 1.5, srodek: 1.2, wolowina: 1.0, ser: 0.15, ketchup: 0.35, musztarda: 0.3, sosSpec: 0.4, cebulka: 0.3, ogorek2: 0.3, salata: 0.7, pomidor2: 0.5 };
+const NAZWA = { korona: "Wierzch bułki", koronaSez: "Wierzch z sezamem", spod: "Spód bułki", spodDuzy: "Spód z sezamem", srodek: "Środek bułki", wolowina: "Kotlet", ser: "Ser", ketchup: "Ketchup", musztarda: "Musztarda", sosSpec: "Sos", cebulka: "Cebulka", ogorek2: "Ogórki", salata: "Sałata", pomidor2: "Pomidor" };
+const PX_CM = 29.23, Y0 = 320, SPR = 512;          // geometria renderu: spód składnika w wierszu 320, 29,23 px na 1 cm wysokości
+const grafika = {};
+await Promise.all(Object.keys(WYS).map(k => new Promise(ok => { const im = new Image(); im.onload = () => { grafika[k] = im.src; ok(); }; im.onerror = () => { grafika[k] = `kuchnia/grafiki/${k}.png`; ok(); }; im.src = `kuchnia/grafiki/gemini/${k}.png`; })));
+
+const BURGERY = [
+  { id: "hamburger", nazwa: "Hamburger", sklad: ["spod", "wolowina", "ogorek2", "cebulka", "ketchup", "musztarda", "korona"] },
+  { id: "cheeseburger", nazwa: "Cheeseburger", sklad: ["spod", "wolowina", "ser", "ogorek2", "cebulka", "ketchup", "musztarda", "korona"] },
+  { id: "podwojny", nazwa: "Podwójny cheeseburger", sklad: ["spod", "wolowina", "ser", "wolowina", "ser", "ogorek2", "cebulka", "ketchup", "korona"] },
+  { id: "pietrowy", nazwa: "Burger piętrowy", sklad: ["spodDuzy", "sosSpec", "salata", "ser", "wolowina", "srodek", "sosSpec", "salata", "ogorek2", "wolowina", "koronaSez"] },
+];
+const ZMYLKI = ["pomidor2", "salata", "sosSpec", "ser", "koronaSez", "spodDuzy"];
+let burger = BURGERY.find(b => b.id === qp.get("danie")) || BURGERY[0], tryb = qp.get("tryb") === "starszak" ? "starszak" : "maluch";
+
+/* mini-podgląd złożonego burgera w danym elemencie */
+function zlozPodglad(el, sklad, szer) {
+  const sk = szer / SPR, wys = sklad.reduce((s, k) => s + WYS[k], 0) * PX_CM * sk; el.innerHTML = ""; el.style.width = szer + "px"; el.style.height = (wys + (SPR - Y0) * sk * 0.35 + 130 * sk) + "px";
+  let y = 0; const baza = parseFloat(el.style.height) - (SPR - Y0) * sk * 0.35;
+  for (const k of sklad) { const im = document.createElement("img"); im.src = grafika[k]; im.style.cssText = `position:absolute;left:0;width:${szer}px;top:${baza - Y0 * sk - y * PX_CM * sk}px`; el.append(im); y += WYS[k]; }
+}
+
+/* ===== ekran startowy ===== */
+function rysujBurgery(el, wyb, cb) {
+  el.innerHTML = BURGERY.map(b => `<button data-b="${b.id}" class="${b.id === wyb ? "wyb" : ""}"><div class="mini"></div>${esc(b.nazwa)}<small>${b.sklad.length} elementów</small></button>`).join("");
+  el.querySelectorAll("button").forEach(btn => { const b = BURGERY.find(x => x.id === btn.dataset.b), m = btn.querySelector(".mini"), w = document.createElement("div"); w.style.cssText = "position:absolute;left:50%;top:0;transform-origin:top center"; m.append(w);
+    zlozPodglad(w, b.sklad, 120); const s = Math.min(1, 92 / parseFloat(w.style.height)); w.style.transform = `translateX(-50%) scale(${s})`; btn.onclick = () => cb(b); });
+}
+function odswiezStart() { $$("#tryby button").forEach(b => b.classList.toggle("wyb", b.dataset.t === tryb)); rysujBurgery($("#burgery"), burger.id, b => { burger = b; odswiezStart(); }); }
+$$("#tryby button").forEach(b => b.onclick = () => { tryb = b.dataset.t; odswiezStart(); });
+try { $("#nick").value = localStorage.getItem("uk-nick") || ""; } catch {}
+const STOL = (qp.get("stol") || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 24);
+$("#stolInfo").textContent = STOL ? `Kod stolika: ${STOL} – „Zagraj z innymi” połączy Cię z osobami, które zeskanowały ten sam kod.` : "„Zagraj z innymi” pokaże kod QR – inni skanują go swoimi telefonami.";
+if (STOL) $("#bRazem").textContent = `👥 Dołącz do stolika ${STOL}`;
+odswiezStart();
+const nick = () => { const n = $("#nick").value.trim(); if (n) try { localStorage.setItem("uk-nick", n); } catch {} return n; };
+$("#bSolo").onclick = () => { $("#eStart").hidden = true; pokoj = null; startGry(performance.now()); };
+$("#bRazem").onclick = () => { const n = nick(); if (!n) { $("#nick").focus(); kom("Wpisz swoje imię", "zle"); return; } dolacz(n, STOL || ("U" + Math.random().toString(36).slice(2, 6).toUpperCase())); };
+
+/* ===== gra ===== */
+let gra = null;
+const OFS_DOTYK = 40;
+function startGry(t0) {
+  dzwiek("start");
+  const sklad = burger.sklad, kaw = sklad.map((k, i) => ({ k, id: "k" + i }));
+  if (tryb === "starszak") ZMYLKI.filter(z => !sklad.includes(z)).slice(0, 2).forEach((k, i) => kaw.push({ k, id: "z" + i, zmylka: true }));
+  for (let i = kaw.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [kaw[i], kaw[j]] = [kaw[j], kaw[i]]; }
+  gra = { sklad, krok: 0, kaw, t0, kary: 0, bledy: 0, koniec: null };
+  $("#plansza").hidden = false; $("#naglowek").hidden = false; $("#hTytul").textContent = `🍔 ${burger.nazwa}`;
+  uklad(); podpowiedz();
+}
+let G = {};
+function uklad() {
+  if (!gra) return; const W = innerWidth, H = innerHeight, top = ($("#naglowek").offsetHeight || 54) + 8, pion = W < H * 1.05;
+  const tacaH = pion ? Math.min(H * 0.38, 330) : H - top - 16, tacaW = pion ? W - 16 : Math.min(W * 0.42, 560);
+  const taca = $("#taca"); Object.assign(taca.style, pion ? { left: "8px", right: "8px", top: "", height: tacaH + "px", width: "" } : { left: "", right: "8px", top: top + "px", height: tacaH + "px", width: tacaW + "px" });
+  const pole = pion ? { x: 0, y: top, w: W, h: H - top - tacaH - 16 } : { x: 0, y: top, w: W - tacaW - 24, h: H - top - 8 };
+  const wysStosu = gra.sklad.reduce((s, k) => s + WYS[k], 0) * PX_CM;
+  const szer = Math.min(pole.w * 0.62, (pole.h * 0.92) / ((wysStosu + 150) / SPR), 460), sk = szer / SPR;
+  G = { sk, szer, cx: pole.x + pole.w * (pion ? 0.42 : 0.45), baza: pole.y + pole.h * 0.94, pion, taca: taca.getBoundingClientRect() };
+  Object.assign($("#talerz").style, { width: szer * 1.25 + "px", height: szer * 0.42 + "px", left: G.cx - szer * 0.625 + "px", top: G.baza - szer * 0.27 + "px" });
+  Object.assign($("#stos").style, { left: G.cx - szer / 2 + "px", top: "0px", width: szer + "px", height: "100%" });
+  const wz = $("#wzor"), wzW = Math.min(pole.w * 0.24, 130); wz.style.left = (pion ? pole.x + pole.w - wzW - 22 : pole.x + 10) + "px"; wz.style.top = pole.y + 6 + "px"; zlozPodglad($("#wzorObraz"), gra.sklad, wzW);
+  rysujStos(); rozlozKawalki();
+}
+function yWarstwy(i) { let y = 0; for (let j = 0; j < i; j++) y += WYS[gra.sklad[j]]; return G.baza - Y0 * G.sk - y * PX_CM * G.sk; }
+function rysujStos() {
+  const s = $("#stos"); s.innerHTML = "";
+  for (let i = 0; i < gra.krok; i++) { const im = document.createElement("img"); im.src = grafika[gra.sklad[i]]; im.style.top = yWarstwy(i) + "px"; im.style.width = G.szer + "px"; s.append(im); }
+  const c = $("#cel"), yc = yWarstwy(gra.krok) + Y0 * G.sk; Object.assign(c.style, { left: G.cx - G.szer * 0.42 + "px", top: yc - G.szer * 0.16 + "px", width: G.szer * 0.84 + "px", height: G.szer * 0.3 + "px" });
+}
+function rozlozKawalki() {
+  const T = G.taca, wolne = gra.kaw.filter(k => !k.uzyty), n = wolne.length, kol = T.width < 520 ? 3 : Math.max(3, Math.ceil(Math.sqrt(n * T.width / T.height))), rz = Math.ceil(n / kol);
+  const cw = T.width / kol, ch = T.height / rz, roz = Math.min(cw * 0.98, ch * 1.45);
+  $$(".kawalek").forEach(e => e.remove());
+  wolne.forEach((kw, i) => {
+    const d = document.createElement("div"); d.className = "kawalek"; d.dataset.id = kw.id; const sk = roz / SPR;
+    d.style.width = roz + "px"; d.style.height = roz * 0.6 + "px";
+    const x = T.left + (i % kol) * cw + (cw - roz) / 2, y = T.top + Math.floor(i / kol) * ch + (ch - roz * 0.6) / 2;
+    d.style.left = x + "px"; d.style.top = y + "px"; kw.dom = d; kw.x0 = x; kw.y0 = y; kw.roz = roz;
+    d.innerHTML = `<img src="${grafika[kw.k]}" style="width:150%;left:-25%;top:${-roz * 0.52}px"><div class="podpis">${NAZWA[kw.k]}</div>`;   /* 150% – przycięte przezroczyste marginesy renderu */
+    d.addEventListener("pointerdown", e => chwyc(e, kw)); document.body.append(d);
+  });
+  podpowiedz();
+}
+function podpowiedz() { if (!gra) return; const nast = gra.sklad[gra.krok]; let jeden = false; for (const kw of gra.kaw) { const p = tryb === "maluch" && !kw.uzyty && kw.k === nast && !jeden; if (p) jeden = true; kw.dom?.classList.toggle("podpowiedz", p); } }
+
+let trzymany = null;
+function chwyc(e, kw) {
+  if (!gra || gra.koniec || trzymany) return; e.preventDefault(); try { kw.dom.setPointerCapture(e.pointerId); } catch {}
+  const r = kw.dom.getBoundingClientRect(), ofs = e.pointerType === "touch" ? OFS_DOTYK : 0;
+  trzymany = { kw, dx: e.clientX - r.left, dy: e.clientY - r.top, ofs, id: e.pointerId };
+  kw.dom.classList.add("trzymany"); kw.dom.classList.remove("podpowiedz");
+  // podczas przenoszenia kawałek rośnie do rozmiaru burgera na talerzu
+  const skala = G.szer / (kw.roz * 1.5); kw.dom.style.transform = `scale(${Math.min(1.5, Math.max(1, skala))})`; kw.dom.style.transformOrigin = `${trzymany.dx}px ${trzymany.dy}px`;
+  przesun(e.clientX, e.clientY); dzwiek("chwyt");
+}
+function przesun(x, y) { const t = trzymany; t.kw.dom.style.left = x - t.dx + "px"; t.kw.dom.style.top = y - t.dy - t.ofs + "px"; t.x = x; t.y = y - t.ofs; $("#cel").classList.toggle("aktywny", nadTalerzem(t.x, t.y)); }
+function nadTalerzem(x, y) { const yc = yWarstwy(gra.krok) + Y0 * G.sk; return Math.abs(x - G.cx) < G.szer * 0.75 && y > yc - G.szer * 0.75 && y < G.baza + G.szer * 0.25; }
+addEventListener("pointermove", e => { if (trzymany && e.pointerId === trzymany.id) przesun(e.clientX, e.clientY); });
+addEventListener("pointerup", e => { if (trzymany && e.pointerId === trzymany.id) pusc(); });
+addEventListener("pointercancel", e => { if (trzymany && e.pointerId === trzymany.id) { trzymany.x = -1e4; pusc(); } });
+function pusc() {
+  const t = trzymany, kw = t.kw; trzymany = null; $("#cel").classList.remove("aktywny"); kw.dom.classList.remove("trzymany"); kw.dom.style.transform = "";
+  if (nadTalerzem(t.x, t.y)) {
+    if (kw.k === gra.sklad[gra.krok]) { kw.uzyty = true; kw.dom.remove(); gra.krok++; rysujStos(); dzwiek("ok"); try { navigator.vibrate?.(30); } catch {}
+      if (gra.krok >= gra.sklad.length) return wygrana(); kom(["Super!", "Brawo!", "Świetnie!", "Tak jest!"][gra.krok % 4], "dobrze"); podpowiedz(); return; }
+    gra.bledy++; if (tryb === "starszak") { gra.kary += 2; kom(`Nie teraz! +2 s`, "zle"); } else kom(`Najpierw: ${NAZWA[gra.sklad[gra.krok]]}`, "zle");
+    dzwiek("zle"); try { navigator.vibrate?.([50, 40, 50]); } catch {}
+    kw.dom.classList.add("zle"); setTimeout(() => kw.dom?.classList.remove("zle"), 400);
+  }
+  kw.dom.style.left = kw.x0 + "px"; kw.dom.style.top = kw.y0 + "px"; podpowiedz();
+}
+function wygrana() {
+  const czas = (performance.now() - gra.t0) / 1000, wynik = czas + gra.kary; gra.koniec = { czas, wynik };
+  dzwiek("wygrana"); konfetti(); $$(".kawalek").forEach(e => e.remove());
+  const w = { runda: pokoj?.runda, nick: pokoj?.ja.nick || nick() || "Ty", uid: pokoj?.ja.uid || "ja", czas: +czas.toFixed(2), kary: gra.kary, wynik: +wynik.toFixed(2), bledy: gra.bledy, burger: burger.id };
+  if (pokoj) { zapiszWynik(w); pokoj.ch.send("wynik", w); }
+  setTimeout(() => pokazKoniec(w), 1300);
+}
+function pokazKoniec(w) {
+  const lista = pokoj ? (pokoj.wyniki[pokoj.runda] || []).slice().sort((a, b) => a.wynik - b.wynik) : [w];
+  const miejsce = lista.findIndex(x => x.uid === w.uid) + 1;
+  $("#koniecTresc").innerHTML = `<h1>${miejsce === 1 ? "🏆 Pierwsze miejsce!" : `🎉 ${miejsce}. miejsce!`}</h1>
+    <div style="position:relative;margin:6px auto" id="kPodglad"></div>
+    <table><tr><td>Czas układania</td><td class="n"><b>${w.czas.toFixed(1).replace(".", ",")} s</b></td></tr>${tryb === "starszak" ? `<tr><td>Kary</td><td class="n">+${w.kary} s</td></tr><tr><td>Wynik</td><td class="n"><b>${w.wynik.toFixed(1).replace(".", ",")} s</b></td></tr>` : ""}<tr><td>Pomyłki</td><td class="n">${w.bledy}</td></tr></table>
+    <div id="kRanking"></div>
+    <div class="wiersz">${pokoj ? `<button class="btn zolty" id="kPokoj">👥 Wróć do pokoju</button>` : `<button class="btn zolty" id="kJeszcze">↺ Jeszcze raz</button>`}<button class="btn bialy" id="kInny">🍔 Inny burger</button></div>`;
+  $("#eKoniec").hidden = false; zlozPodglad($("#kPodglad"), burger.sklad, 170); rysujRanking();
+  if ($("#kJeszcze")) $("#kJeszcze").onclick = () => { $("#eKoniec").hidden = true; startGry(performance.now()); };
+  if ($("#kPokoj")) $("#kPokoj").onclick = () => { $("#eKoniec").hidden = true; pokazPokoj(); };
+  $("#kInny").onclick = () => { $("#eKoniec").hidden = true; if (pokoj) pokazPokoj(); else { schowajPlansze(); $("#eStart").hidden = false; odswiezStart(); } };
+  window.__ukWynik = w;
+}
+function schowajPlansze() { gra = null; $("#plansza").hidden = true; $("#naglowek").hidden = true; $$(".kawalek").forEach(e => e.remove()); }
+
+/* ===== gra z innymi: pokój (kod stolika lub kod pokoju) ===== */
+let pokoj = null;
+async function dolacz(n, kod) {
+  $("#eStart").hidden = true;
+  pokoj = { kod, ja: { uid: uid(), nick: n, od: Date.now() }, gracze: [], runda: null, burger: burger.id, tryb, wyniki: {}, pierwszy: {} };
+  const b = await backend();
+  pokoj.ch = b.channel("ukladanka-" + kod, {
+    zdarzenia: ["start", "wynik", "hej", "stan", "wybor"],
+    onPresence: l => { pokoj.gracze = l.filter((x, i, a) => a.findIndex(y => y.uid === x.uid) === i); rysujPokoj(); },
+    onMessage: (ev, p) => {
+      if (ev === "wybor") { pokoj.burger = p.burger; pokoj.tryb = p.tryb; burger = BURGERY.find(x => x.id === p.burger) || burger; tryb = p.tryb; rysujPokoj(); }
+      else if (ev === "start") startRundy(p);
+      else if (ev === "wynik") { zapiszWynik(p); rysujRanking(); rysujPokoj(); }
+      else if (ev === "hej") pokoj.ch.send("stan", { burger: pokoj.burger, tryb: pokoj.tryb, runda: pokoj.runda, wyniki: pokoj.wyniki[pokoj.runda] || [] });
+      else if (ev === "stan") { if (!pokoj.runda && p.runda) { pokoj.runda = p.runda; (p.wyniki || []).forEach(zapiszWynik); } pokoj.burger = p.burger; pokoj.tryb = p.tryb; burger = BURGERY.find(x => x.id === p.burger) || burger; tryb = p.tryb; rysujPokoj(); }
+    },
+    onReady: () => pokoj.ch.send("hej", {}),
+    onError: () => kom("Brak połączenia – sprawdź internet", "zle"),
+  }, pokoj.ja);
+  pokazPokoj();
+}
+function zapiszWynik(w) { const l = pokoj.wyniki[w.runda] || (pokoj.wyniki[w.runda] = []); const i = l.findIndex(x => x.uid === w.uid); if (i >= 0) l[i] = w; else l.push(w);
+  const pierwszy = l.slice().sort((a, b) => a.wynik - b.wynik)[0]; if (gra && !gra.koniec && w.runda === pokoj.runda && pierwszy && w.uid !== pokoj.ja.uid && !pokoj.pierwszy[w.runda]) { pokoj.pierwszy[w.runda] = true; const b = $("#baner"); b.textContent = `🏆 ${w.nick} już skończył(a)! Dokończ swojego burgera!`; b.hidden = false; setTimeout(() => b.hidden = true, 3500); } }
+function pokazPokoj() { schowajPlansze(); $("#ePokoj").hidden = false; rysujPokoj(); }
+function rysujPokoj() {
+  if (!pokoj || $("#ePokoj").hidden) return;
+  $("#pKod").textContent = pokoj.kod;
+  const l = pokoj.gracze.length ? pokoj.gracze : [pokoj.ja]; $("#pGracze").innerHTML = l.map(x => `<span class="${x.uid === pokoj.ja.uid ? "ja" : ""}">👤 ${esc(x.nick)}</span>`).join("");
+  $("#pBurger").textContent = burger.nazwa; $("#pTryb").textContent = tryb === "maluch" ? "🧒 Maluch" : "🧑 Starszak";
+  rysujBurgery($("#pBurgery"), burger.id, b => { burger = b; pokoj.burger = b.id; pokoj.ch.send("wybor", { burger: b.id, tryb }); rysujPokoj(); });
+  const url = new URL("ukladanka.html", location.href); url.searchParams.set("stol", pokoj.kod); url.searchParams.set("danie", burger.id);
+  const q = qrcode(0, "M"); q.addData(url.href); q.make();
+  $("#pQr").innerHTML = `${q.createSvgTag({ cellSize: 4, margin: 1, scalable: true })}<div><b>Zaproś innych:</b> niech zeskanują ten kod telefonem i wpiszą swoje imię.<br><code>${esc(url.href)}</code></div>`;
+  $("#pDemo").innerHTML = DEMO ? "Tryb demo: gracze łączą się tylko w kartach tej samej przeglądarki. Gra z kilku telefonów wymaga wpisania danych Supabase w <code>lekcje/konfiguracja.js</code>." : "";
+  rysujRankingW($("#pWyniki"));
+}
+$("#bStartRazem").onclick = () => { const p = { runda: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), burger: burger.id, tryb, za: 3000 }; pokoj.ch.send("start", p); startRundy(p); };
+function startRundy(p) {
+  pokoj.runda = p.runda; burger = BURGERY.find(x => x.id === p.burger) || burger; tryb = p.tryb || tryb;
+  $("#ePokoj").hidden = true; $("#eKoniec").hidden = true; $("#eOdl").hidden = false; const kon = performance.now() + (p.za || 3000);
+  const tik = () => { const s = Math.ceil((kon - performance.now()) / 1000); if (s > 0) { if ($("#odl").textContent !== String(s)) dzwiek("tik"); $("#odl").textContent = s; requestAnimationFrame(tik); } else { $("#odl").textContent = "START!"; setTimeout(() => $("#eOdl").hidden = true, 350); startGry(performance.now()); } };
+  tik();
+}
+function rysujRankingW(el) {
+  if (!el || !pokoj) return; const l = (pokoj.wyniki[pokoj.runda] || []).slice().sort((a, b) => a.wynik - b.wynik); if (!l.length) { el.innerHTML = ""; return; }
+  el.innerHTML = `<h2 style="margin-top:12px">🏆 Kto pierwszy?</h2><table>${l.map((w, i) => `<tr class="m${i + 1} ${w.uid === pokoj.ja.uid ? "ja" : ""}"><td>${esc(w.nick)}</td><td class="n">${w.wynik.toFixed(1)} s</td></tr>`).join("")}</table><p class="male">Pozostali dołączą do tabeli, gdy skończą.</p>`;
+}
+function rysujRanking() { rysujRankingW($("#kRanking")); }
+
+/* ===== drobiazgi: komunikaty, dźwięki, konfetti ===== */
+let tK; function kom(t, k = "") { const e = $("#kom"); e.textContent = t; e.className = k; e.style.display = "block"; clearTimeout(tK); tK = setTimeout(() => e.style.display = "none", 1100); }
+let ac; function dzwiek(r) { try { ac ??= new AudioContext(); const t = ac.currentTime, ton = (f, d, typ = "sine", g = 0.15, od = 0) => { const o = ac.createOscillator(), gg = ac.createGain(); o.type = typ; o.frequency.value = f; o.connect(gg); gg.connect(ac.destination); gg.gain.setValueAtTime(g, t + od); gg.gain.exponentialRampToValueAtTime(0.001, t + od + d); o.start(t + od); o.stop(t + od + d + 0.02); };
+  if (r === "ok") { ton(660, 0.1, "triangle"); ton(990, 0.14, "triangle", 0.12, 0.07); } else if (r === "zle") ton(180, 0.25, "square", 0.08); else if (r === "chwyt") ton(440, 0.05, "sine", 0.06); else if (r === "tik") ton(880, 0.08, "square", 0.06);
+  else if (r === "wygrana") [523, 659, 784, 1047].forEach((f, i) => ton(f, 0.25, "triangle", 0.14, i * 0.12)); else if (r === "start") ton(1047, 0.2, "triangle", 0.12); } catch {} }
+function konfetti() { const c = $("#konfetti"), g = c.getContext("2d"); c.width = innerWidth; c.height = innerHeight; const P = Array.from({ length: 140 }, () => ({ x: innerWidth / 2, y: innerHeight * 0.45, vx: (Math.random() - 0.5) * 14, vy: -Math.random() * 14 - 4, k: ["#da291c", "#ffc72c", "#2f8f4e", "#fff", "#ff7a1a"][Math.floor(Math.random() * 5)], r: Math.random() * 6.28 })); let n = 0;
+  const kr = () => { g.clearRect(0, 0, c.width, c.height); for (const p of P) { p.x += p.vx; p.y += p.vy; p.vy += 0.45; p.r += 0.2; g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.fillStyle = p.k; g.fillRect(-5, -3, 10, 6); g.restore(); } if (++n < 110) requestAnimationFrame(kr); else g.clearRect(0, 0, c.width, c.height); }; kr(); }
+
+addEventListener("resize", () => { if (gra && !gra.koniec && !trzymany) uklad(); });
+// czas na górze
+(function tik() { if (gra && !gra.koniec) $("#hCzas").textContent = (((performance.now() - gra.t0) / 1000) + gra.kary).toFixed(1).replace(".", ",") + " s"; requestAnimationFrame(tik); })();
+// bezpośredni link z kodu QR: ?danie=…&stol=… – od razu do pokoju po wpisaniu imienia
+if (qp.get("start") === "1" && !STOL) { $("#eStart").hidden = true; startGry(performance.now()); }
+window.__uk = { stan: () => gra, G: () => G, pokoj: () => pokoj, BURGERY };
+window.__ukGotowa = true;
+</script>
+</body>
+</html>

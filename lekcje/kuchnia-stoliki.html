@@ -16,31 +16,51 @@
   .paragony { display: flex; flex-wrap: wrap; gap: 8mm; padding: 8mm; background: #fff; }
   .paragon { width: 58mm; font: 9pt ui-monospace, Menlo, monospace; text-align: center; border: 1px dashed #bbb; padding: 3mm; }
   .paragon svg { width: 34mm; height: 34mm; }
+  .produkty { padding: 8mm; background: #fff; display: grid; gap: 8mm; }
+  .produkt { border: 2px solid #f0dcb8; border-radius: 6mm; padding: 4mm 5mm; break-inside: avoid; }
+  .produkt h2 { margin: 0 0 3mm; color: #da291c; } .zabawy { display: flex; gap: 6mm; flex-wrap: wrap; }
+  .zabawa { width: 52mm; text-align: center; display: flex; flex-direction: column; gap: 1.5mm; align-items: center; } .zabawa svg { width: 38mm; height: 38mm; } .zabawa small { color: #7a6352; }
+  .zabawa input { width: 100%; font: 10px ui-monospace, monospace; padding: 4px; border-radius: 6px; } .zabawa button { font-size: 12px; padding: 5px 10px; }
+  @media print { .zabawa input, .zabawa button { display: none; } }
   @media print { .panel { display: none; } body { background: #fff; } .arkusz, .paragony { padding: 0; gap: 8mm; } }
 </style></head><body>
 <div class="panel">
-  <h1>🍔 Mistrz Kanapek – kody do gry przy stoliku</h1>
+  <h1>🍔 Mistrz Kanapek – kody QR i linki</h1>
   <p>Każdy stolik ma własny kod QR. Goście przy tym samym stoliku skanują ten sam kod, podają swoją nazwę i grają razem – ranking według czasu złożenia kanapki.
   Do gry z kilku telefonów potrzebny jest wpisany projekt Supabase w <code>lekcje/konfiguracja.js</code> (bez niego – tryb demo na jednym urządzeniu).</p>
   <label>Kod restauracji<input id="kod" value="R1" maxlength="10"></label>
   <label>Liczba stolików<input id="ile" type="number" min="1" max="60" value="6"></label>
-  <label>Format<select id="format"><option value="naklejka">Naklejki na stoliki (A4)</option><option value="paragon">Pasek na paragon 58 mm</option></select></label>
+  <label>Format<select id="format"><option value="produkty">Kody i linki do każdej pozycji menu</option><option value="naklejka">Naklejki na stoliki (A4)</option><option value="paragon">Pasek na paragon 58 mm</option></select></label>
+  <label>Stolik (opcjonalnie, dla kodów pozycji)<input id="stolP" placeholder="np. T5" maxlength="8"></label>
   <button id="bGen">Generuj</button> <button id="bDruk" style="background:#27170e">🖨 Drukuj</button>
   <p style="font-size:13px">Druk kodu z kasy (POS): wstaw na paragonie kod QR z adresem<br><code id="wzor"></code><br>
   gdzie <code>{nr}</code> to numer stolika (gra wspólna dla stolika) albo numer zamówienia (gra wspólna dla osób z jednego zamówienia).</p>
 </div>
 <div id="wynik"></div>
-<script>
+<script type="module">
+import { MENU } from "./kuchnia/menu.js?v=42";
 const $ = s => document.querySelector(s);
+const UKLADANKA = ["hamburger", "cheeseburger", "podwojny", "pietrowy"];
 const baza = new URL("kuchnia.html", location.href).href;
 function svg(t, cell = 4) { const q = qrcode(0, "M"); q.addData(t); q.make(); return q.createSvgTag({ cellSize: cell, margin: 2, scalable: true }); }
 function generuj() {
   const kod = ($("#kod").value || "R1").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 10), ile = Math.max(1, Math.min(60, +$("#ile").value || 1)), f = $("#format").value;
   $("#wzor").textContent = `${baza}?stol=${kod}-{nr}`;
   const url = n => `${baza}?stol=${kod}-T${n}`;
-  if (f === "naklejka") $("#wynik").innerHTML = `<div class="arkusz">${Array.from({ length: ile }, (_, i) => `<div class="naklejka"><div class="nr">STOLIK ${i + 1}</div><h2>🍔 Mistrz Kanapek</h2><p>Czekasz na zamówienie? Zeskanuj kod, wpisz swoją nazwę<br>i złóż kanapkę szybciej niż znajomi przy stoliku!</p><div class="biale">${svg(url(i + 1))}</div><p style="font-size:8pt">Gra działa w przeglądarce telefonu – bez instalowania aplikacji.</p></div>`).join("")}</div>`;
+  if (f === "produkty") {
+    const stol = ($("#stolP").value || "").replace(/[^A-Za-z0-9_-]/g, ""), st = stol ? `&stol=${kod}-${stol}` : "";
+    const ukl = new URL("ukladanka.html", location.href).href;
+    const zab = d => [
+      ["🎓 Szkolenie", `${baza}?tryb=szkolenie&danie=${d.id}`, "receptura krok po kroku"],
+      ["🏁 Gra na czas", `${baza}?tryb=gra&danie=${d.id}${st}`, "kuchnia: grill, toster, sosy"],
+      ...(UKLADANKA.includes(d.id) ? [["🧩 Układanka", `${ukl}?danie=${d.id}${st}`, "dla dzieci i dorosłych"]] : []),
+    ];
+    $("#wynik").innerHTML = `<div class="produkty">${MENU.map(d => `<div class="produkt"><h2>${d.emoji} ${d.nazwa}</h2><div class="zabawy">${zab(d).map(([n, u, o]) => `<div class="zabawa">${svg(u, 3)}<b>${n}</b><small>${o}</small><input readonly value="${u}" onclick="this.select()"><button data-u="${u}">📋 Kopiuj link</button></div>`).join("")}</div></div>`).join("")}</div>`;
+    document.querySelectorAll("[data-u]").forEach(b => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.u); b.textContent = "✔ Skopiowano"; } catch { b.previousElementSibling.select(); } });
+  } else if (f === "naklejka") $("#wynik").innerHTML = `<div class="arkusz">${Array.from({ length: ile }, (_, i) => `<div class="naklejka"><div class="nr">STOLIK ${i + 1}</div><h2>🍔 Mistrz Kanapek</h2><p>Czekasz na zamówienie? Zeskanuj kod, wpisz swoją nazwę<br>i złóż kanapkę szybciej niż znajomi przy stoliku!</p><div class="biale">${svg(url(i + 1))}</div><p style="font-size:8pt">Gra działa w przeglądarce telefonu – bez instalowania aplikacji.</p></div>`).join("")}</div>`;
   else $("#wynik").innerHTML = `<div class="paragony">${Array.from({ length: ile }, (_, i) => `<div class="paragon">--------------------------------<br><b>🍔 ZAGRAJ, ZANIM PODAMY!</b><br>Złóż kanapkę na czas<br>z osobami przy stoliku ${i + 1}<br>${svg(url(i + 1), 3)}Zeskanuj i wpisz swoją nazwę<br>--------------------------------</div>`).join("")}</div>`;
 }
 $("#bGen").onclick = generuj; $("#bDruk").onclick = () => print();
+$("#format").onchange = generuj; $("#stolP").oninput = generuj;
 generuj(); window.__ok = true;
 </script></body></html>
