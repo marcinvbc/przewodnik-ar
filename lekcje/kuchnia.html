@@ -47,6 +47,7 @@
   table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; } td, th { padding: 5px 6px; border-bottom: 1px solid #f0dcb8; text-align: left; } td.n, th.n { text-align: right; } tr.suma td { font-weight: 900; border-top: 2px solid var(--ink); }
   .ranking .m1 td:first-child::before { content: "🥇 "; } .ranking .m2 td:first-child::before { content: "🥈 "; } .ranking .m3 td:first-child::before { content: "🥉 "; } .ranking tr.ja td { background: #fff1d0; font-weight: 800; }
   .odliczanie { font-size: 120px; font-weight: 900; color: #fff; text-shadow: 0 6px 0 var(--czerwony2); }
+  .btnAR { display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; width: 100%; margin: 8px 0 4px; font-size: 17px; background: linear-gradient(135deg, #27170e, #5a3519); box-shadow: 0 4px 0 #120a05; }
   .wiersz { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; } .wiersz .btn { flex: 1; }
   .male { font-size: 12.5px; color: #7a6352; }
   .bledy li { color: var(--czerwony2); }
@@ -429,7 +430,9 @@ function koniec() {
   for (const [k, v] of Object.entries(sumy)) wiersze.push(`<tr><td>${esc(SKLADNIKI[k].nazwa)}</td><td class="n">${SKLADNIKI[k].sos ? v.n.toFixed(1) + " porcji" : v.n + " szt."}</td><td class="n">${Math.round(v.g)} g</td><td class="n">${Math.round(v.kcal)} kcal</td></tr>`);
   const wzor = kcalDania(gra.danie);
   const bledy = gra.kary.length ? `<h3>Do poprawy</h3><ul class="bledy">${gra.kary.map(k => `<li>${esc(k.tekst)}${k.s ? ` (+${k.s} s)` : ""}</li>`).join("")}</ul>` : `<p>👏 <b>Bez błędów!</b> Kanapka zgodna z recepturą.</p>`;
+  const arUrl = `burger-ar.html?danie=${encodeURIComponent(gra.danie.id)}&gra=kuchnia&czas=${wynik.toFixed(1)}&gracz=${encodeURIComponent(stolik?.ja.nick || $("#nick").value.trim() || "")}`;
   $("#koniecTresc").innerHTML = `<h2>${gra.danie.emoji} ${esc(gra.danie.nazwa)} – gotowe!</h2>
+    <a class="btn btnAR" id="kAR" href="${arUrl}" target="_blank" rel="noopener">🥽 Zobacz swoją kanapkę w 3D i AR</a>
     <table><tr><td>Czas składania</td><td class="n"><b>${t.toFixed(1).replace(".", ",")} s</b></td></tr><tr><td>Kary za błędy</td><td class="n">+${kary} s</td></tr><tr><td>Wynik</td><td class="n"><b>${wynik.toFixed(1).replace(".", ",")} s</b></td></tr><tr><td>Dokładność układania</td><td class="n">${dok}%</td></tr></table>
     <h3>Podsumowanie kaloryczne</h3><table><tr><th>Składnik</th><th class="n">Ilość</th><th class="n">Masa</th><th class="n">kcal</th></tr>${wiersze.join("")}<tr class="suma"><td>Razem</td><td></td><td class="n">${Math.round(Object.values(sumy).reduce((s, v) => s + v.g, 0))} g</td><td class="n">${Math.round(gra.kcal)} kcal</td></tr></table>
     <p class="male">Wzorcowo wg receptury: ${wzor} kcal. Wartości orientacyjne.</p>${bledy}

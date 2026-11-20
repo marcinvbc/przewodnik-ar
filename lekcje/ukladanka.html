@@ -46,6 +46,7 @@
   .tryby { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; } .tryby button { border: 4px solid transparent; background: #fff; border-radius: 18px; padding: 10px; cursor: pointer; font-weight: 900; } .tryby button.wyb { border-color: var(--czerwony); background: #fff1d0; } .tryby span { font-size: 30px; display: block; } .tryby small { display: block; font-weight: 500; color: #6b5444; }
   input.nick { width: 100%; padding: 14px; border-radius: 16px; border: 3px solid #f0dcb8; font: 18px system-ui; margin: 8px 0; }
   .gracze { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; } .gracze span { background: #fff; border-radius: 99px; padding: 6px 12px; font-weight: 800; border: 3px solid #f0dcb8; } .gracze span.ja { border-color: var(--czerwony); }
+  .btnAR { display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; width: 100%; margin: 8px 0 4px; font-size: 17px; background: linear-gradient(135deg, #27170e, #5a3519); box-shadow: 0 4px 0 #120a05; }
   .wiersz { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; } .wiersz .btn { flex: 1; }
   .male { font-size: 13px; color: #7a6352; } .qr { background: #fff; border-radius: 16px; padding: 10px; display: flex; gap: 12px; align-items: center; margin-top: 10px; } .qr svg { width: 120px; height: 120px; flex: none; } .qr code { font-size: 11px; word-break: break-all; }
   table { width: 100%; border-collapse: collapse; font-size: 16px; } td, th { padding: 7px 6px; border-bottom: 1px solid #f0dcb8; text-align: left; } td.n { text-align: right; font-variant-numeric: tabular-nums; } tr.ja td { background: #fff1d0; font-weight: 900; }
@@ -231,6 +232,7 @@ function pokazKoniec(w) {
   const miejsce = lista.findIndex(x => x.uid === w.uid) + 1;
   $("#koniecTresc").innerHTML = `<h1>${miejsce === 1 ? "🏆 Pierwsze miejsce!" : `🎉 ${miejsce}. miejsce!`}</h1>
     <div style="position:relative;margin:6px auto" id="kPodglad"></div>
+    <a class="btn btnAR" id="kAR" href="burger-ar.html?danie=${encodeURIComponent(burger.id)}&gra=ukladanka&czas=${w.wynik.toFixed(1)}&gracz=${encodeURIComponent(w.nick || "")}" target="_blank" rel="noopener">🥽 Zobacz burgera w 3D i AR</a>
     <table><tr><td>Czas układania</td><td class="n"><b>${w.czas.toFixed(1).replace(".", ",")} s</b></td></tr>${tryb === "starszak" ? `<tr><td>Kary</td><td class="n">+${w.kary} s</td></tr><tr><td>Wynik</td><td class="n"><b>${w.wynik.toFixed(1).replace(".", ",")} s</b></td></tr>` : ""}<tr><td>Pomyłki</td><td class="n">${w.bledy}</td></tr></table>
     <div id="kRanking"></div>
     <div class="wiersz">${pokoj ? `<button class="btn zolty" id="kPokoj">👥 Wróć do pokoju</button>` : `<button class="btn zolty" id="kJeszcze">↺ Jeszcze raz</button>`}<button class="btn bialy" id="kInny">🍔 Inny burger</button></div>`;

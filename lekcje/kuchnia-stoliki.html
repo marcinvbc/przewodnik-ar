@@ -54,6 +54,7 @@ function generuj() {
       ["🎓 Szkolenie", `${baza}?tryb=szkolenie&danie=${d.id}`, "receptura krok po kroku"],
       ["🏁 Gra na czas", `${baza}?tryb=gra&danie=${d.id}${st}`, "kuchnia: grill, toster, sosy"],
       ...(UKLADANKA.includes(d.id) ? [["🧩 Układanka", `${ukl}?danie=${d.id}${st}`, "dla dzieci i dorosłych"]] : []),
+      ["🥽 Model 3D / AR", `${new URL("burger-ar.html", location.href).href}?danie=${d.id}`, "postaw kanapkę na stole"],
     ];
     $("#wynik").innerHTML = `<div class="produkty">${MENU.map(d => `<div class="produkt"><h2>${d.emoji} ${d.nazwa}</h2><div class="zabawy">${zab(d).map(([n, u, o]) => `<div class="zabawa">${svg(u, 3)}<b>${n}</b><small>${o}</small><input readonly value="${u}" onclick="this.select()"><button data-u="${u}">📋 Kopiuj link</button></div>`).join("")}</div></div>`).join("")}</div>`;
     document.querySelectorAll("[data-u]").forEach(b => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.u); b.textContent = "✔ Skopiowano"; } catch { b.previousElementSibling.select(); } });

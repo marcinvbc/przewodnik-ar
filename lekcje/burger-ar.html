@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Twoja kanapka w AR</title>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<script src="konfiguracja.js"></script>
+<script src="../wersja.js"></script>
+<script src="../anioly/lib/qrcode.js"></script>
+<style>
+  :root { --czerwony: #da291c; --zolty: #ffc72c; --ink: #27170e; --krem: #fff8e6; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body { font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: radial-gradient(120% 80% at 50% 30%, #fff3d6 0%, #ffd77a 55%, #f0a43a 100%); display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; padding-top: max(10px, env(safe-area-inset-top)); }
+  header a { text-decoration: none; color: var(--ink); background: #fff; border-radius: 99px; padding: 7px 12px; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+  header h1 { margin: 0; font-size: 19px; flex: 1; }
+  .scena { position: relative; flex: 1; min-height: 320px; }
+  model-viewer { width: 100%; height: 100%; --poster-color: transparent; background: transparent; }
+  .ar-btn { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); border: 0; border-radius: 99px; padding: 14px 24px; font: 800 17px system-ui; background: var(--czerwony); color: #fff; box-shadow: 0 6px 18px rgba(160,20,10,.45); display: flex; gap: 8px; align-items: center; cursor: pointer; white-space: nowrap; animation: puls 1.6s ease-in-out infinite; }
+  @keyframes puls { 50% { transform: translateX(-50%) scale(1.06); } }
+  .odznaka { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,.92); border-radius: 99px; padding: 6px 14px; font-weight: 700; font-size: 14px; white-space: nowrap; box-shadow: 0 2px 10px rgba(0,0,0,.1); }
+  .rozmiar { position: absolute; right: 10px; top: 52px; display: flex; flex-direction: column; gap: 6px; }
+  .rozmiar button { border: 0; border-radius: 12px; padding: 8px 10px; font: 700 13px system-ui; background: rgba(255,255,255,.85); cursor: pointer; }
+  .rozmiar button.wyb { background: var(--ink); color: #fff; }
+  .loadbar { position: absolute; left: 20%; right: 20%; top: 50%; height: 6px; border-radius: 3px; background: rgba(255,255,255,.6); overflow: hidden; }
+  .loadbar::after { content: ""; display: block; height: 100%; width: var(--p, 0%); background: var(--czerwony); }
+  .karta { background: var(--krem); border-radius: 20px 20px 0 0; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 20px rgba(0,0,0,.12); }
+  .karta h2 { margin: 0 0 6px; font-size: 16px; }
+  .sklad { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sklad span { background: #fff; border-radius: 99px; padding: 3px 10px; font-size: 13px; border: 1px solid #f1dfb5; }
+  .kcal { margin-top: 8px; font-size: 13.5px; color: #6b4a2a; }
+  .naTel { display: none; gap: 14px; align-items: center; margin-top: 10px; background: #fff; border-radius: 14px; padding: 10px; }
+  .naTel.widac { display: flex; } .naTel img { width: 110px; height: 110px; image-rendering: pixelated; }
+  .wskazowka { font-size: 13px; color: #6b4a2a; margin-top: 6px; }
+  @media (min-width: 900px) { body { flex-direction: row; flex-wrap: wrap; } header { width: 100%; } .scena { flex: 1 1 60%; } .karta { flex: 0 0 360px; border-radius: 20px; margin: 0 16px 16px 0; align-self: flex-start; } }
+</style>
+</head>
+<body>
+<header><a id="wroc" href="kuchnia.html">← Wróć</a><h1 id="tytul">Twoja kanapka</h1></header>
+<div class="scena">
+  <model-viewer id="mv" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto"
+    camera-controls touch-action="pan-y" auto-rotate auto-rotate-delay="1200" rotation-per-second="22deg"
+    shadow-intensity="1.25" shadow-softness="0.55" environment-image="neutral" exposure="1.05" tone-mapping="neutral"
+    camera-orbit="30deg 68deg auto" min-camera-orbit="auto 15deg auto" max-camera-orbit="auto 95deg auto" interaction-prompt="auto">
+    <div class="loadbar" slot="progress-bar"></div>
+    <button class="ar-btn" slot="ar-button">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
+      Postaw na stole (AR)
+    </button>
+  </model-viewer>
+  <div class="odznaka" id="odznaka" hidden></div>
+  <div class="rozmiar" title="Wielkość w AR">
+    <button data-s="1" class="wyb">🍽 Prawdziwa</button>
+    <button data-s="3">🔍 XL</button>
+    <button data-s="8">🏢 Gigant</button>
+  </div>
+</div>
+<div class="karta">
+  <h2 id="opis"></h2>
+  <div class="sklad" id="sklad"></div>
+  <div class="kcal" id="kcal"></div>
+  <div class="wskazowka">Obracaj palcem, przybliżaj dwoma palcami. <b>Postaw na stole</b> – telefon pokaże kanapkę w prawdziwej wielkości przez kamerę.</div>
+  <div class="naTel" id="naTel"><img id="qr" alt="Kod QR do tej strony"><div><b>AR działa na telefonie.</b><br>Zeskanuj kod telefonem, żeby postawić kanapkę na stole.</div></div>
+</div>
+<script type="module">
+import { MENU, SKLADNIKI, kcalDania } from "./kuchnia/menu.js?v=45";
+const qp = new URLSearchParams(location.search), $ = s => document.querySelector(s);
+const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const danie = MENU.find(d => d.id === qp.get("danie")) || MENU[1], gracz = qp.get("gracz"), czas = +qp.get("czas") || 0, gra = qp.get("gra") === "ukladanka" ? "ukladanka" : "kuchnia";
+const mv = $("#mv"), v = typeof WERSJA !== "undefined" ? WERSJA : Date.now();
+mv.src = `../modele/burgery/${danie.id}.glb?v=${v}`; mv.alt = `Model 3D: ${danie.nazwa}`;
+document.title = `${danie.nazwa} w AR`; $("#tytul").textContent = `${danie.emoji} ${danie.nazwa}`;
+const powrot = qp.get("wroc"); $("#wroc").href = powrot && /^[\w\-./?=&%]+$/.test(powrot) ? powrot : (gra === "ukladanka" ? "ukladanka.html" : "kuchnia.html");
+if (gracz) { $("#odznaka").hidden = false; $("#odznaka").textContent = `⭐ Złożone przez: ${gracz}${czas ? ` · ${czas.toFixed(1).replace(".", ",")} s` : ""}`; }
+$("#opis").textContent = danie.opis;
+const ile = {}; for (const k of danie.sklad) ile[k] = (ile[k] || 0) + 1;
+$("#sklad").innerHTML = Object.entries(ile).map(([k, n]) => `<span>${esc(SKLADNIKI[k].nazwa.split(" (")[0])}${n > 1 ? ` ×${n}` : ""}</span>`).join("");
+$("#kcal").innerHTML = `Ok. <b>${kcalDania(danie)} kcal</b> · ${danie.sklad.length} warstw · wartości orientacyjne`;
+mv.addEventListener("progress", e => mv.querySelector(".loadbar").style.setProperty("--p", e.detail.totalProgress * 100 + "%"));
+mv.addEventListener("load", () => mv.querySelector(".loadbar").style.display = "none");
+document.querySelectorAll(".rozmiar button").forEach(b => b.onclick = () => { const s = +b.dataset.s; mv.scale = `${s} ${s} ${s}`; mv.updateFraming?.(); document.querySelectorAll(".rozmiar button").forEach(x => x.classList.toggle("wyb", x === b)); });
+// AR niedostępne (komputer) → kod QR do otwarcia tej samej strony na telefonie
+const pokazQR = () => { try { const q = qrcode(0, "M"); q.addData(location.href); q.make(); $("#qr").src = q.createDataURL(5, 2); $("#naTel").classList.add("widac"); } catch {} };
+customElements.whenDefined("model-viewer").then(() => setTimeout(() => { if (!mv.canActivateAR) pokazQR(); }, 1500));
+setTimeout(() => { if (!customElements.get("model-viewer")) pokazQR(); }, 4000);
+mv.addEventListener("ar-status", e => { if (e.detail.status === "session-started") import("./przekaznik.js?v=45").then(m => m.zglos(gra, "ar", { pozycja: danie.nazwa, gracz: gracz || "" })).catch(() => {}); });
+import("./przekaznik.js?v=45").then(m => m.zglos(gra, "podglad3d", { pozycja: danie.nazwa, gracz: gracz || "" })).catch(() => {});
+window.__burgerAR = { danie: danie.id, src: mv.src };
+</script>
+</body>
+</html>

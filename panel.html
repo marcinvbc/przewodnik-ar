@@ -70,7 +70,7 @@ const $ = s => document.querySelector(s);
 const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const GRY = { anioly: "👼 Zwiedzaj z Aniołami", kuchnia: "🍔 Mistrz Kanapek", ukladanka: "🧩 Burgerowa układanka", dzwig: "🏗 Operator żurawia", dyrygent: "🎼 Zostań dyrygentem", szkielet: "🦴 Układ kostny" };
 const nazwaGry = g => GRY[g] || g;
-const ZDARZ = { otwarcie: "otworzono", start: "start gry", dolaczenie: "dołączenie do grupy", wynik: "ukończono", punkt: "zaliczony punkt", wyjscie: "wyjście" };
+const ZDARZ = { otwarcie: "otworzono", start: "start gry", dolaczenie: "dołączenie do grupy", wynik: "ukończono", punkt: "zaliczony punkt", wyjscie: "wyjście", podglad3d: "obejrzano w 3D", ar: "postawiono w AR" };
 const KLUCZ = "panel-zdarzenia-v1", MAX = 8000;
 let zdarzenia = (() => { try { return JSON.parse(localStorage.getItem(KLUCZ) || "[]"); } catch { return []; } })();
 const teraz = new Map();     // urządzenie|gra -> { gra, gracz, grupa, pozycja, t }

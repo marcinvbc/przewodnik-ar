@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<script type="importmap">{ "imports": { "three": "../../lib/three/build/three.module.min.js", "three/addons/": "../../lib/three/examples/jsm/" } }</script></head>
+<body style="margin:0;background:#fff">
+<script type="module">
+import * as THREE from "three";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { GLTFExporter } from "./GLTFExporter.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { zbuduj } from "./budowa.js";
+window.eksport = async id => { const o = zbuduj(id); const buf = await new GLTFExporter().parseAsync(o, { binary: true, maxTextureSize: 1024 });
+  let s = ""; const b = new Uint8Array(buf); for (let i = 0; i < b.length; i += 32768) s += String.fromCharCode(...b.subarray(i, i + 32768)); return btoa(s); };
+window.podglad = async (url, w = 900, h = 700, kat = 0.45) => {
+  const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); r.setSize(w, h); r.toneMapping = THREE.NeutralToneMapping; r.toneMappingExposure = 0.9; document.body.innerHTML = ""; document.body.append(r.domElement);
+  const sc = new THREE.Scene(); sc.background = new THREE.Color("#f4f1ea"); sc.environment = new THREE.PMREMGenerator(r).fromScene(new RoomEnvironment(), 0.04).texture;
+  const d = new THREE.DirectionalLight("#fff", 0.8); d.position.set(2, 4, 3); sc.add(d);
+  const g = (await new GLTFLoader().loadAsync(url)).scene; sc.add(g); const bb = new THREE.Box3().setFromObject(g), c = bb.getCenter(new THREE.Vector3()), s = bb.getSize(new THREE.Vector3()).length();
+  const cam = new THREE.PerspectiveCamera(30, w / h, 0.001, 10); cam.position.set(c.x + s * 1.1 * Math.cos(kat), c.y + s * 0.45, c.z + s * 1.1 * Math.sin(kat) + s * 0.3); cam.lookAt(c); r.render(sc, cam); return bb.getSize(new THREE.Vector3()).toArray(); };
+window.gotowe = true;
+</script></body></html>
