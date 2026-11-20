@@ -471,7 +471,7 @@ let stolik = null;
 async function dolaczDoStolika(nick) {
   zglos("kuchnia", "dolaczenie", { gracz: nick, grupa: STOL }); obecnosc("kuchnia", { gracz: nick, grupa: STOL });
   $("#eStart").hidden = true;
-  stolik = { ja: { uid: uid(), nick, od: Date.now() }, gracze: [], runda: null, danie: danie.id, wyniki: {} };
+  stolik = { ja: { uid: uid(), nick, od: Date.now() }, gracze: [], runda: null, danie: danie.id, wyniki: {}, zagrane: new Set(), start: null, startT: 0 };
   // bez Supabase: publiczny przekaźnik (telefony łączą się bez konfiguracji); z Supabase: kanał Supabase
   const otworz = DEMO ? kanal : (await backend()).channel.bind(await backend());
   stolik.polaczony = false;
@@ -482,8 +482,12 @@ async function dolaczDoStolika(nick) {
       if (ev === "wybor") { stolik.danie = p.danie; rysujPoczekalnie(); }
       else if (ev === "start") startRundy(p);
       else if (ev === "wynik") { zapiszWynik(p); rysujRanking(); }
-      else if (ev === "hej") stolik.ch.send("stan", { danie: stolik.danie, runda: stolik.runda, wyniki: stolik.wyniki[stolik.runda] || [] });
-      else if (ev === "stan") { if (!stolik.runda && p.runda) { stolik.runda = p.runda; stolik.danie = p.danie; (p.wyniki || []).forEach(zapiszWynik); } rysujPoczekalnie(); }
+      else if (ev === "hej") wyslijStanStolu();
+      else if (ev === "stan") {
+        (p.wyniki || []).forEach(zapiszWynik);
+        // runda wystartowała, zanim dołączyłem (albo zgubiłem sygnał startu) → dołączam automatycznie
+        if (p.start && !stolik.zagrane.has(p.start.runda) && !(gra && !gra.koniec) && p.start.wiek < 240000) { startRundy({ ...p.start, za: Math.max(1500, (p.start.za || 3000) - p.start.wiek) }, p.start.wiek > (p.start.za || 3000)); return; }
+        if (!stolik.runda && p.runda) { stolik.runda = p.runda; stolik.danie = p.danie; } rysujPoczekalnie(); }
     },
     onReady: () => { stolik.polaczony = true; stolik.ch.send("hej", {}); odswiezPolaczenie(); },
     onError: () => komunikat("Brak połączenia ze stolikiem – sprawdź internet", "zle"),
@@ -503,8 +507,13 @@ function rysujPoczekalnie() {
   const wyn = stolik.wyniki[stolik.runda]; if (wyn?.length && $("#ePoczekalnia") && !$("#ePoczekalnia").hidden) $("#pTryb").insertAdjacentHTML("beforebegin", "");
   rysujRankingW($("#pDania").parentElement.querySelector("#rankPocz") || (() => { const e = document.createElement("div"); e.id = "rankPocz"; $("#pDania").before(e); return e; })());
 }
-$("#bRunda").onclick = () => { const p = { runda: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), danie: stolik.danie, za: 3000 }; stolik.ch.send("start", p); startRundy(p); };
-function startRundy(p) {
+$("#bRunda").onclick = () => { const p = { runda: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), danie: stolik.danie, za: 3000 }; stolik.ch.send("start", p); startRundy(p);
+  setTimeout(wyslijStanStolu, 1200); setTimeout(wyslijStanStolu, 4000); };   // powtórka dla telefonów, które zgubiły sygnał startu
+function wyslijStanStolu() { stolik?.ch.send("stan", { danie: stolik.danie, runda: stolik.runda, wyniki: stolik.wyniki[stolik.runda] || [], start: stolik.start ? { ...stolik.start, wiek: Date.now() - stolik.startT } : null }); }
+function startRundy(p, spozniony) {
+  if (stolik.zagrane.has(p.runda)) return; stolik.zagrane.add(p.runda);
+  if (!stolik.start || stolik.start.runda !== p.runda) { stolik.start = { runda: p.runda, danie: p.danie, za: 3000 }; stolik.startT = Date.now() - (p.wiek || 0); }
+  if (spozniony) setTimeout(() => komunikat("⏱ Runda już trwa – dołączasz! Twój czas liczy się od Twojego startu.", "dobrze"), 1600);
   zglos("kuchnia", "start", { gracz: stolik.ja.nick, grupa: STOL, pozycja: (MENU.find(m => m.id === p.danie) || MENU[0]).nazwa, tryb: "gra" });
   stolik.runda = p.runda; stolik.danie = p.danie; danie = MENU.find(m => m.id === p.danie) || MENU[0];
   $("#ePoczekalnia").hidden = true; $("#eKoniec").hidden = true; $("#eOdliczanie").hidden = false;

@@ -249,7 +249,7 @@ let pokoj = null;
 async function dolacz(n, kod) {
   zglos("ukladanka", "dolaczenie", { gracz: n, grupa: kod }); obecnosc("ukladanka", { gracz: n, grupa: kod });
   $("#eStart").hidden = true;
-  pokoj = { kod, ja: { uid: uid(), nick: n, od: Date.now() }, gracze: [], runda: null, burger: burger.id, tryb, wyniki: {}, pierwszy: {} };
+  pokoj = { kod, ja: { uid: uid(), nick: n, od: Date.now() }, gracze: [], runda: null, burger: burger.id, tryb, wyniki: {}, pierwszy: {}, zagrane: new Set(), start: null, startT: 0 };
   // bez Supabase: publiczny przekaźnik (telefony łączą się bez konfiguracji); z Supabase: kanał Supabase
   const otworz = DEMO ? kanal : (await backend()).channel.bind(await backend());
   pokoj.polaczony = false;
@@ -260,8 +260,13 @@ async function dolacz(n, kod) {
       if (ev === "wybor") { pokoj.burger = p.burger; pokoj.tryb = p.tryb; burger = BURGERY.find(x => x.id === p.burger) || burger; tryb = p.tryb; rysujPokoj(); }
       else if (ev === "start") startRundy(p);
       else if (ev === "wynik") { zapiszWynik(p); rysujRanking(); rysujPokoj(); }
-      else if (ev === "hej") pokoj.ch.send("stan", { burger: pokoj.burger, tryb: pokoj.tryb, runda: pokoj.runda, wyniki: pokoj.wyniki[pokoj.runda] || [] });
-      else if (ev === "stan") { if (!pokoj.runda && p.runda) { pokoj.runda = p.runda; (p.wyniki || []).forEach(zapiszWynik); } pokoj.burger = p.burger; pokoj.tryb = p.tryb; burger = BURGERY.find(x => x.id === p.burger) || burger; tryb = p.tryb; rysujPokoj(); }
+      else if (ev === "hej") wyslijStan();
+      else if (ev === "stan") {
+        (p.wyniki || []).forEach(zapiszWynik);
+        // ktoś już wystartował rundę, zanim tu dołączyłem (albo zgubiłem sygnał startu) → dołączam do niej automatycznie
+        if (p.start && !pokoj.zagrane.has(p.start.runda) && !(gra && !gra.koniec) && p.start.wiek < 150000) { const za = Math.max(1500, (p.start.za || 3000) - p.start.wiek); startRundy({ ...p.start, za }, p.start.wiek > (p.start.za || 3000)); return; }
+        if (!pokoj.runda && p.runda) pokoj.runda = p.runda;
+        if (!(gra && !gra.koniec)) { pokoj.burger = p.burger; pokoj.tryb = p.tryb; burger = BURGERY.find(x => x.id === p.burger) || burger; tryb = p.tryb; } rysujPokoj(); }
     },
     onReady: () => { pokoj.polaczony = true; pokoj.ch.send("hej", {}); odswiezPolaczenie(); },
     onError: () => kom("Brak połączenia – sprawdź internet", "zle"),
@@ -284,8 +289,13 @@ function rysujPokoj() {
   $("#pDemo").innerHTML = pokoj.polaczony ? "🟢 Połączono – wszyscy w pokoju widzą ten sam start i wspólny ranking." : "🟡 Łączenie z innymi graczami…";
   rysujRankingW($("#pWyniki"));
 }
-$("#bStartRazem").onclick = () => { const p = { runda: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), burger: burger.id, tryb, za: 3000 }; pokoj.ch.send("start", p); startRundy(p); };
-function startRundy(p) {
+$("#bStartRazem").onclick = () => { const p = { runda: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), burger: burger.id, tryb, za: 3000 }; pokoj.ch.send("start", p); startRundy(p);
+  setTimeout(wyslijStan, 1200); setTimeout(wyslijStan, 4000); };   // powtórka dla telefonów, które zgubiły sygnał startu
+function wyslijStan() { pokoj?.ch.send("stan", { burger: pokoj.burger, tryb: pokoj.tryb, runda: pokoj.runda, wyniki: pokoj.wyniki[pokoj.runda] || [], start: pokoj.start ? { ...pokoj.start, wiek: Date.now() - pokoj.startT } : null }); }
+function startRundy(p, spozniony) {
+  if (pokoj.zagrane.has(p.runda)) return; pokoj.zagrane.add(p.runda);
+  if (!pokoj.start || pokoj.start.runda !== p.runda) { pokoj.start = { runda: p.runda, burger: p.burger, tryb: p.tryb, za: 3000 }; pokoj.startT = Date.now() - (p.wiek || 0); }
+  if (spozniony) { const b = $("#baner"); b.textContent = "⏱ Runda już trwa – dołączasz! Twój czas liczy się od Twojego startu."; b.hidden = false; setTimeout(() => b.hidden = true, 3500); }
   zglos("ukladanka", "start", { gracz: pokoj.ja.nick, grupa: pokoj.kod, pozycja: (BURGERY.find(x => x.id === p.burger) || burger).nazwa, tryb: p.tryb });
   pokoj.runda = p.runda; burger = BURGERY.find(x => x.id === p.burger) || burger; tryb = p.tryb || tryb;
   $("#ePokoj").hidden = true; $("#eKoniec").hidden = true; $("#eOdl").hidden = false; const kon = performance.now() + (p.za || 3000);
