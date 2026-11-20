@@ -22,7 +22,7 @@
   header .pill { background: rgba(255,255,255,.18); border-radius: 99px; padding: 4px 10px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
   #krok { position: fixed; left: 8px; right: 8px; z-index: 9; background: var(--krem); border-radius: 0 0 14px 14px; padding: 7px 12px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,.15); display: flex; gap: 8px; align-items: center; }
   #krok b { color: var(--czerwony); } #krok .nr { background: var(--czerwony); color: #fff; border-radius: 99px; padding: 1px 8px; font-weight: 800; font-size: 12px; white-space: nowrap; }
-  #scena { position: fixed; left: 0; top: 0; display: block; touch-action: none; }
+  #scena { position: fixed; left: 0; top: 0; display: block; touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; }
   #nak { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 55; }
   #podglad { position: fixed; right: 10px; bottom: 10px; width: 150px; border-radius: 12px; transform: scaleX(-1); opacity: .8; z-index: 54; display: none; border: 3px solid var(--zolty); }
   body.kamera #podglad { display: block; }
@@ -71,7 +71,7 @@
     <button data-t="gra"><span>🏁</span>Gra na czas<small>dla gości przy stoliku – kilka osób jednocześnie, ranking według czasu</small></button>
   </div>
   <div id="sStolik" hidden><input class="nick" id="nick" maxlength="16" placeholder="Twoja nazwa w grze"><div class="male" id="stolikInfo"></div></div>
-  <label class="przelacznik"><input type="checkbox" id="sReka"> 🖐 Steruj dłońmi przed kamerą <small style="font-weight:400;color:#6b5444">(szczypnięcie kciuk + palec wskazujący = chwyć)</small></label>
+  <label class="przelacznik"><input type="checkbox" id="sReka"> 🖐 Steruj dłońmi przed kamerą (komputer z kamerą) <small style="font-weight:400;color:#6b5444">(szczypnięcie kciuk + palec wskazujący = chwyć)</small></label>
   <div><b>Wybierz pozycję z menu:</b></div>
   <div class="dania" id="dania"></div>
   <div class="wiersz"><button class="btn zolty" id="bStart">Do kuchni ➜</button></div>
@@ -95,9 +95,9 @@
 
 <script type="module">
 import * as THREE from "three";
-import { SKLADNIKI, MENU, KARY, CZASY, kcalDania } from "./kuchnia/menu.js?v=40";
-import { Kuchnia3D, stworzSkladnik, butelka, WYS, R_BULKI, SKALA_STOSU, SOS_KOL } from "./kuchnia/scena3d.js?v=40";
-import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=40";
+import { SKLADNIKI, MENU, KARY, CZASY, kcalDania } from "./kuchnia/menu.js?v=41";
+import { Kuchnia3D, stworzSkladnik, butelka, WYS, R_BULKI, SKALA_STOSU, SOS_KOL } from "./kuchnia/scena3d.js?v=41";
+import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=41";
 import { backend, uid, esc, DEMO } from "./wspolne.js";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -216,7 +216,7 @@ const nadKanapka = W => { const p = K.naPoziom(W.x, W.y - W.ofs, wysStosu() * SK
 function wDol(id, x, y, ofs, zrodlo) {
   if (!gra || gra.koniec || gra.etap === "czekaj") return;
   const W = { id, x, y, x0: x, y0: y, ofs, zrodlo, t0: performance.now(), typ: null }; wskazniki.set(id, W);
-  const h = trafienie(x, y, zrodlo === "dlon" ? 26 : zrodlo === "dotyk" ? 14 : 0), c = h?.cel;
+  const h = trafienie(x, y, zrodlo === "dlon" ? 26 : zrodlo === "dotyk" ? 24 : 0), c = h?.cel;
   if (!c) { wskazniki.delete(id); return; }
   if (c.typ === "narz") { const n = c.n; gra.narz = gra.narz === n ? "reka" : n; for (const [k, o] of Object.entries(K.narz)) o.visible = gra.narz !== k; komunikat(gra.narz === "lopatka" ? "🍳 Łopatka w ręku – stuknij kotlet, by go przewrócić, przeciągnij, by zdjąć" : gra.narz === "szczypce" ? "🥢 Szczypce w ręku – wyciągnij kurczaka z uniesionego kosza" : "✋ Narzędzie odłożone"); wskazniki.delete(id); return; }
   start();
@@ -247,10 +247,12 @@ function zaczepNiesiony(W) {
 function prowadz(W, dt) {
   const nad = gra.etap === "sklad" ? nadKanapka(W) : null, h = nad ? wysStosu() * SKALA_STOSU + (W.sos ? 16 : 5) : 13, p = K.naPoziom(W.x, W.y - W.ofs, h);
   if (!p) return; W.o.position.lerp(p, Math.min(1, dt * 22)); W.nad = nad;
-  if (W.sos) { if (nad) { W.st.ile = Math.min(2.4, W.st.ile + dt / 0.55); if (!W.podglad) { W.podglad = stworzSkladnik(W.k, { ile: 0.1, id: W.st.id }); W.podglad.scale.setScalar(SKALA_STOSU); K.dyn.add(W.podglad); } W.podglad.position.set(p.x, wysStosu() * SKALA_STOSU + 0.1, p.z); W.podglad.userData.ustaw({ ile: W.st.ile }); } }
+  W.zly = !!nad && W.k !== oczekiwany();
+  if (W.sos && W.zly) { if (!W.ostrzezony) { W.ostrzezony = true; komunikat(`Teraz nie ${KROTKO[W.k].toLowerCase()} – potrzebny: ${SKLADNIKI[oczekiwany()].nazwa}`, "zle"); } }
+  else if (W.sos) { if (nad) { W.punktSosu = nad; W.st.ile = Math.min(2.4, W.st.ile + dt / 0.7); if (!W.podglad) { W.podglad = stworzSkladnik(W.k, { ile: 0.1, id: W.st.id }); W.podglad.scale.setScalar(SKALA_STOSU); K.dyn.add(W.podglad); } W.podglad.position.set(p.x, wysStosu() * SKALA_STOSU + 0.1, p.z); W.podglad.userData.ustaw({ ile: W.st.ile }); } }
   else if (W.k === "korona" || W.k === "koronaSez") W.o.userData.ustaw({ ...W.st, odwrocona: !!nad && gra.danie.odwroc && gra.krok === 0 });
   // celownik na kanapce
-  pierscien.visible = !!nad && !W.sos; if (nad) { const dx = (nad.x - P.papier.x) / SKALA_STOSU, dz = (nad.z - P.papier.z) / SKALA_STOSU, off = Math.hypot(dx, dz) / R_BULKI; pierscien.position.set(P.papier.x, wysStosu() * SKALA_STOSU + 0.25, P.papier.z); pierscien.material.color.set(off < 0.45 ? "#34c759" : "#ff9500"); if (off >= 0.45) pierscien.position.set(nad.x, pierscien.position.y, nad.z); }
+  pierscien.visible = !!nad && (!W.sos || W.zly); if (nad) { const dx = (nad.x - P.papier.x) / SKALA_STOSU, dz = (nad.z - P.papier.z) / SKALA_STOSU, off = Math.hypot(dx, dz) / R_BULKI; pierscien.position.set(P.papier.x, wysStosu() * SKALA_STOSU + 0.25, P.papier.z); pierscien.material.color.set(W.zly ? "#ff3b30" : off < 0.45 ? "#34c759" : "#ff9500"); if (off >= 0.45) pierscien.position.set(nad.x, pierscien.position.y, nad.z); }
 }
 const pierscien = new THREE.Mesh(new THREE.RingGeometry(R_BULKI * SKALA_STOSU * 0.92, R_BULKI * SKALA_STOSU * 1.02, 64), new THREE.MeshBasicMaterial({ color: "#34c759", transparent: true, opacity: 0.85, depthTest: false })); pierscien.rotation.x = -Math.PI / 2; pierscien.renderOrder = 9; pierscien.visible = false; K.sc.add(pierscien);
 
@@ -276,7 +278,12 @@ function wGora(id) {
   if (k === "wolowina" && st.surowy) { if (nad) kara("niedopieczone", "Surowe mięso! Najpierw usmaż je na grillu"); return; }
   if (k === "kurczak" && st.surowy && P.fryt && wObr(p8, P.fryt, 3) && K.kosz) { if (gra.kosz.dol) { komunikat("Najpierw unieś kosz"); return; } if (gra.kosz.el.length >= 4) { komunikat("Kosz pełny"); return; } const c = { s: 0, id: st.id }; gra.kosz.el.push(c); c.o = stworzSkladnik("kurczak", { smazenie: 0, id: c.id }); c.o.traverse(x => x.userData.cel = { typ: "kosz" }); const i = gra.kosz.el.length - 1; c.o.position.set((i % 2 - 0.5) * 7, 0.5 + Math.floor(i / 2) * 1.6, 0); K.kosz.add(c.o); komunikat("Kurczak w koszu – stuknij kosz, by opuścić go do oleju"); return; }
   if (k === "kurczak" && st.surowy) { if (nad) kara("niedopieczone", "Surowy kurczak! Najpierw do frytownicy"); return; }
-  if (sk.sos) { if (st.ile > 0.05 && nad) dodajWarstwe(k, { ...st }, nad); return; }
+  if (sk.sos) {
+    if (st.ile > 0.05 && (nad || W.punktSosu)) dodajWarstwe(k, { ...st }, W.punktSosu || nad);
+    else if (nad && W.zly) kara("zlySkladnik", `To nie teraz – potrzebny: ${SKLADNIKI[oczekiwany()].nazwa}`);
+    else if (nad) komunikat("Przytrzymaj butelkę nad kanapką – sos leci, dopóki trzymasz", "zle");
+    return;
+  }
   if (nad) { dodajWarstwe(k, st, nad); return; }
   if (st.zTostera) { const sl = slotyWolne(gra.toster, MAX_TOSTER), s = { k, p: st.opieczenie, id: st.id, slot: sl }; gra.toster.push(s); s.o = obiekt(k, { opieczenie: s.p, id: s.id }, { typ: "tost", s }); s.o.position.copy(lokTostera(sl)); if (k === "tortilla") s.o.scale.setScalar(0.48); }
   else if (k === "kurczak" && K.kosz) { const c = { s: st.smazenie, id: st.id }; gra.kosz.el.push(c); c.o = stworzSkladnik("kurczak", { smazenie: c.s, id: c.id }); c.o.traverse(x => x.userData.cel = { typ: "kosz" }); c.o.position.set(0, 0.5, 0); K.kosz.add(c.o); }
@@ -341,14 +348,15 @@ function rysujNakladke(t) {
     for (const m of gra.grill) { const q = ekr(m.o.position.clone().add(new THREE.Vector3(0, 3, 0))), spal = m.dol > 1.4, got = m.dol >= 0.85; pasek(q.x, q.y - 16, 50, m.dol / 0.85, spal ? "#ff3b30" : got ? "#4cd964" : "#ffcc00"); if (got) napis(spal ? "PRZYPALA SIĘ!" : m.przewr ? "GOTOWY – ZDEJMIJ" : "PRZEWRÓĆ!", q.x, q.y - 29, { r: 10.5, tlo: spal ? "rgba(192,57,43,.95)" : "rgba(47,143,78,.95)" }); }
     if (K.kosz && gra.kosz.el.length) { const s = gra.kosz.el[0].s, q = ekr(new THREE.Vector3(P.fryt.x, 14, P.fryt.z)); pasek(q.x, q.y - 12, 56, s / 0.85, s > 1.45 ? "#ff3b30" : s >= 0.85 ? "#4cd964" : "#ffcc00"); napis(gra.kosz.dol ? (s >= 0.85 ? "UNIEŚ KOSZ" : "smaży się…") : (s >= 0.85 ? "wyjmij szczypcami" : "stuknij kosz"), q.x, q.y - 25, { r: 10.5 }); }
     if (tryb === "szkolenie") { const c = celSzkolenia(); if (c) { const a = 0.55 + 0.45 * Math.sin(t / 180), q1 = ekr(new THREE.Vector3(c.x - (c.w || 14) / 2, 0, c.z)), q2 = ekr(new THREE.Vector3(c.x + (c.w || 14) / 2, 0, c.z)), q = ekr(new THREE.Vector3(c.x, 0, c.z)); ng.save(); ng.strokeStyle = `rgba(47,180,90,${a})`; ng.lineWidth = 5; ng.setLineDash([10, 7]); ng.beginPath(); ng.ellipse(q.x, q.y, Math.max(30, (q2.x - q1.x) * 0.62), Math.max(22, (q2.x - q1.x) * 0.42), 0, 0, 7); ng.stroke(); ng.restore(); } }
-    for (const W of wskazniki.values()) if (W.sos && W.typ === "niesie") { const ile = W.st.ile, ok = ile >= 0.6 && ile <= 1.5, x = W.x + OB.x + 40, y = W.y + OB.y - W.ofs - 40; ng.fillStyle = "rgba(0,0,0,.5)"; ng.beginPath(); ng.roundRect(x, y - 70, 14, 80, 7); ng.fill(); ng.fillStyle = ok ? "#4cd964" : ile > 1.5 ? "#ff3b30" : "#ffcc00"; const hh = 80 * Math.min(1, ile / 2.4); ng.beginPath(); ng.roundRect(x, y + 10 - hh, 14, hh, 7); ng.fill(); ng.strokeStyle = "#fff"; ng.lineWidth = 2; for (const v of [0.6, 1.5]) { const yy = y + 10 - 80 * v / 2.4; ng.beginPath(); ng.moveTo(x - 3, yy); ng.lineTo(x + 17, yy); ng.stroke(); } napis(W.nad ? `${ile.toFixed(1)} porcji` : "trzymaj nad kanapką", x + 7, y - 84, { r: 11 }); }
+    for (const W of wskazniki.values()) if (W.sos && W.typ === "niesie") { const ile = W.st.ile, ok = ile >= 0.6 && ile <= 1.5, x = W.x + OB.x + 40, y = W.y + OB.y - W.ofs - 40; ng.fillStyle = "rgba(0,0,0,.5)"; ng.beginPath(); ng.roundRect(x, y - 70, 14, 80, 7); ng.fill(); ng.fillStyle = ok ? "#4cd964" : ile > 1.5 ? "#ff3b30" : "#ffcc00"; const hh = 80 * Math.min(1, ile / 2.4); ng.beginPath(); ng.roundRect(x, y + 10 - hh, 14, hh, 7); ng.fill(); ng.strokeStyle = "#fff"; ng.lineWidth = 2; for (const v of [0.6, 1.5]) { const yy = y + 10 - 80 * v / 2.4; ng.beginPath(); ng.moveTo(x - 3, yy); ng.lineTo(x + 17, yy); ng.stroke(); } napis(W.zly ? `teraz: ${KROTKO[oczekiwany()]}` : W.nad ? `${ile.toFixed(1)} porcji` : "trzymaj nad kanapką", x + 7, y - 84, { r: 11, tlo: W.zly ? "rgba(192,57,43,.95)" : undefined }); }
   }
   if (rece.aktywne) rysujDlonie();
 }
 
 /* ================= wejście: mysz i dotyk ================= */
 const pkt = e => ({ x: e.clientX - OB.x, y: e.clientY - OB.y });
-cv.addEventListener("pointerdown", e => { cv.setPointerCapture(e.pointerId); const p = pkt(e); wDol("p" + e.pointerId, p.x, p.y, e.pointerType === "touch" ? 54 : 0, e.pointerType === "touch" ? "dotyk" : "mysz"); });
+cv.addEventListener("contextmenu", e => e.preventDefault());
+cv.addEventListener("pointerdown", e => { e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch {} const p = pkt(e); wDol("p" + e.pointerId, p.x, p.y, e.pointerType === "touch" ? 54 : 0, e.pointerType === "touch" ? "dotyk" : "mysz"); });
 cv.addEventListener("pointermove", e => { const p = pkt(e); wRuch("p" + e.pointerId, p.x, p.y); });
 cv.addEventListener("pointerup", e => wGora("p" + e.pointerId));
 cv.addEventListener("pointercancel", e => { const W = wskazniki.get("p" + e.pointerId); if (W) { W.x = W.x0; W.y = W.y0; } wGora("p" + e.pointerId); });
@@ -494,6 +502,8 @@ function petla() {
 addEventListener("resize", () => uklad());
 uklad(); petla();
 if (STOL) { tryb = "gra"; odswiezStart(); }
+// telefon/tablet: gra dotykiem – opcja kamery tylko na komputerze
+if (matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches) { $("#sReka").checked = false; $("#sReka").closest("label").hidden = true; }
 window.__mk = { stan: () => gra, wsk: () => [...wskazniki.values()].map(W => ({ typ: W.typ, k: W.k, ile: W.st?.ile, nad: !!W.nad })), K, P: () => P, OB: () => OB, ekr, wDol, wRuch, wGora, rece, wlaczDlonie, stolik: () => stolik, MENU, sztucznaDlon, wynikSymulacji };
 window.__mkGotowa = true;
 </script>
