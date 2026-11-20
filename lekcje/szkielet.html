@@ -121,6 +121,7 @@
 </div></div>
 
 <script type="module">
+import("./przekaznik.js?v=44").then(m => m.zglos("szkielet", "otwarcie", {})).catch(() => {});
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";

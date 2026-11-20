@@ -87,3 +87,38 @@ export function kanal(nazwa, h, ja) {
     close() { wyslijSur("__wychodze", {}); clearInterval(serce); pol.zamknij(); bc?.close(); },
   };
 }
+
+/* ===================================================================================
+   STATYSTYKI DLA PANELU ORGANIZATORA
+   Gry zgłaszają: otwarcie, start, dołączenie do grupy, wynik oraz co 20 s „jestem” (kto gra teraz).
+   Bez lokalizacji. Panel (panel.html) słucha tego samego tematu i zapisuje historię u siebie.
+   Temat zawiera kod organizatora z konfiguracja.js (kodStatystyk) – zmień go, by mieć „swoje” statystyki. */
+let _stat = null, _bcStat = null, _serceStat = 0, _obecnosc = null;
+const urzadzenie = (() => { try { let u = localStorage.getItem("pAR-urzadzenie"); if (!u) { u = Math.random().toString(36).slice(2, 10); localStorage.setItem("pAR-urzadzenie", u); } return u; } catch { return "x" + Math.random().toString(36).slice(2, 8); } })();
+export const tematStatystyk = () => PREFIKS + "stat/" + String(window.LEKCJE_CONFIG?.kodStatystyk || "publiczne").replace(/[^A-Za-z0-9_-]/g, "_");
+function polStat() {
+  if (_stat) return _stat;
+  if (window.LEKCJE_CONFIG?.statystyki === false) return (_stat = { wyslij() {} });
+  _stat = polaczenie(tematStatystyk(), () => {}, () => {});
+  try { _bcStat = new BroadcastChannel("przekaznik-" + tematStatystyk()); } catch {}
+  return _stat;
+}
+/** zglos("ukladanka", "wynik", { gracz: "Ola", grupa: "R1-T4", czas: 12.3, ... }) */
+export function zglos(gra, zdarzenie, dane = {}) {
+  const s = JSON.stringify({ ev: "stat", od: urzadzenie, t: Date.now(), p: { gra, zdarzenie, urzadzenie, ...dane } });
+  polStat().wyslij(s); try { _bcStat?.postMessage(s); } catch {}
+}
+/** obecnosc("ukladanka", { gracz, grupa }) – wywołuj przy zmianie; null = koniec gry */
+export function obecnosc(gra, info) {
+  _obecnosc = info ? { gra, ...info } : null; clearInterval(_serceStat);
+  if (!_obecnosc) { zglos(gra, "wyjscie", {}); return; }
+  const tik = () => _obecnosc && zglos(_obecnosc.gra, "jestem", _obecnosc); tik(); _serceStat = setInterval(tik, 20000);
+}
+addEventListener("pagehide", () => { if (_obecnosc) zglos(_obecnosc.gra, "wyjscie", {}); });
+/** dla panelu: nasłuch zgłoszeń */
+export function sluchajStatystyk(onZgloszenie, onStan) {
+  const odb = tekst => { let m; try { m = JSON.parse(tekst); } catch { return; } if (m?.ev === "stat" && m.p) onZgloszenie({ ...m.p, t: m.t }); };
+  const pol = polaczenie(tematStatystyk(), odb, (ok, url, poddaj) => onStan?.(ok, url, poddaj));
+  let bc = null; try { bc = new BroadcastChannel("przekaznik-" + tematStatystyk()); bc.onmessage = e => odb(e.data); } catch {}
+  return { zamknij() { pol.zamknij(); bc?.close(); } };
+}

@@ -8,6 +8,7 @@
 <script type="importmap">
 { "imports": { "three": "../lib/three/build/three.module.min.js", "three/addons/": "../lib/three/examples/jsm/" } }
 </script>
+<script src="konfiguracja.js"></script>
 <script src="../wersja.js"></script>
 <style>
   :root { --ink: #20262b; --zolty: #f2b705; --ok: #2f8f5a; --zle: #c0392b; }
@@ -163,6 +164,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "../dlonie.js?v=37";
+import { zglos, obecnosc } from "./przekaznik.js?v=44";
+zglos("dzwig", "otwarcie", {});
 import { zbudujScene, zbudujLadunki, LADUNKI, STREFY, udzwig, WIEZA, WYSIEG, WYS_WYSIEGU, R_MIN } from "./dzwig/scena.js?v=37";
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -502,7 +505,7 @@ function podsumowanie() {
   try { const k = "dzwig-wyniki", a = JSON.parse(localStorage.getItem(k) || "[]"); a.push(wynik); localStorage.setItem(k, JSON.stringify(a)); } catch {}
   const kod = "DZWIG1:" + btoa(unescape(encodeURIComponent(JSON.stringify(wynik))));
   $("#koniecTresc").insertAdjacentHTML("beforeend", `<p style="font-size:13px;margin-top:12px">Wynik zapisano na tym komputerze – zobaczysz go w <a href="dzwig-wyniki.html">📊 Wynikach</a>. Grasz na innym komputerze niż prowadzący? Skopiuj <b>kod wyniku</b> i wyślij go prowadzącemu (wkleja go w Wynikach):</p><textarea readonly style="width:100%;height:64px;font:11px ui-monospace,monospace" onclick="this.select()">${kod}</textarea><div class="rzad"><a class="btn-d" href="dzwig-wyniki.html">📊 Porównaj wyniki</a></div>`);
-  window.__dzwigWynik = wynik;
+  window.__dzwigWynik = wynik; zglos("dzwig", "wynik", { gracz: wynik.uczestnik, czas: wynik.czas_s, punkty: wynik.punkty, bledy: wynik.kolizje + wynik.bledy });
   $("#koniec").hidden = false;
   $("#kKopiuj").onclick = () => navigator.clipboard?.writeText(`Operator żurawia – ${wynik.uczestnik}: ${pkt}/100, ocena ${ocena}, czas ${czas} s, kolizje ${stat.kolizje}, błędy ${stat.bledy}, przeciążenia ${stat.przeciazenia}`);
 }
@@ -554,6 +557,7 @@ function ramka(dlonie) {
 /* ------------------------------------------------------------ start i pętla */
 let tryb = "mysz";
 async function start(zKamera) {
+  { const g = ($("#imie").value || "").trim() || "bez imienia"; zglos("dzwig", "start", { gracz: g, tryb: zKamera ? "dłonie" : "mysz" }); obecnosc("dzwig", { gracz: g }); }
   tryb = zKamera ? "dłonie" : "mysz/klawiatura";
   document.body.classList.toggle("dlonie", zKamera); setTimeout(() => { joy.L.rysuj(); joy.R.rysuj(); }, 50);
   if (zKamera) {

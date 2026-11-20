@@ -13,5 +13,7 @@ window.LEKCJE_CONFIG = {
   supabaseUrl: "",          // np. "https://abcdefghijkl.supabase.co"
   supabaseKey: "",          // klucz publishable (sb_publishable_…) albo anon (eyJ…)
   aiWlaczone: true,
+  kodStatystyk: "org-7rkingjz2t",   // panel organizatora (panel.html) widzi tylko gry z tym samym kodem; zmień, by zacząć „od zera”
+  statystyki: true,               // false = gry nic nie zgłaszają do panelu
   epearUrl: "https://arplus.test.dio.vobacom.org",   // adres platformy e-peAR (przycisk „📤 Wyślij do e-peAR”)         // czy próbować planowania i pytań przez Claude (wymaga funkcji „claude” w Supabase)
 };

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel organizatora – kto gra i co jest popularne</title>
+<script src="lekcje/konfiguracja.js"></script>
+<script src="wersja.js"></script>
+<style>
+  :root { --surface: #fcfcfb; --tlo: #f1efe9; --t1: #0b0b0b; --t2: #52514e; --t3: #8a8984; --siatka: #e4e2dc; --seria: #2a78d6; --ok: #2f8f4e; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--tlo); color: var(--t1); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { background: #20262b; color: #fff; padding: 12px 20px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; }
+  header h1 { margin: 0; font-size: 19px; } .prawo { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .pill { border-radius: 99px; padding: 4px 11px; font-weight: 700; font-size: 13px; background: rgba(255,255,255,.14); }
+  .btn { border: 0; border-radius: 10px; padding: 7px 12px; font: 600 13px system-ui; background: #fff; color: #20262b; cursor: pointer; text-decoration: none; }
+  .btn.potw { background: #c0392b; color: #fff; }
+  select { font: 13px system-ui; padding: 6px 8px; border-radius: 8px; border: 0; }
+  main { max-width: 1240px; margin: 0 auto; padding: 16px 20px 40px; }
+  .kafle { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .kafel { background: var(--surface); border-radius: 14px; padding: 12px 14px; } .kafel h3 { margin: 0; font-size: 12px; color: var(--t2); text-transform: uppercase; letter-spacing: .03em; font-weight: 600; }
+  .kafel b { display: block; font-size: 26px; margin-top: 2px; font-variant-numeric: tabular-nums; } .kafel small { color: var(--t3); }
+  .karta { background: var(--surface); border-radius: 14px; padding: 14px 16px; margin-top: 14px; }
+  .karta h2 { margin: 0 0 2px; font-size: 16px; } .pod { margin: 0 0 10px; color: var(--t2); font-size: 13px; }
+  .dwa { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; } .dwa .karta { margin-top: 14px; }
+  .teraz { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .gra-teraz { border: 1px solid var(--siatka); border-radius: 12px; padding: 10px 12px; }
+  .gra-teraz h3 { margin: 0 0 6px; font-size: 15px; display: flex; justify-content: space-between; }
+  .grupa { background: #f6f4ef; border-radius: 10px; padding: 7px 9px; margin-top: 6px; } .grupa b { font-size: 13px; }
+  .chip { display: inline-block; background: #fff; border: 1px solid var(--siatka); border-radius: 99px; padding: 2px 9px; margin: 3px 4px 0 0; font-size: 13px; }
+  .chip.live::before { content: "● "; color: var(--ok); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th { text-align: left; font-size: 12px; color: var(--t2); font-weight: 600; border-bottom: 1px solid var(--siatka); padding: 6px; white-space: nowrap; }
+  td { padding: 6px; border-bottom: 1px solid #efede7; vertical-align: top; } td.n, th.n { text-align: right; }
+  .pusto { color: var(--t3); padding: 10px 0; }
+  #tip { position: fixed; pointer-events: none; background: #20262b; color: #fff; border-radius: 8px; padding: 6px 9px; font-size: 12.5px; display: none; z-index: 10; }
+  .info { font-size: 12.5px; color: var(--t2); }
+  @media (max-width: 900px) { .kafle { grid-template-columns: 1fr 1fr; } .dwa { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚙ Panel organizatora</h1>
+  <span class="pill" id="stan">🟡 Łączenie…</span>
+  <span class="prawo">
+    <select id="okres"><option value="dzis">Dziś</option><option value="7">Ostatnie 7 dni</option><option value="wszystko">Wszystko</option></select>
+    <select id="filtrGra"><option value="">Wszystkie gry</option></select>
+    <button class="btn" id="bCsv">⬇ CSV</button><button class="btn" id="bWyczysc">Wyczyść</button><a class="btn" href="./">← Start</a>
+  </span>
+</header>
+<main>
+  <p class="info" id="opis"></p>
+  <div class="kafle" id="kafle"></div>
+  <div class="karta"><h2>🟢 Teraz grają</h2><p class="pod">Na żywo: kto ma otwartą grę w tej chwili (sygnał co 20 s). Grupy to stoliki i pokoje gry wspólnej.</p><div class="teraz" id="teraz"></div></div>
+  <div class="dwa">
+    <div class="karta"><h2>Popularność gier</h2><p class="pod">Liczba rozpoczętych gier w wybranym okresie.</p><div id="wykres"></div></div>
+    <div class="karta"><h2>Najczęściej wybierane pozycje</h2><p class="pod">Kanapki, burgery, anioły i atrakcje – starty i zaliczenia.</p><div id="pozycje"></div></div>
+  </div>
+  <div class="karta"><h2>Gry – podsumowanie</h2><div id="tabGry"></div></div>
+  <div class="dwa">
+    <div class="karta"><h2>👥 Grupy</h2><p class="pod">Stoliki i pokoje, w których grało kilka osób.</p><div id="tabGrupy"></div></div>
+    <div class="karta"><h2>👤 Gracze</h2><p class="pod">Imiona wpisane przez graczy (bez lokalizacji).</p><div id="tabGracze"></div></div>
+  </div>
+  <div class="karta"><h2>Ostatnie zdarzenia</h2><div id="tabLog"></div></div>
+</main>
+<div id="tip"></div>
+<script type="module">
+import { sluchajStatystyk, tematStatystyk } from "./lekcje/przekaznik.js?v=44";
+const $ = s => document.querySelector(s);
+const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const GRY = { anioly: "👼 Zwiedzaj z Aniołami", kuchnia: "🍔 Mistrz Kanapek", ukladanka: "🧩 Burgerowa układanka", dzwig: "🏗 Operator żurawia", dyrygent: "🎼 Zostań dyrygentem", szkielet: "🦴 Układ kostny" };
+const nazwaGry = g => GRY[g] || g;
+const ZDARZ = { otwarcie: "otworzono", start: "start gry", dolaczenie: "dołączenie do grupy", wynik: "ukończono", punkt: "zaliczony punkt", wyjscie: "wyjście" };
+const KLUCZ = "panel-zdarzenia-v1", MAX = 8000;
+let zdarzenia = (() => { try { return JSON.parse(localStorage.getItem(KLUCZ) || "[]"); } catch { return []; } })();
+const teraz = new Map();     // urządzenie|gra -> { gra, gracz, grupa, pozycja, t }
+let zapisT = 0; const zapisz = () => { clearTimeout(zapisT); zapisT = setTimeout(() => { try { localStorage.setItem(KLUCZ, JSON.stringify(zdarzenia.slice(-MAX))); } catch {} }, 400); };
+
+$("#opis").innerHTML = `Panel zbiera zgłoszenia z gier z kodem organizatora <b>${esc(window.LEKCJE_CONFIG?.kodStatystyk || "publiczne")}</b> i zapisuje historię <b>na tym urządzeniu, gdy panel jest otwarty</b> – zostaw go włączonego na komputerze lub tablecie. Gry nie wysyłają lokalizacji, tylko wpisane imię, nazwę grupy (stolika/pokoju) i wynik.`;
+
+sluchajStatystyk(z => {
+  const klucz = z.urzadzenie + "|" + z.gra;
+  if (z.zdarzenie === "jestem") { teraz.set(klucz, { ...z, t: Date.now() }); odswiezLekko(); return; }
+  if (z.zdarzenie === "wyjscie") { teraz.delete(klucz); odswiezLekko(); return; }
+  if (z.gracz || z.grupa) teraz.set(klucz, { ...(teraz.get(klucz) || {}), ...z, t: Date.now() });
+  zdarzenia.push({ t: z.t || Date.now(), gra: z.gra, zdarzenie: z.zdarzenie, gracz: z.gracz || "", grupa: z.grupa || "", pozycja: z.pozycja || "", tryb: z.tryb || "", czas: z.czas ?? "", bledy: z.bledy ?? "", punkty: z.punkty ?? z.pierniki ?? "", urzadzenie: z.urzadzenie || "" });
+  zapisz(); odswiez();
+}, (ok, url, poddaj) => { $("#stan").textContent = ok ? "🟢 Nasłuch na żywo" : poddaj ? "🔴 Brak połączenia z przekaźnikiem" : "🟡 Łączenie…"; });
+
+/* ---------- obliczenia ---------- */
+function wOkresie() {
+  const o = $("#okres").value, d = new Date(); d.setHours(0, 0, 0, 0);
+  const od = o === "dzis" ? d.getTime() : o === "7" ? d.getTime() - 6 * 864e5 : 0, g = $("#filtrGra").value;
+  return zdarzenia.filter(z => z.t >= od && (!g || z.gra === g));
+}
+const fmtCzas = t => new Date(t).toLocaleString("pl-PL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+const ileTemu = t => { const s = Math.round((Date.now() - t) / 1000); return s < 60 ? `${s} s temu` : s < 3600 ? `${Math.round(s / 60)} min temu` : fmtCzas(t); };
+function aktywni() { const t = Date.now(); for (const [k, v] of teraz) if (t - v.t > 60000) teraz.delete(k); return [...teraz.values()].filter(v => !$("#filtrGra").value || v.gra === $("#filtrGra").value); }
+
+function odswiezLekko() { rysujTeraz(); rysujKafle(); }
+function odswiez() {
+  const gry = [...new Set([...Object.keys(GRY), ...zdarzenia.map(z => z.gra)])], sel = $("#filtrGra"), w = sel.value;
+  sel.innerHTML = `<option value="">Wszystkie gry</option>` + gry.map(g => `<option value="${esc(g)}">${esc(nazwaGry(g))}</option>`).join(""); sel.value = w;
+  rysujKafle(); rysujTeraz(); rysujWykres(); rysujPozycje(); rysujTabGry(); rysujGrupy(); rysujGraczy(); rysujLog();
+}
+function rysujKafle() {
+  const Z = wOkresie(), starty = Z.filter(z => z.zdarzenie === "start"), gracze = new Set(Z.filter(z => z.gracz).map(z => z.gracz.toLowerCase())), grupy = new Set(Z.filter(z => z.grupa).map(z => z.gra + z.grupa));
+  const pop = Object.entries(starty.reduce((m, z) => (m[z.gra] = (m[z.gra] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1])[0];
+  const k = (t, v, s = "") => `<div class="kafel"><h3>${t}</h3><b>${v}</b><small>${s}</small></div>`;
+  $("#kafle").innerHTML = k("Grają teraz", aktywni().length, "osób z otwartą grą") + k("Rozpoczęte gry", starty.length, $("#okres").selectedOptions[0].text.toLowerCase()) + k("Gracze", gracze.size, "różne imiona") + k("Grupy", grupy.size, "stoliki i pokoje") + k("Najpopularniejsza", pop ? nazwaGry(pop[0]).split(" ")[0] : "–", pop ? `${nazwaGry(pop[0]).slice(2)} · ${pop[1]}×` : "brak danych");
+}
+function rysujTeraz() {
+  const A = aktywni(); if (!A.length) { $("#teraz").innerHTML = `<div class="pusto">Nikt teraz nie gra. Otwarte gry pojawią się tu same w ciągu kilku sekund.</div>`; return; }
+  const poGrach = {}; for (const a of A) (poGrach[a.gra] ||= []).push(a);
+  $("#teraz").innerHTML = Object.entries(poGrach).map(([g, l]) => {
+    const grupy = {}, solo = []; for (const a of l) (a.grupa ? (grupy[a.grupa] ||= []) : solo).push(a);
+    return `<div class="gra-teraz"><h3><span>${esc(nazwaGry(g))}</span><span>${l.length} 👤</span></h3>
+      ${Object.entries(grupy).map(([gr, ll]) => `<div class="grupa"><b>👥 Grupa: ${esc(gr.startsWith("U") && gr.length <= 5 ? "pokój " + gr : "stolik " + gr)}</b> · ${ll.length} graczy<br>${ll.map(a => `<span class="chip live">${esc(a.gracz || "bez imienia")}</span>`).join("")}</div>`).join("")}
+      ${solo.length ? `<div class="grupa"><b>Pojedynczo</b><br>${solo.map(a => `<span class="chip live">${esc(a.gracz || "bez imienia")}</span>${a.pozycja ? `<small> ${esc(a.pozycja)}</small>` : ""}`).join(" ")}</div>` : ""}</div>`;
+  }).join("");
+}
+function rysujWykres() {
+  const Z = wOkresie(), l = Object.entries(Z.filter(z => z.zdarzenie === "start").reduce((m, z) => (m[z.gra] = (m[z.gra] || 0) + 1, m), {})).sort((a, b) => b[1] - a[1]);
+  if (!l.length) { $("#wykres").innerHTML = `<div class="pusto">Brak rozpoczętych gier w tym okresie.</div>`; return; }
+  const W = $("#wykres").clientWidth || 520, lewy = 190, prawy = 44, h = 20, odst = 8, H = l.length * (h + odst) + 24, max = Math.max(...l.map(x => x[1])), krok = [1, 2, 5, 10, 20, 50, 100, 200, 500].find(s => max / s <= 5) || 1000, top = Math.ceil(max / krok) * krok, x = v => lewy + (W - lewy - prawy) * v / top;
+  let s = `<svg width="${W}" height="${H}" role="img" aria-label="Popularność gier">`;
+  for (let v = 0; v <= top; v += krok) s += `<line x1="${x(v)}" x2="${x(v)}" y1="0" y2="${H - 20}" stroke="var(--siatka)"/><text x="${x(v)}" y="${H - 5}" font-size="11" fill="var(--t3)" text-anchor="middle">${v}</text>`;
+  l.forEach(([g, n], i) => { const y = i * (h + odst) + 4, w = Math.max(2, x(n) - lewy); s += `<g data-tip="<b>${esc(nazwaGry(g))}</b><br>${n} rozpoczętych gier"><rect x="0" y="${y - 3}" width="${W}" height="${h + 6}" fill="transparent"/><text x="${lewy - 8}" y="${y + h / 2}" font-size="13" text-anchor="end" dominant-baseline="middle" fill="var(--t1)">${esc(nazwaGry(g))}</text><path d="M${lewy},${y}h${w - 4}a4,4 0 0 1 4,4v${h - 8}a4,4 0 0 1 -4,4h${-(w - 4)}z" fill="var(--seria)"/><text x="${lewy + w + 6}" y="${y + h / 2}" font-size="12" fill="var(--t2)" dominant-baseline="middle">${n}</text></g>`; });
+  $("#wykres").innerHTML = s + "</svg>";
+}
+function rysujPozycje() {
+  const l = Object.entries(wOkresie().filter(z => z.pozycja && (z.zdarzenie === "start" || z.zdarzenie === "punkt")).reduce((m, z) => { const k = z.gra + "|" + z.pozycja; m[k] = (m[k] || 0) + 1; return m; }, {})).sort((a, b) => b[1] - a[1]).slice(0, 12);
+  $("#pozycje").innerHTML = l.length ? `<table><tr><th>Pozycja</th><th>Gra</th><th class="n">Razy</th></tr>${l.map(([k, n]) => { const [g, p] = k.split("|"); return `<tr><td>${esc(p)}</td><td>${esc(nazwaGry(g))}</td><td class="n">${n}</td></tr>`; }).join("")}</table>` : `<div class="pusto">Brak danych.</div>`;
+}
+function rysujTabGry() {
+  const Z = wOkresie(), gry = [...new Set(Z.map(z => z.gra))];
+  if (!gry.length) { $("#tabGry").innerHTML = `<div class="pusto">Brak danych w tym okresie.</div>`; return; }
+  const wiersze = gry.map(g => { const z = Z.filter(x => x.gra === g), w = z.filter(x => x.zdarzenie === "wynik" && x.czas !== ""), sr = w.length ? w.reduce((s, x) => s + +x.czas, 0) / w.length : null;
+    return { g, otw: z.filter(x => x.zdarzenie === "otwarcie").length, st: z.filter(x => x.zdarzenie === "start").length, gr: new Set(z.filter(x => x.gracz).map(x => x.gracz.toLowerCase())).size, grp: new Set(z.filter(x => x.grupa).map(x => x.grupa)).size, uk: z.filter(x => x.zdarzenie === "wynik").length, sr, ost: Math.max(...z.map(x => x.t)) }; }).sort((a, b) => b.st - a.st);
+  $("#tabGry").innerHTML = `<table><tr><th>Gra</th><th class="n">Otwarcia</th><th class="n">Starty</th><th class="n">Gracze</th><th class="n">Grupy</th><th class="n">Ukończone</th><th class="n">Śr. czas</th><th>Ostatnio</th></tr>${wiersze.map(r => `<tr><td>${esc(nazwaGry(r.g))}</td><td class="n">${r.otw}</td><td class="n"><b>${r.st}</b></td><td class="n">${r.gr}</td><td class="n">${r.grp}</td><td class="n">${r.uk}</td><td class="n">${r.sr == null ? "–" : r.sr.toFixed(1) + " s"}</td><td>${ileTemu(r.ost)}</td></tr>`).join("")}</table>`;
+}
+function rysujGrupy() {
+  const Z = wOkresie().filter(z => z.grupa), m = {};
+  for (const z of Z) { const k = z.gra + "|" + z.grupa, g = m[k] ||= { gra: z.gra, grupa: z.grupa, gracze: new Set(), rundy: new Set(), ost: 0, wyniki: [] }; if (z.gracz) g.gracze.add(z.gracz); if (z.zdarzenie === "start") g.rundy.add(Math.round(z.t / 4000)); if (z.zdarzenie === "wynik") g.wyniki.push(z); g.ost = Math.max(g.ost, z.t); }
+  const l = Object.values(m).sort((a, b) => b.ost - a.ost);
+  $("#tabGrupy").innerHTML = l.length ? `<table><tr><th>Grupa</th><th>Gra</th><th>Gracze</th><th class="n">Rundy</th><th>Najlepszy</th><th>Ostatnio</th></tr>${l.map(g => { const naj = g.wyniki.slice().sort((a, b) => a.czas - b.czas)[0];
+    return `<tr><td><b>${esc(g.grupa)}</b></td><td>${esc(nazwaGry(g.gra))}</td><td>${[...g.gracze].map(n => `<span class="chip">${esc(n)}</span>`).join("")}</td><td class="n">${g.rundy.size}</td><td>${naj ? `${esc(naj.gracz)} · ${(+naj.czas).toFixed(1)} s` : "–"}</td><td>${ileTemu(g.ost)}</td></tr>`; }).join("")}</table>` : `<div class="pusto">Nikt jeszcze nie grał w grupie.</div>`;
+}
+function rysujGraczy() {
+  const Z = wOkresie().filter(z => z.gracz), m = {};
+  for (const z of Z) { const k = z.gracz.toLowerCase(), g = m[k] ||= { gracz: z.gracz, gry: new Set(), grupy: new Set(), starty: 0, ukon: 0, ost: 0 }; g.gry.add(z.gra); if (z.grupa) g.grupy.add(z.grupa); if (z.zdarzenie === "start") g.starty++; if (z.zdarzenie === "wynik") g.ukon++; g.ost = Math.max(g.ost, z.t); }
+  const l = Object.values(m).sort((a, b) => b.ost - a.ost).slice(0, 60);
+  $("#tabGracze").innerHTML = l.length ? `<table><tr><th>Gracz</th><th>Gry</th><th>Grupa</th><th class="n">Starty</th><th class="n">Ukończ.</th><th>Ostatnio</th></tr>${l.map(g => `<tr><td><b>${esc(g.gracz)}</b></td><td>${[...g.gry].map(x => nazwaGry(x).split(" ")[0]).join(" ")}</td><td>${[...g.grupy].map(esc).join(", ") || "–"}</td><td class="n">${g.starty}</td><td class="n">${g.ukon}</td><td>${ileTemu(g.ost)}</td></tr>`).join("")}</table>` : `<div class="pusto">Brak graczy w tym okresie.</div>`;
+}
+function rysujLog() {
+  const l = wOkresie().slice(-60).reverse();
+  $("#tabLog").innerHTML = l.length ? `<table><tr><th>Kiedy</th><th>Gra</th><th>Zdarzenie</th><th>Gracz</th><th>Grupa</th><th>Szczegóły</th></tr>${l.map(z => `<tr><td>${fmtCzas(z.t)}</td><td>${esc(nazwaGry(z.gra))}</td><td>${esc(ZDARZ[z.zdarzenie] || z.zdarzenie)}</td><td>${esc(z.gracz) || "–"}</td><td>${esc(z.grupa) || "–"}</td><td>${[z.pozycja, z.tryb, z.czas !== "" ? `${(+z.czas).toFixed(1)} s` : "", z.punkty !== "" ? `${z.punkty} pkt` : ""].filter(Boolean).map(esc).join(" · ")}</td></tr>`).join("")}</table>` : `<div class="pusto">Brak zdarzeń. Otwórz dowolną grę na telefonie – zgłoszenie pojawi się tutaj.</div>`;
+}
+
+/* ---------- akcje ---------- */
+$("#okres").onchange = $("#filtrGra").onchange = odswiez;
+$("#bCsv").onclick = () => { const kol = ["t", "gra", "zdarzenie", "gracz", "grupa", "pozycja", "tryb", "czas", "bledy", "punkty"]; const csv = "﻿" + [["data", ...kol.slice(1)].join(";"), ...wOkresie().map(z => [new Date(z.t).toISOString(), ...kol.slice(1).map(k => String(z[k] ?? "").replace(/[;\n]/g, " "))].join(";"))].join("\n"); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "statystyki-gier.csv"; a.click(); };
+$("#bWyczysc").onclick = e => { const b = e.currentTarget; if (!b.classList.contains("potw")) { b.classList.add("potw"); b.textContent = "Na pewno? Kliknij znowu"; setTimeout(() => { b.classList.remove("potw"); b.textContent = "Wyczyść"; }, 3000); return; } zdarzenia = []; zapisz(); b.classList.remove("potw"); b.textContent = "Wyczyść"; odswiez(); };
+document.addEventListener("pointermove", e => { const t = e.target.closest?.("[data-tip]"), tip = $("#tip"); if (!t) { tip.style.display = "none"; return; } tip.innerHTML = t.dataset.tip; tip.style.display = "block"; tip.style.left = e.clientX + 14 + "px"; tip.style.top = e.clientY + 14 + "px"; });
+setInterval(odswiezLekko, 5000); addEventListener("resize", odswiez);
+odswiez();
+window.__panel = { zdarzenia: () => zdarzenia, teraz: () => [...teraz.values()], temat: tematStatystyk() };
+window.__panelGotowy = true;
+</script>
+</body>
+</html>

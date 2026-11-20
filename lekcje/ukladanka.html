@@ -80,6 +80,7 @@
   <input class="nick" id="nick" maxlength="14" placeholder="Twoje imię">
   <div class="wiersz"><button class="btn zolty" id="bSolo">▶ Graj sam</button><button class="btn" id="bRazem">👥 Zagraj z innymi</button></div>
   <p class="male" id="stolInfo"></p>
+  <p class="male">Wpisane imię i czas widzi organizator w panelu statystyk (bez lokalizacji).</p>
 </div></div>
 
 <!-- POCZEKALNIA -->
@@ -98,7 +99,8 @@
 
 <script type="module">
 import { backend, uid, esc, DEMO } from "./wspolne.js";
-import { kanal } from "./przekaznik.js?v=43";
+import { kanal, zglos, obecnosc } from "./przekaznik.js?v=44";
+zglos("ukladanka", "otwarcie", {});
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const qp = new URLSearchParams(location.search);
 
@@ -139,7 +141,7 @@ $("#stolInfo").textContent = STOL ? `Kod stolika: ${STOL} – „Zagraj z innymi
 if (STOL) $("#bRazem").textContent = `👥 Dołącz do stolika ${STOL}`;
 odswiezStart();
 const nick = () => { const n = $("#nick").value.trim(); if (n) try { localStorage.setItem("uk-nick", n); } catch {} return n; };
-$("#bSolo").onclick = () => { $("#eStart").hidden = true; pokoj = null; startGry(performance.now()); };
+$("#bSolo").onclick = () => { $("#eStart").hidden = true; pokoj = null; const g = nick() || "bez imienia"; zglos("ukladanka", "start", { gracz: g, grupa: null, pozycja: burger.nazwa, tryb }); obecnosc("ukladanka", { gracz: g, grupa: null, pozycja: burger.nazwa }); startGry(performance.now()); };
 $("#bRazem").onclick = () => { const n = nick(); if (!n) { $("#nick").focus(); kom("Wpisz swoje imię", "zle"); return; } dolacz(n, STOL || ("U" + Math.random().toString(36).slice(2, 6).toUpperCase())); };
 
 /* ===== gra ===== */
@@ -221,6 +223,7 @@ function wygrana() {
   dzwiek("wygrana"); konfetti(); $$(".kawalek").forEach(e => e.remove());
   const w = { runda: pokoj?.runda, nick: pokoj?.ja.nick || nick() || "Ty", uid: pokoj?.ja.uid || "ja", czas: +czas.toFixed(2), kary: gra.kary, wynik: +wynik.toFixed(2), bledy: gra.bledy, burger: burger.id };
   if (pokoj) { zapiszWynik(w); pokoj.ch.send("wynik", w); }
+  zglos("ukladanka", "wynik", { gracz: w.nick, grupa: pokoj?.kod || null, pozycja: burger.nazwa, czas: w.wynik, bledy: w.bledy });
   setTimeout(() => pokazKoniec(w), 1300);
 }
 function pokazKoniec(w) {
@@ -242,6 +245,7 @@ function schowajPlansze() { gra = null; $("#plansza").hidden = true; $("#naglowe
 /* ===== gra z innymi: pokój (kod stolika lub kod pokoju) ===== */
 let pokoj = null;
 async function dolacz(n, kod) {
+  zglos("ukladanka", "dolaczenie", { gracz: n, grupa: kod }); obecnosc("ukladanka", { gracz: n, grupa: kod });
   $("#eStart").hidden = true;
   pokoj = { kod, ja: { uid: uid(), nick: n, od: Date.now() }, gracze: [], runda: null, burger: burger.id, tryb, wyniki: {}, pierwszy: {} };
   // bez Supabase: publiczny przekaźnik (telefony łączą się bez konfiguracji); z Supabase: kanał Supabase
@@ -280,6 +284,7 @@ function rysujPokoj() {
 }
 $("#bStartRazem").onclick = () => { const p = { runda: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), burger: burger.id, tryb, za: 3000 }; pokoj.ch.send("start", p); startRundy(p); };
 function startRundy(p) {
+  zglos("ukladanka", "start", { gracz: pokoj.ja.nick, grupa: pokoj.kod, pozycja: (BURGERY.find(x => x.id === p.burger) || burger).nazwa, tryb: p.tryb });
   pokoj.runda = p.runda; burger = BURGERY.find(x => x.id === p.burger) || burger; tryb = p.tryb || tryb;
   $("#ePokoj").hidden = true; $("#eKoniec").hidden = true; $("#eOdl").hidden = false; const kon = performance.now() + (p.za || 3000);
   const tik = () => { const s = Math.ceil((kon - performance.now()) / 1000); if (s > 0) { if ($("#odl").textContent !== String(s)) dzwiek("tik"); $("#odl").textContent = s; requestAnimationFrame(tik); } else { $("#odl").textContent = "START!"; setTimeout(() => $("#eOdl").hidden = true, 350); startGry(performance.now()); } };

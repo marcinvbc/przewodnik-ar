@@ -8,6 +8,7 @@
 <meta name="description" content="Gra miejska śladem toruńskich aniołów: skanuj kody QR przy figurach, oglądaj anioły w 3D, rozwiązuj zagadki i zbieraj wirtualne pierniki.">
 <script type="importmap">{ "imports": { "three": "../lib/three/build/three.module.min.js", "three/addons/": "../lib/three/examples/jsm/" } }</script>
 <script src="lib/jsQR.js"></script>
+<script src="../lekcje/konfiguracja.js"></script>
 <style>
   :root { --piernik: #6b3f1f; --piernik2: #8a5630; --zloto: #d9a441; --cegla: #a8432f; --krem: #f7f0e3; --ink: #2a1d14; --sz: #7d6a5b; --ok: #2f7d4f; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -86,7 +87,7 @@
     <p>Toruńska gra miejska śladem aniołów z brązu. Skanuj kody QR przy figurach, oglądaj anioły w 3D, rozwiązuj zagadki po drodze i zbieraj <b>wirtualne pierniki</b>.</p>
     <input id="gracz" maxlength="30" placeholder="Twoje imię albo nazwa drużyny">
     <button class="btn zloty pelny" id="bStart">Ruszam na szlak ➜</button>
-    <div class="male">Trasa „Od Ratusza nad Wisłę” · ok. 1 km · 5 aniołów i 2 ukryte atrakcje.<br>Gra korzysta z kamery (kody QR) i lokalizacji (czy jesteś na miejscu) – dane zostają w Twoim telefonie.<br>Anioły w aplikacji to stylizowane modele z atrybutami miejsc, nie kopie rzeźb. Prawdziwe figurki i filmy przewodników znajdziesz na szlaku i na torunskieanioly.pl.</div>
+    <div class="male">Trasa „Od Ratusza nad Wisłę” · ok. 1 km · 5 aniołów i 2 ukryte atrakcje.<br>Gra korzysta z kamery (kody QR) i lokalizacji (czy jesteś na miejscu) – lokalizacja zostaje w Twoim telefonie. Organizator widzi w panelu tylko imię/nazwę drużyny i zaliczone punkty.<br>Anioły w aplikacji to stylizowane modele z atrybutami miejsc, nie kopie rzeźb. Prawdziwe figurki i filmy przewodników znajdziesz na szlaku i na torunskieanioly.pl.</div>
   </div>
 </div>
 
@@ -144,6 +145,8 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { PROJEKT, PIERNIKI, ANIOLY, ATRAKCJE, TRASA, ODZNAKI } from "./dane.js?v=38";
 import { zbudujAniola } from "./aniol3d.js?v=38";
+import { zglos, obecnosc } from "../lekcje/przekaznik.js?v=44";
+zglos("anioly", "otwarcie", {});
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -253,6 +256,7 @@ function zaliczGps(typ, p) {
 }
 function odblokujAtrakcje(t) {
   if (S.atrakcje[t.id]) { pokazAtrakcje(t, false); return; }
+  zglos("anioly", "punkt", { gracz: S.gracz, pozycja: "🔎 " + t.nazwa });
   const bez = !(S.podpowiedzi[t.id] > 0); S.atrakcje[t.id] = { czas: Date.now(), bezPodp: bez }; zapisz();
   dodajPierniki(PIERNIKI.atrakcja + (bez ? PIERNIKI.bezPodpowiedzi : 0), `Odnaleziono: ${t.nazwa}${bez ? " – bez podpowiedzi!" : ""}`);
   sprawdzKoniec(); pokazAtrakcje(t, true);
@@ -273,11 +277,11 @@ function pokazAtrakcje(t, nowa) {
   modal(`<div class="typ" style="color:#a8432f;font-weight:800;font-size:12px;text-transform:uppercase">${nowa ? "Odnaleziona atrakcja!" : "Atrakcja"}</div><h2>🔎 ${esc(t.nazwa)}</h2><p>${esc(t.ciekawostka)}</p>${pytanieHtml(t.id, t.pytanie)}<div class="rzad"><a class="btn jasny maly" href="${nawiguj(t)}" target="_blank" rel="noopener">🧭 Na mapie</a><button class="btn" id="mDalej">Dalej ➜</button></div>`);
   podepnijPytanie(t.id, t.pytanie); $("#mDalej").onclick = () => { zamknijModal(); odswiezTrase(); };
 }
-function sprawdzKoniec() { if (!S.koniec && TRASA.etapy.every(zaliczony)) { S.koniec = Date.now(); zapisz(); setTimeout(() => toast("🎉 Cała trasa przebyta – jesteś Anielskim Przewodnikiem!", 5000), 2200); } }
+function sprawdzKoniec() { if (!S.koniec && TRASA.etapy.every(zaliczony)) { S.koniec = Date.now(); zapisz(); zglos("anioly", "wynik", { gracz: S.gracz, pozycja: TRASA.nazwa, pierniki: S.pierniki, czas: Math.round((S.koniec - S.start) / 1000) }); setTimeout(() => toast("🎉 Cała trasa przebyta – jesteś Anielskim Przewodnikiem!", 5000), 2200); } }
 
 /* ---------------- ANIOŁ: odblokowanie i widok 3D ---------------- */
 function odblokujAniola(id, sposob, url) {
-  const a = aniol(id); if (url) S.filmy[id] = url;
+  const a = aniol(id); if (url) S.filmy[id] = url; if (!S.anioly[id]) zglos("anioly", "punkt", { gracz: S.gracz, pozycja: "👼 " + a.imie, sposob });
   if (!S.anioly[id]) { S.anioly[id] = { czas: Date.now(), sposob }; zapisz(); dodajPierniki(PIERNIKI.aniol, `Odnaleziony anioł: ${a.imie}`); sprawdzKoniec(); }
   else zapisz();
   pokazAniola(id);
@@ -411,7 +415,7 @@ function rysujUstawienia() {
 }
 
 /* ---------------- start ---------------- */
-function wejdz() { $("#start").hidden = true; startGps(); pokaz("trasa"); }
+function wejdz() { $("#start").hidden = true; startGps(); pokaz("trasa"); zglos("anioly", "start", { gracz: S.gracz, grupa: /druż|grup|klas|rodzin/i.test(S.gracz) ? S.gracz : null }); obecnosc("anioly", { gracz: S.gracz, grupa: /druż|grup|klas|rodzin/i.test(S.gracz) ? S.gracz : null, pozycja: TRASA.nazwa }); }
 if (S) { $("#gracz").value = S.gracz; $("#bStart").textContent = "Wracam na szlak ➜"; }
 $("#bStart").onclick = () => { const g = $("#gracz").value.trim() || "Anielski wędrowiec"; if (!S) S = nowyStan(g); else S.gracz = g; zapisz(); wejdz(); };
 // ?kod=... – można uruchomić grę linkiem z kodem (np. własne kody QR organizatora)

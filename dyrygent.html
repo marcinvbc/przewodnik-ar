@@ -177,7 +177,9 @@
   // gdy skrypt strony nie wystartuje (np. stara kopia plików w pamięci przeglądarki) – pokaż podpowiedź zamiast martwych przycisków
   setTimeout(() => { if (!window.__dyrygentGotowy) { const i = document.getElementById("info"); if (i) { i.classList.add("blad"); i.textContent = "Strona nie wczytała się do końca. Odśwież ją z pominięciem pamięci podręcznej: Cmd+Shift+R (Mac) lub Ctrl+F5."; } } }, 4000);
 </script>
+<script src="lekcje/konfiguracja.js"></script>
 <script type="module">
+import("./lekcje/przekaznik.js?v=44").then(m => m.zglos("dyrygent", "otwarcie", {})).catch(() => {});
 // wersja w adresie: przeglądarka nie weźmie starej kopii z pamięci podręcznej po aktualizacji
 import { kamera, uruchomDlonie, rysujDlon, sztucznaDlon, wynikSymulacji } from "./dlonie.js?v=27";
 import { SEKCJE, UTWORY, sekcjeStylu, Orkiestra } from "./orkiestra.js?v=27";
