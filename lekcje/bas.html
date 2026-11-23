@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Gitara basowa AR – pierwsze lekcje</title>
+<script type="importmap">
+{ "imports": { "three": "../lib/three/build/three.module.min.js", "three/addons/": "../lib/three/examples/jsm/" } }
+</script>
+<script src="konfiguracja.js"></script>
+<script src="../wersja.js"></script>
+<style>
+  :root { --ink: #1b1410; --akcent: #ff9a2e; --ok: #3ddc84; --zle: #ff5a4f; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #120d0a; color: #fff; font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
+  #wideo { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0; transition: opacity .4s; }
+  body.kamera #wideo { opacity: 1; }
+  body:not(.kamera) { background: radial-gradient(120% 90% at 30% 20%, #3a2a20 0%, #1b1410 60%, #0c0806 100%); }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+  #bas { transition: opacity .3s; } body.przezr #bas { opacity: .55; }
+  #dlonie { pointer-events: none; }
+  /* pasek lekcji */
+  #pasek { position: fixed; left: 0; right: 0; top: 0; padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top)); display: flex; gap: 10px; align-items: flex-start; background: linear-gradient(#000c, #0000); pointer-events: none; }
+  #pasek > * { pointer-events: auto; }
+  #info { flex: 1; min-width: 0; }
+  #tytul { font-weight: 800; font-size: 15px; opacity: .85; }
+  #instr { font-size: clamp(16px, 2.6vw, 22px); font-weight: 700; margin-top: 2px; text-shadow: 0 2px 6px #000; }
+  #tab { margin-top: 6px; display: inline-grid; grid-auto-flow: column; gap: 0; background: #fffef8; color: var(--ink); border-radius: 10px; padding: 4px 8px 4px 4px; font: 700 13px ui-monospace, Menlo, Consolas, monospace; box-shadow: 0 4px 14px #0008; }
+  #tab .lit { display: grid; grid-template-rows: repeat(4, 16px); padding-right: 6px; color: #8a7a6a; } #tab .kol { display: grid; grid-template-rows: repeat(4, 16px); min-width: 26px; text-align: center; background: repeating-linear-gradient(#fffef8 0 7px, #b9ab98 7px 8px, #fffef8 8px 16px); }
+  #tab .kol.teraz { background-color: #3ddc8433; outline: 2px solid var(--ok); border-radius: 4px; } #tab .kol.zrobione { opacity: .35; } #tab .kol span { background: #fffef8; justify-self: center; padding: 0 2px; line-height: 16px; }
+  .btn { border: 0; border-radius: 12px; padding: 10px 14px; font: 800 15px system-ui; background: #fff; color: var(--ink); cursor: pointer; box-shadow: 0 3px 0 #0006; }
+  .btn.akc { background: var(--akcent); } .btn.male { padding: 7px 10px; font-size: 13px; } .btn.nad { outline: 3px solid #ffd23f; } .btn.klik { transform: scale(.94); }
+  #prawe { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 46vw; }
+  #wynikPasek { font: 800 14px system-ui; background: #000a; border-radius: 10px; padding: 6px 10px; white-space: nowrap; }
+  /* rytm */
+  #rytm { position: fixed; left: 50%; transform: translateX(-50%); bottom: max(10px, env(safe-area-inset-bottom)); display: flex; gap: 6px; align-items: center; background: #000b; border-radius: 14px; padding: 8px 12px; }
+  #rytm i { width: 16px; height: 16px; border-radius: 50%; background: #ffffff33; display: block; } #rytm i.akt { background: #fff; box-shadow: 0 0 12px #fff; } #rytm i.traf { background: var(--ok); } #rytm i.blisko { background: #ffd23f; } #rytm i.pud { background: var(--zle); }
+  #rytm b { margin-right: 8px; font-size: 20px; min-width: 28px; text-align: center; }
+  /* dymki */
+  .dymek { position: fixed; pointer-events: none; font: 900 28px system-ui; text-shadow: 0 2px 8px #000; animation: unies 0.9s ease-out forwards; z-index: 6; }
+  @keyframes unies { from { transform: translate(-50%, 0) scale(.8); opacity: 1; } to { transform: translate(-50%, -60px) scale(1.15); opacity: 0; } }
+  #kom { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%); background: #000d; border-radius: 16px; padding: 12px 20px; font: 800 18px system-ui; text-align: center; display: none; z-index: 7; max-width: 86vw; }
+  #kom.ok { border: 2px solid var(--ok); } #kom.zle { border: 2px solid var(--zle); }
+  /* ekrany */
+  .ekran { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #0d0907e6; z-index: 10; padding: 16px; overflow: auto; }
+  .ekran[hidden] { display: none; }
+  .karta { background: #fffaf0; color: var(--ink); border-radius: 22px; padding: 20px 22px; width: min(720px, 100%); max-height: 100%; overflow: auto; box-shadow: 0 20px 60px #000a; }
+  .karta h1 { margin: 0 0 4px; font-size: 26px; } .karta h2 { margin: 0 0 6px; } .karta p { margin: 6px 0; }
+  .male { font-size: 13px; color: #6d5d4f; }
+  .lekcje { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 12px 0; }
+  .lekcja { text-align: left; border: 2px solid #eadcc6; background: #fff; border-radius: 16px; padding: 12px; cursor: pointer; font: 14px system-ui; color: var(--ink); }
+  .lekcja b { display: block; font-size: 16px; } .lekcja small { color: #6d5d4f; } .lekcja .gw { float: right; letter-spacing: 1px; }
+  .lekcja.wyb { border-color: var(--akcent); background: #fff4e3; }
+  .wybor { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; } .wybor label { display: flex; gap: 8px; align-items: center; border: 2px solid #eadcc6; border-radius: 14px; padding: 10px 12px; cursor: pointer; background: #fff; flex: 1 1 200px; }
+  .wybor label:has(input:checked) { border-color: var(--akcent); background: #fff4e3; } .wybor input { accent-color: var(--akcent); }
+  input[type=text] { font: 16px system-ui; padding: 9px 12px; border-radius: 10px; border: 2px solid #eadcc6; width: min(260px, 100%); }
+  .gwiazdy { font-size: 44px; letter-spacing: 6px; margin: 4px 0; }
+  table.wyn { border-collapse: collapse; margin: 8px 0; } table.wyn td { padding: 4px 12px 4px 0; }
+  #obroc { display: none; }
+  @media (orientation: portrait) and (max-width: 560px) { #obroc { display: block; position: fixed; left: 10px; right: 10px; bottom: 62px; z-index: 5; background: #000c; border-radius: 12px; padding: 8px 12px; font-size: 13px; text-align: center; } }
+</style>
+</head>
+<body>
+<video id="wideo" playsinline muted></video>
+<canvas id="bas"></canvas>
+<canvas id="dlonie"></canvas>
+
+<div id="pasek" hidden>
+  <div id="info"><div id="tytul"></div><div id="instr"></div><div id="tab"></div></div>
+  <div id="prawe"><span id="wynikPasek"></span><button class="btn male" id="bPrzezr" title="Przezroczysty bas – widać własne dłonie">👻</button><button class="btn male" id="bMenu">☰ Lekcje</button></div>
+</div>
+<div id="rytm" hidden></div>
+<div id="kom"></div>
+<div id="obroc">📱 Obróć telefon poziomo – gryf będzie dłuższy i wygodniejszy.</div>
+
+<!-- start -->
+<div class="ekran" id="eStart"><div class="karta">
+  <h1>🎸 Gitara basowa AR</h1>
+  <p>Stań przed kamerą jak z prawdziwym basem: <b>lewa dłoń</b> dociska struny na gryfie (po lewej), <b>prawa dłoń</b> szarpie struny nad przetwornikiem (po prawej) – ruchem palca w dół przez strunę.</p>
+  <div class="wybor">
+    <label><input type="radio" name="ster" value="dlonie" checked> 📷 <span><b>Dłonie przed kamerą</b><br><small>gesty jak na prawdziwym basie</small></span></label>
+    <label><input type="radio" name="ster" value="dotyk"> 👆 <span><b>Dotyk lub mysz</b><br><small>tablet: jeden palec na gryfie, drugi szarpie</small></span></label>
+  </div>
+  <p><input type="text" id="imie" maxlength="30" placeholder="Twoje imię (opcjonalnie)"></p>
+  <div class="lekcje" id="listaLekcji"></div>
+  <p class="male">Obraz z kamery jest analizowany tylko w przeglądarce i nigdzie nie jest wysyłany. Dźwięk basu jest syntezowany na żywo – włącz głośnik lub słuchawki (słuchawki lepiej oddają niskie tony).</p>
+</div></div>
+
+<!-- wstęp lekcji -->
+<div class="ekran" id="eWstep" hidden><div class="karta">
+  <h2 id="wTytul"></h2><p id="wTekst"></p><p class="male" id="wCel"></p>
+  <p style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn akc" id="bZacznij">▶ Zaczynamy</button><button class="btn" id="bWroc">← Lekcje</button></p>
+</div></div>
+
+<!-- koniec lekcji -->
+<div class="ekran" id="eKoniec" hidden><div class="karta" id="koniecTresc"></div></div>
+
+<script type="module">
+import { Bas3D, STRUNY, nazwaNuty } from "./bas/model.js?v=49";
+import { LEKCJE, Dzwiek } from "./bas/lekcje.js?v=49";
+import { kamera, uruchomDlonie, rysujDlon } from "../dlonie.js?v=37";
+import { zglos, obecnosc } from "./przekaznik.js?v=44";
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const bas = new Bas3D($("#bas")), dz = new Dzwiek(), wideo = $("#wideo");
+const cv = $("#dlonie"), g2 = cv.getContext("2d");
+let L = null, ster = "dlonie", latwy = false, lekcja = null, czesc = 0, krok = 0, stat = null, rytm = null, wybrana = 0;
+
+function rozmiar() { L = bas.uklad(innerWidth, innerHeight); const d = devicePixelRatio || 1; cv.width = innerWidth * d; cv.height = innerHeight * d; g2.setTransform(d, 0, 0, d, 0, 0); if (lekcja) pokazCel(); }
+addEventListener("resize", () => { clearTimeout(rozmiar.t); rozmiar.t = setTimeout(rozmiar, 120); });
+rozmiar();
+
+/* ================= stan strun: kto dociska który próg ================= */
+const docisk = new Map();      // źródło (dotyk / palec dłoni) → { s, f }
+const progNa = s => { let f = 0; for (const v of docisk.values()) if (v.s === s && v.f > f) f = v.f; return f; };
+function odswiezPalce() { bas.ustawPalce([0, 1, 2, 3].map(s => ({ s, f: progNa(s) })).filter(x => x.f > 0)); }
+function gdzieNaGryfie(x, y) {
+  if (x < L.x0 + 2 || x > L.korpusX) return null;
+  let s = -1, best = L.sp * 0.62; L.strunaY.forEach((sy, i) => { const d = Math.abs(y - sy); if (d < best) { best = d; s = i; } }); if (s < 0) return null;
+  let f = 1; while (f < L.maxProg && x > L.progX(f)) f++; if (x > L.progX(L.maxProg)) f = L.maxProg;
+  return { s, f };
+}
+const wStrefieSzarpania = x => x > L.szarp.x1 - L.sp * 0.4 && x < innerWidth;
+const ostatnieSzarp = [0, 0, 0, 0];
+function szarpnij(s, sila = 0.8, zrodlo = "") {
+  const t = performance.now(); if (t - ostatnieSzarp[s] < 90) return; ostatnieSzarp[s] = t;
+  const f = progNa(s), midi = STRUNY[s].midi + f;
+  const czasAudio = dz.graj(s, midi, sila); bas.szarpnij(s, sila);
+  dymek(nazwaNuty(midi), (L.szarp.x1 + L.szarp.x2) / 2, L.strunaY[s] - L.sp * 0.6, f ? "#ffd27a" : "#fff");
+  zagrano({ s, f, midi, czasAudio, t });
+}
+function dymek(t, x, y, kolor) { const d = document.createElement("div"); d.className = "dymek"; d.textContent = t; d.style.left = x + "px"; d.style.top = y + "px"; d.style.color = kolor; document.body.append(d); setTimeout(() => d.remove(), 900); }
+
+/* ================= dotyk i mysz ================= */
+const wskazniki = new Map();
+addEventListener("pointerdown", e => {
+  if (e.target.closest(".ekran, #pasek, button")) return; dz.wlacz();
+  const x = e.clientX, y = e.clientY, gr = gdzieNaGryfie(x, y);
+  if (gr) { if (latwy || e.pointerType === "mouse") { docisk.set("p" + e.pointerId, gr); odswiezPalce(); szarpnij(gr.s, 0.8); wskazniki.set(e.pointerId, { typ: "gryfGra" }); }
+            else { docisk.set("p" + e.pointerId, gr); odswiezPalce(); wskazniki.set(e.pointerId, { typ: "gryf" }); } return; }
+  if (wStrefieSzarpania(x)) { let s = -1, best = L.sp * 0.3; L.strunaY.forEach((sy, i) => { if (Math.abs(y - sy) < best) { best = Math.abs(y - sy); s = i; } }); if (s >= 0) szarpnij(s, 0.75);
+    wskazniki.set(e.pointerId, { typ: "szarp", y, t: performance.now() }); }
+});
+addEventListener("pointermove", e => {
+  const w = wskazniki.get(e.pointerId); if (!w) return;
+  if (w.typ === "gryf" || w.typ === "gryfGra") { const gr = gdzieNaGryfie(e.clientX, e.clientY); if (gr) docisk.set("p" + e.pointerId, gr); else docisk.delete("p" + e.pointerId); odswiezPalce(); }
+  else if (w.typ === "szarp") { const t = performance.now(); przeciecia(w.y, e.clientY, e.clientX, Math.abs(e.clientY - w.y) / Math.max(8, t - w.t) * 4); w.y = e.clientY; w.t = t; }
+});
+const koniecWsk = e => { const w = wskazniki.get(e.pointerId); if (!w) return; wskazniki.delete(e.pointerId); if (docisk.delete("p" + e.pointerId)) { odswiezPalce(); } };
+addEventListener("pointerup", koniecWsk); addEventListener("pointercancel", koniecWsk);
+function przeciecia(y0, y1, x, sila) {     // palec przeciągnięty przez linię struny = szarpnięcie
+  if (!wStrefieSzarpania(x) || y0 === y1) return;
+  L.strunaY.forEach((sy, s) => { if ((y0 - sy) * (y1 - sy) < 0) szarpnij(s, Math.min(1.2, 0.45 + sila)); });
+}
+
+/* ================= dłonie przed kamerą ================= */
+const KOLOR = { Lewa: [80, 200, 255], Prawa: [255, 170, 60] };
+let naEkran = p => ({ x: p.x * innerWidth, y: p.y * innerHeight });
+function mapowanieWideo() {   // obraz wypełnia ekran (object-fit: cover) – przeliczamy punkty tak, by dłoń leżała na swoim obrazie
+  const vw = wideo.videoWidth, vh = wideo.videoHeight; if (!vw) return; const sk = Math.max(innerWidth / vw, innerHeight / vh), dw = vw * sk, dh = vh * sk, ox = (innerWidth - dw) / 2, oy = (innerHeight - dh) / 2;
+  naEkran = p => ({ x: ox + p.x * dw, y: oy + p.y * dh });
+}
+const poprzCzubek = {}; let nadBtn = new Set();
+function ramka(dlonie) {
+  mapowanieWideo(); g2.clearRect(0, 0, innerWidth, innerHeight);
+  for (const k of [...docisk.keys()]) if (k.startsWith("d")) docisk.delete(k);
+  const nad = new Set();
+  for (const d of dlonie) {
+    const P = d.punkty.map(naEkran), c = naEkran(d.chwyt);
+    // przyciski: szczypnięcie nad przyciskiem = kliknięcie
+    const el = document.elementFromPoint(c.x, c.y)?.closest?.(".btn, .lekcja, .wybor label"); if (el) nad.add(el);
+    if (d.szczypie && !poprzCzubek[d.strona + "sz"] && el) { el.classList.add("klik"); setTimeout(() => el.classList.remove("klik"), 140); el.click(); }
+    poprzCzubek[d.strona + "sz"] = d.szczypie;
+    if (!$("#eStart").hidden || !$("#eWstep").hidden || !$("#eKoniec").hidden) { rysujDlon(g2, P, KOLOR[d.strona], { szczypie: d.szczypie, nadCzyms: !!el }); continue; }
+    // gryf: opuszki palców 2–5 dociskają struny tam, gdzie leżą
+    for (const tip of [8, 12, 16, 20]) { const gr = gdzieNaGryfie(P[tip].x, P[tip].y); if (gr) docisk.set(`d${d.strona}${tip}`, gr); }
+    // szarpanie: palec wskazujący i środkowy przeciągnięte przez strunę w strefie przetwornika
+    // liczy się tylko ruch W DÓŁ (powrót dłoni w górę nie szarpie) i tylko palec, który przesunął się najbardziej
+    const teraz = performance.now(); let naj = null;
+    for (const tip of [8, 12]) { const k = d.strona + tip, p0 = poprzCzubek[k], p = P[tip]; if (p0 && teraz - p0.t < (window.__basOkno || 700) && p.y - p0.y > L.sp * 0.25 && (!naj || p.y - p0.y > naj.dy)) naj = { y0: p0.y, y1: p.y, x: p.x, dy: p.y - p0.y, dt: teraz - p0.t }; poprzCzubek[k] = { y: p.y, t: teraz }; }
+    if (naj) przeciecia(naj.y0, naj.y1, naj.x, naj.dy / Math.max(10, naj.dt) * 3);
+    rysujDlon(g2, P, KOLOR[d.strona], { szczypie: false, nadCzyms: false });
+  }
+  for (const e of nadBtn) if (!nad.has(e)) e.classList.remove("nad"); for (const e of nad) e.classList.add("nad"); nadBtn = nad;
+  odswiezPalce();
+}
+
+/* ================= lekcje ================= */
+const WYNIKI_KLUCZ = "bas-wyniki-v1", wyniki = (() => { try { return JSON.parse(localStorage.getItem(WYNIKI_KLUCZ) || "{}"); } catch { return {}; } })();
+function rysujListe() {
+  $("#listaLekcji").innerHTML = LEKCJE.map((l, i) => `<button class="lekcja ${i === wybrana ? "wyb" : ""}" data-i="${i}"><span class="gw">${"★".repeat(wyniki[l.id] || 0)}${"☆".repeat(3 - (wyniki[l.id] || 0))}</span><b>${l.ikona} ${esc(l.tytul)}</b><small>${esc(l.cel)}</small></button>`).join("")
+    + `<button class="lekcja" data-i="wolna"><b>🎵 Wolna gra</b><small>Graj, co chcesz – nazwy dźwięków pokazują się na bieżąco</small></button>`;
+  $$("#listaLekcji .lekcja").forEach(b => b.onclick = () => wybierz(b.dataset.i));
+}
+let kameraGotowa = false;
+async function wybierz(i) {
+  ster = $('[name="ster"]:checked').value; latwy = ster === "dotyk" && !matchMedia("(pointer: coarse)").matches; dz.wlacz();
+  if (ster === "dlonie" && !kameraGotowa) {
+    try { if (!window.__symulacjaDloni) { await kamera(wideo); document.body.classList.add("kamera"); } await uruchomDlonie({ video: wideo, onRamka: ramka, symulacja: window.__symulacjaDloni || null }); kameraGotowa = true; }
+    catch (e) { komunikat(/Permission|NotAllowed/i.test(e.name + e.message) ? "Brak dostępu do kamery – zezwól na kamerę albo wybierz dotyk." : "Kamera niedostępna – grasz dotykiem.", "zle"); $('[name="ster"][value="dotyk"]').checked = true; ster = "dotyk"; }
+  }
+  const imie = $("#imie").value.trim();
+  obecnosc("bas", { gracz: imie || "bez imienia" });
+  if (i === "wolna") { lekcja = { id: "wolna", tytul: "Wolna gra", czesci: [] }; $("#eStart").hidden = true; $("#pasek").hidden = false; $("#tytul").textContent = "🎵 Wolna gra"; $("#instr").textContent = "Graj dowolne dźwięki – nazwa nuty pojawia się nad struną."; $("#tab").innerHTML = ""; $("#wynikPasek").textContent = ""; bas.ustawCel(null); zglos("bas", "start", { gracz: imie, pozycja: "Wolna gra", tryb: ster }); return; }
+  wybrana = +i; lekcja = LEKCJE[wybrana];
+  $("#wTytul").textContent = `${lekcja.ikona} ${lekcja.tytul}`; $("#wTekst").innerHTML = lekcja.wstep; $("#wCel").textContent = "Cel: " + lekcja.cel + (ster === "dlonie" ? " · Przyciski klikasz szczypnięciem (kciuk + palec wskazujący)." : "");
+  $("#eStart").hidden = true; $("#eWstep").hidden = false;
+}
+$("#bWroc").onclick = () => { $("#eWstep").hidden = true; $("#eStart").hidden = false; lekcja = null; rysujListe(); };
+$("#bZacznij").onclick = () => { $("#eWstep").hidden = true; startLekcji(); };
+$("#bMenu").onclick = () => { zatrzymajRytm(); lekcja = null; bas.ustawCel(null); $("#pasek").hidden = true; $("#rytm").hidden = true; $("#eStart").hidden = false; rysujListe(); };
+$("#bPrzezr").onclick = () => document.body.classList.toggle("przezr");
+
+function startLekcji() {
+  stat = { t0: performance.now(), bledy: 0, rytmTraf: 0, rytmBlisko: 0, rytmWszystkie: 0 }; czesc = 0; krok = 0;
+  $("#pasek").hidden = false; $("#tytul").textContent = `${lekcja.ikona} ${lekcja.tytul}`;
+  zglos("bas", "start", { gracz: $("#imie").value.trim(), pozycja: lekcja.tytul, tryb: ster }); startCzesci();
+}
+function startCzesci() {
+  const c = lekcja.czesci[czesc]; krok = 0;
+  if (c.typ === "rytm") startRytmu(c); else { $("#rytm").hidden = true; pokazCel(); }
+}
+function pokazCel() {
+  const c = lekcja?.czesci?.[czesc]; if (!c) return;
+  if (c.typ === "kroki") { const k = c.kroki[krok]; bas.ustawCel(k); $("#instr").textContent = k.opis; rysujTab(c.kroki.map(x => [x.s, x.f]), krok); $("#wynikPasek").textContent = `${krok + 1}/${c.kroki.length} · błędy ${stat.bledy}`; }
+  else if (rytm) { const n = c.nuty[Math.max(0, rytm.nast)] || c.nuty.at(-1); bas.ustawCel({ s: n[0], f: n[1] }); rysujTab(c.nuty, rytm.nast); }
+}
+function rysujTab(nuty, teraz) {      // tabulatura: 4 linie (G na górze – jak w zapisie), widać 8 kolejnych dźwięków
+  const od = Math.max(0, Math.min(teraz - 2, nuty.length - 8)), wid = nuty.slice(od, od + 8);
+  $("#tab").innerHTML = `<div class="lit">${["G", "D", "A", "E"].map(x => `<span>${x}</span>`).join("")}</div>` + wid.map(([s, f], i) => `<div class="kol ${od + i === teraz ? "teraz" : od + i < teraz ? "zrobione" : ""}">${[3, 2, 1, 0].map(r => `<span>${r === s ? f : ""}</span>`).join("")}</div>`).join("");
+}
+function zagrano(n) {
+  if (!lekcja || lekcja.id === "wolna") return; const c = lekcja.czesci[czesc]; if (!c) return;
+  if (c.typ === "kroki") {
+    const k = c.kroki[krok];
+    if (n.s === k.s && n.f === k.f) { krok++; bas.ustawCel(null);
+      if (krok >= c.kroki.length) setTimeout(nastepnaCzesc, 500); else setTimeout(pokazCel, 280); }
+    else { stat.bledy++; const ok = nazwaNuty(STRUNY[k.s].midi + k.f); komunikat(n.s !== k.s ? `To struna ${STRUNY[n.s].nazwa} – potrzebna ${STRUNY[k.s].nazwa}` : `Zagrałeś ${nazwaNuty(n.midi)} (próg ${n.f}) – potrzebny ${ok} (próg ${k.f})`, "zle", 1300); bas.ustawCel(k, "#ff5a4f"); setTimeout(() => lekcja && bas.ustawCel(k), 450); $("#wynikPasek").textContent = `${krok + 1}/${c.kroki.length} · błędy ${stat.bledy}`; }
+  } else if (rytm && n.czasAudio != null) ocenRytm(n);
+}
+function nastepnaCzesc() { czesc++; if (czesc < lekcja.czesci.length) { komunikat("Świetnie! Teraz w rytmie z metronomem 🥁", "ok", 1600); setTimeout(startCzesci, 1700); } else koniecLekcji(); }
+
+/* ---------- rytm: metronom w czasie AudioContext, ocena trafienia w uderzenie ---------- */
+function startRytmu(c) {
+  zatrzymajRytm(); const ctx = dz.ctx, okres = 60 / c.bpm, t0 = ctx.currentTime + 0.4 + 4 * okres;
+  rytm = { c, okres, t0, nast: 0, oceny: c.nuty.map(() => null), timer: 0 };
+  for (let i = -4; i < c.nuty.length; i++) dz.klik(t0 + i * okres, i % 4 === 0);
+  $("#rytm").hidden = false; $("#rytm").innerHTML = `<b id="licz"></b>` + c.nuty.map(() => "<i></i>").join("");
+  $("#instr").textContent = c.opis; pokazCel();
+  const tik = () => {
+    if (!rytm) return; const t = ctx.currentTime, i = Math.floor((t - rytm.t0) / okres + 0.5);
+    $("#licz").textContent = t < rytm.t0 - okres * 0.5 ? String(Math.min(4, Math.ceil((rytm.t0 - t) / okres))) : "♩";
+    // pudła: uderzenia, które minęły bez dźwięku
+    for (let k = 0; k < c.nuty.length; k++) if (!rytm.oceny[k] && t > rytm.t0 + k * okres + 0.25) { rytm.oceny[k] = "pud"; stat.rytmWszystkie++; }
+    const nast = rytm.oceny.findIndex(o => !o); rytm.nast = nast < 0 ? c.nuty.length : nast;
+    const kropki = $$("#rytm i"); kropki.forEach((e, k) => { e.className = rytm.oceny[k] || (k === i && t >= rytm.t0 - okres * 0.5 ? "akt" : ""); });
+    if (rytm.nast !== rytm.pop) { rytm.pop = rytm.nast; pokazCel(); }
+    $("#wynikPasek").textContent = `w rytm: ${rytm.oceny.filter(o => o === "traf" || o === "blisko").length}/${c.nuty.length}`;
+    if (rytm.oceny.every(Boolean)) { const r = rytm; rytm = null; setTimeout(() => { $("#rytm").hidden = true; czesc++; if (czesc < lekcja.czesci.length) startCzesci(); else koniecLekcji(); }, 600); return; }
+    rytm.timer = requestAnimationFrame(tik);
+  };
+  tik();
+}
+function ocenRytm(n) {
+  const c = rytm.c, k = Math.round((n.czasAudio - rytm.t0) / rytm.okres); if (k < 0 || k >= c.nuty.length || rytm.oceny[k]) return;
+  const dt = Math.abs(n.czasAudio - (rytm.t0 + k * rytm.okres)), [s, f] = c.nuty[k];
+  if (dt > 0.25) return;
+  stat.rytmWszystkie++;
+  if (n.s !== s || n.f !== f) { rytm.oceny[k] = "pud"; stat.bledy++; komunikat(`Na tym uderzeniu: ${nazwaNuty(STRUNY[s].midi + f)} (${STRUNY[s].nazwa}${f ? ", próg " + f : ""})`, "zle", 900); return; }
+  rytm.oceny[k] = dt < 0.1 ? "traf" : "blisko"; if (dt < 0.1) stat.rytmTraf++; else stat.rytmBlisko++;
+}
+function zatrzymajRytm() { if (rytm) cancelAnimationFrame(rytm.timer); rytm = null; }
+
+function koniecLekcji() {
+  bas.ustawCel(null); const czas = (performance.now() - stat.t0) / 1000, maRytm = lekcja.czesci.some(c => c.typ === "rytm");
+  const kroki = lekcja.czesci.filter(c => c.typ === "kroki").reduce((s, c) => s + c.kroki.length, 0);
+  const celnosc = kroki ? Math.round(kroki / (kroki + stat.bledy) * 100) : null, wRytm = stat.rytmWszystkie ? Math.round((stat.rytmTraf + stat.rytmBlisko * 0.6) / stat.rytmWszystkie * 100) : null;
+  const ocena = Math.min(celnosc ?? 100, wRytm ?? 100), gw = ocena >= 90 ? 3 : ocena >= 70 ? 2 : 1;
+  if (gw > (wyniki[lekcja.id] || 0)) { wyniki[lekcja.id] = gw; try { localStorage.setItem(WYNIKI_KLUCZ, JSON.stringify(wyniki)); } catch {} }
+  zglos("bas", "wynik", { gracz: $("#imie").value.trim(), pozycja: lekcja.tytul, czas: +czas.toFixed(1), bledy: stat.bledy, tryb: ster });
+  const nast = LEKCJE[wybrana + 1];
+  $("#koniecTresc").innerHTML = `<h2>${lekcja.ikona} ${esc(lekcja.tytul)} – ukończona!</h2><div class="gwiazdy">${"★".repeat(gw)}${"☆".repeat(3 - gw)}</div>
+    <table class="wyn">${celnosc != null ? `<tr><td>Trafione pozycje</td><td><b>${celnosc}%</b> (${stat.bledy} ${stat.bledy === 1 ? "pomyłka" : stat.bledy % 10 >= 2 && stat.bledy % 10 <= 4 && (stat.bledy % 100 < 10 || stat.bledy % 100 >= 20) ? "pomyłki" : "pomyłek"})</td></tr>` : ""}${maRytm ? `<tr><td>Gra w rytmie</td><td><b>${wRytm ?? 0}%</b> (idealnie: ${stat.rytmTraf}, prawie: ${stat.rytmBlisko})</td></tr>` : ""}<tr><td>Czas</td><td>${Math.round(czas)} s</td></tr></table>
+    <p class="male">${gw === 3 ? "Brawo – możesz iść dalej!" : gw === 2 ? "Dobrze! Powtórz, żeby zdobyć 3 gwiazdki." : "Spróbuj jeszcze raz – powoli, patrz na zielone kółko."}</p>
+    <p style="display:flex;gap:8px;flex-wrap:wrap">${nast ? `<button class="btn akc" id="kNast">▶ Dalej: ${esc(nast.tytul)}</button>` : ""}<button class="btn" id="kPowt">↺ Powtórz</button><button class="btn" id="kMenu">☰ Lekcje</button></p>`;
+  $("#eKoniec").hidden = false; $("#rytm").hidden = true;
+  $("#kPowt").onclick = () => { $("#eKoniec").hidden = true; startLekcji(); };
+  $("#kMenu").onclick = () => { $("#eKoniec").hidden = true; $("#bMenu").click(); };
+  if (nast) $("#kNast").onclick = () => { $("#eKoniec").hidden = true; wybierz(wybrana + 1); };
+}
+let tKom = 0; function komunikat(t, typ = "", ms = 1500) { const k = $("#kom"); k.textContent = t; k.className = typ; k.style.display = "block"; clearTimeout(tKom); tKom = setTimeout(() => k.style.display = "none", ms); }
+
+/* ---------- pętla ---------- */
+let poprz = performance.now();
+function petla(t) { const dt = Math.min(0.05, (t - poprz) / 1000); poprz = t; bas.klatka(dt, t / 1000); requestAnimationFrame(petla); }
+requestAnimationFrame(petla);
+rysujListe();
+zglos("bas", "otwarcie", {});
+window.__bas = { L: () => L, szarpnij, docisk, progNa, lekcja: () => lekcja, krok: () => krok, czesc: () => czesc, stat: () => stat, rytm: () => rytm, dz, bas };
+window.__basGotowy = true;
+</script>
+</body>
+</html>
