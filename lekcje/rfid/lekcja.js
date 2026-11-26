@@ -458,14 +458,15 @@ function sumuj() {
 
 /* ================= nawigacja ================= */
 let idx = 0; const odwiedzone = new Set();
-$("#nawig").innerHTML = SEKCJE.map((s, i) => `<button data-i="${i}">${esc(s.tytul)}</button>`).join("");
-$$("#nawig button").forEach(b => b.onclick = () => pokazSekcje(+b.dataset.i));
+$("#nawig").innerHTML = SEKCJE.map((s, i) => `<option value="${i}">${esc(s.tytul)}</option>`).join("");
+$("#nawig").onchange = e => pokazSekcje(+e.target.value);
 $("#bWstecz").onclick = () => pokazSekcje(Math.max(0, idx - 1)); $("#bDalej").onclick = () => pokazSekcje(Math.min(SEKCJE.length - 1, idx + 1));
 function pokazSekcje(i) {
   const zmiana = i !== idx || !akt; idx = i; odwiedzone.add(i); const s = SEKCJE[i]; history.replaceState(null, "", "#" + s.id);
   if (s.id !== "zadania") inw = null; if (s.id !== "pasma") wyrozniony = null;
   $("#tresc").innerHTML = typeof s.html === "function" ? s.html() : s.html; if (zmiana) $("#tresc").scrollTop = 0; s.po?.();
-  $$("#nawig button").forEach((b, k) => { b.classList.toggle("wyb", k === i); b.classList.toggle("zrob", odwiedzone.has(k) && k !== i); });
+  $("#nawig").value = i; [...$("#nawig").options].forEach((o, k) => o.textContent = (odwiedzone.has(k) && k !== i ? "✓ " : "") + SEKCJE[k].tytul);
+  $("#czescTxt").textContent = `📡 ${i + 1}/${SEKCJE.length} · ${s.tytul.replace(/^\d+\.\s*/, "")}`;
   $("#bWstecz").disabled = i === 0; $("#bDalej").textContent = i === SEKCJE.length - 1 ? "✔ Koniec" : "Dalej ▶";
   ustawScene(s.scena()); $("#etykieta").style.display = "none";
   if (i === SEKCJE.length - 1) zglos("rfid", "wynik", { pozycja: "Lekcja przejrzana do końca", czas: Math.round((performance.now() - t00) / 1000) });
