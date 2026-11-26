@@ -24,7 +24,7 @@ let akt = null;   // bieżąca scena: { grupa, klatka, sprzataj }
 function ustawScene(sc3) {
   if (akt) { sc.remove(akt.grupa); akt.sprzataj?.(); }
   akt = sc3; sc.add(akt.grupa); ster.enabled = true; $("#wskaznik").hidden = true; $("#podpis3d").hidden = !akt.podpis; if (akt.podpis) $("#podpis3d").innerHTML = akt.podpis;
-  $("#nakl").innerHTML = ""; (akt.przyciski || []).forEach(p => { const b = document.createElement(p.href ? "a" : "button"); b.className = "btn" + (p.wyb ? " wyb" : ""); b.textContent = p.t; if (p.href) { b.href = p.href; b.target = "_blank"; b.style.textDecoration = "none"; } else b.onclick = () => { $$("#nakl .btn").forEach(x => x.classList.toggle("wyb", x === b && !p.bezWyb)); p.f(); }; $("#nakl").append(b); });
+  $("#nakl").innerHTML = ""; (akt.przyciski || []).forEach(p => { const b = document.createElement(p.href ? "a" : "button"); b.className = "btn" + (p.wyb ? " wyb" : ""); b.textContent = p.t; if (p.href) { b.href = p.href; b.style.textDecoration = "none"; } else b.onclick = () => { $$("#nakl .btn").forEach(x => x.classList.toggle("wyb", x === b && !p.bezWyb)); p.f(); }; $("#nakl").append(b); });
   kadruj(akt.kadrObj || akt.grupa, akt.kadr || {});
 }
 function kadruj(obj, { kier = [0.6, 0.55, 1], odl = 1.15, cel = null } = {}) {
@@ -44,7 +44,7 @@ function pokazOpis(t, e) {
   et.style.left = Math.min(b.width - 310, e.clientX - b.left + 12) + "px"; et.style.top = Math.max(8, e.clientY - b.top - 20) + "px"; clearTimeout(pokazOpis.t); pokazOpis.t = setTimeout(() => et.style.display = "none", 6000);
 }
 const podloga = (rozm, kolor = "#16232f") => { const m = new THREE.Mesh(new THREE.CircleGeometry(rozm, 64), new THREE.MeshStandardMaterial({ color: kolor, roughness: 0.9, transparent: true, opacity: 0.85 })); m.rotation.x = -Math.PI / 2; m.position.y = -0.0005; m.userData.bezKadru = true; return m; };
-const ar = (plik, tytul) => ({ t: "📱 Zobacz w AR", href: `model-ar.html?m=${encodeURIComponent("rfid/" + plik)}&t=${encodeURIComponent(tytul)}` });
+const ar = (plik, tytul) => ({ t: "📱 Zobacz w AR", href: `model-ar.html?m=${encodeURIComponent("rfid/" + plik)}&t=${encodeURIComponent(tytul)}&wroc=${encodeURIComponent("rfid.html#" + (SEKCJE[idx]?.id || ""))}` });
 function wskaznik(html) { const w = $("#wskaznik"); w.hidden = false; w.innerHTML = html; }
 
 /* ---------- znaczniki: świecąca kulka (pakiet danych) ---------- */
