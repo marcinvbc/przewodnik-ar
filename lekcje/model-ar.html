@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Model 3D w AR</title>
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<script src="../wersja.js"></script>
+<script src="../anioly/lib/qrcode.js"></script>
+<style>
+  * { box-sizing: border-box; } [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; background: radial-gradient(120% 90% at 50% 30%, #22384d, #0e1620 70%); color: #fff; display: flex; flex-direction: column; }
+  header { display: flex; gap: 10px; align-items: center; padding: 10px 14px; padding-top: max(10px, env(safe-area-inset-top)); } header a { color: #0f1b26; background: #fff; border-radius: 99px; padding: 6px 12px; text-decoration: none; font-weight: 700; } header h1 { margin: 0; font-size: 18px; flex: 1; }
+  model-viewer { flex: 1; width: 100%; --poster-color: transparent; }
+  .ar-btn { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); border: 0; border-radius: 99px; padding: 13px 22px; font: 800 16px system-ui; background: #0a84ff; color: #fff; box-shadow: 0 6px 18px #0a84ff66; cursor: pointer; }
+  .pod { padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); font-size: 13.5px; color: #cfe3f5; text-align: center; }
+  #qr { display: inline-block; background: #fff; border-radius: 12px; padding: 8px; margin-top: 6px; } #qr img { width: 120px; height: 120px; display: block; }
+</style>
+</head>
+<body>
+<header><a href="javascript:history.back()">← Wróć</a><h1 id="tytul">Model 3D</h1></header>
+<model-viewer id="mv" ar ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="auto" camera-controls touch-action="pan-y" auto-rotate shadow-intensity="1" environment-image="neutral" tone-mapping="neutral">
+  <button class="ar-btn" slot="ar-button">📱 Postaw w swoim otoczeniu (AR)</button>
+</model-viewer>
+<div class="pod"><span id="opis">Obracaj palcem, przybliżaj dwoma palcami. Model ma prawdziwe wymiary – w AR możesz go powiększyć gestem.</span><div id="naTel" hidden><div>AR działa na telefonie – zeskanuj kod:</div><div id="qr"></div></div></div>
+<script>
+  const q = new URLSearchParams(location.search), m = (q.get("m") || "").replace(/[^\w\-./]/g, "").replace(/\.\.+/g, "");
+  const mv = document.getElementById("mv"); mv.src = `../modele/${m}?v=${typeof WERSJA !== "undefined" ? WERSJA : 1}`; const t = (q.get("t") || "Model 3D").slice(0, 80);
+  document.getElementById("tytul").textContent = t; document.title = t + " – AR";
+  const qr = () => { try { const k = qrcode(0, "M"); k.addData(location.href); k.make(); document.getElementById("qr").innerHTML = k.createImgTag(4, 4); document.getElementById("naTel").hidden = false; } catch {} };
+  customElements.whenDefined("model-viewer").then(() => setTimeout(() => { if (!mv.canActivateAR) qr(); }, 1500)); setTimeout(() => { if (!customElements.get("model-viewer")) qr(); }, 4000);
+</script>
+</body>
+</html>

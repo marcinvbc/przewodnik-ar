@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RFID – wprowadzenie (lekcja AR)</title>
+<script type="importmap">
+{ "imports": { "three": "../lib/three/build/three.module.min.js", "three/addons/": "../lib/three/examples/jsm/" } }
+</script>
+<script src="konfiguracja.js"></script>
+<script src="../wersja.js"></script>
+<style>
+  :root { --tlo: #0e1620; --panel: #f7f9fb; --ink: #0f1b26; --t2: #4c5b68; --akc: #0a84ff; --ok: #1fa45a; --zle: #d93a2b; --linia: #dde4ea; --zolty: #f2b705; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; background: var(--tlo); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  #uklad { display: grid; grid-template-columns: 1fr minmax(360px, 34%); height: 100%; }
+  #scena { position: relative; min-height: 0; background: radial-gradient(120% 100% at 40% 30%, #22384d 0%, #0e1620 70%); }
+  #scena canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+  #panel { background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+  #naglowek { padding: 12px 16px 8px; border-bottom: 1px solid var(--linia); }
+  #naglowek .gora { display: flex; align-items: center; gap: 8px; } #naglowek h1 { font-size: 13px; margin: 0; color: var(--t2); font-weight: 700; letter-spacing: .02em; text-transform: uppercase; flex: 1; }
+  #nawig { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px; }
+  #nawig button { border: 1px solid var(--linia); background: #fff; border-radius: 99px; padding: 3px 10px; font: 600 12.5px system-ui; color: var(--t2); cursor: pointer; } #nawig button.wyb { background: var(--ink); color: #fff; border-color: var(--ink); } #nawig button.zrob::after { content: " ✓"; color: var(--ok); }
+  #tresc { flex: 1; overflow: auto; padding: 14px 18px 20px; }
+  #tresc h2 { margin: 0 0 6px; font-size: 21px; } #tresc h3 { font-size: 15px; margin: 16px 0 4px; } #tresc p { margin: 6px 0; } #tresc ul { margin: 6px 0; padding-left: 20px; } #tresc li { margin: 3px 0; }
+  .ramka { background: #fff; border: 1px solid var(--linia); border-radius: 12px; padding: 10px 12px; margin: 10px 0; }
+  .wzor { font: 600 14px ui-monospace, Menlo, Consolas, monospace; background: #eef3f7; border-radius: 8px; padding: 6px 10px; display: inline-block; margin: 2px 0; }
+  .lab { border-left: 4px solid var(--zolty); background: #fff9e6; border-radius: 8px; padding: 8px 12px; margin: 10px 0; }
+  .lab b:first-child { color: #8a6400; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; } table.t th { text-align: left; color: var(--t2); font-weight: 600; border-bottom: 1px solid var(--linia); padding: 5px 4px; } table.t td { border-bottom: 1px solid #eef1f4; padding: 5px 4px; vertical-align: top; }
+  .btn { border: 0; border-radius: 10px; padding: 8px 13px; font: 700 14px system-ui; background: var(--ink); color: #fff; cursor: pointer; } .btn.jasny { background: #fff; color: var(--ink); border: 1px solid var(--linia); } .btn.akc { background: var(--akc); } .btn:disabled { opacity: .45; }
+  .rzad { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+  label.suw { display: flex; flex-direction: column; font-size: 13px; color: var(--t2); gap: 2px; flex: 1 1 150px; } label.suw b { color: var(--ink); }
+  input[type=range] { width: 100%; accent-color: var(--akc); }
+  .seg { display: inline-flex; border: 1px solid var(--linia); border-radius: 10px; overflow: hidden; } .seg button { border: 0; background: #fff; padding: 7px 12px; font: 600 13px system-ui; cursor: pointer; color: var(--t2); } .seg button.wyb { background: var(--ink); color: #fff; }
+  canvas.osc { width: 100%; height: 120px; background: #071018; border-radius: 10px; display: block; }
+  canvas.sloty { width: 100%; height: 150px; background: #fff; border: 1px solid var(--linia); border-radius: 10px; display: block; }
+  .stat { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; } .stat div { background: #fff; border: 1px solid var(--linia); border-radius: 10px; padding: 6px 8px; font-size: 12px; color: var(--t2); } .stat b { display: block; font-size: 18px; color: var(--ink); }
+  .legenda { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--t2); } .legenda i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
+  .log { font: 12.5px ui-monospace, Menlo, Consolas, monospace; background: #071018; color: #b8f5c8; border-radius: 10px; padding: 8px 10px; max-height: 150px; overflow: auto; white-space: pre; }
+  pre.kod { font: 12.5px ui-monospace, Menlo, Consolas, monospace; background: #0f1b26; color: #d7e6f3; border-radius: 10px; padding: 10px 12px; overflow: auto; }
+  .karty { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .karty .ramka { margin: 0; }
+  .zad { border: 2px solid var(--akc); border-radius: 14px; padding: 10px 12px; margin: 12px 0; background: #f2f8ff; } .zad h3 { margin-top: 0 !important; } .zad .wynik { font-weight: 800; }
+  .kosze { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0; } .kosz { border: 2px dashed #b9c6d2; border-radius: 12px; min-height: 110px; padding: 6px; background: #fff; } .kosz h4 { margin: 0 0 4px; font-size: 13px; } .kosz.nad { border-color: var(--akc); background: #eef6ff; }
+  .zeton { display: inline-block; background: #fff; border: 1px solid var(--linia); border-radius: 99px; padding: 4px 10px; margin: 3px; font-size: 13px; cursor: grab; user-select: none; touch-action: none; } .zeton.ok { background: #e3f6ea; border-color: #9fd6ae; } .zeton.zle { background: #fde8e6; border-color: #f0aaa2; } .zeton.wybrany { outline: 2px solid var(--akc); }
+  #etykieta { position: absolute; pointer-events: none; background: #0f1b26ee; color: #fff; border-radius: 10px; padding: 8px 11px; font-size: 13px; max-width: 300px; display: none; z-index: 3; box-shadow: 0 6px 20px #0006; } #etykieta b { display: block; margin-bottom: 2px; color: #9fd0ff; }
+  #nakl { position: absolute; left: 12px; top: 12px; display: flex; gap: 6px; flex-wrap: wrap; z-index: 2; }
+  #nakl .btn { background: #ffffffe6; color: var(--ink); } #nakl .btn.wyb { background: var(--akc); color: #fff; }
+  #podpis3d { position: absolute; left: 12px; bottom: 12px; color: #cfe3f5; font-size: 13px; background: #0008; border-radius: 10px; padding: 6px 10px; max-width: 70%; z-index: 2; }
+  #wskaznik { position: absolute; right: 12px; top: 12px; z-index: 2; background: #000a; color: #fff; border-radius: 12px; padding: 8px 12px; font: 600 13px system-ui; min-width: 180px; } #wskaznik .pas { height: 8px; border-radius: 4px; background: #ffffff22; margin-top: 4px; overflow: hidden; } #wskaznik .pas i { display: block; height: 100%; background: var(--ok); }
+  #stopka { display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--linia); background: #fff; } #stopka .btn { flex: 1; }
+  @media (max-width: 860px) { #uklad { grid-template-columns: 1fr; grid-template-rows: 46% 54%; } .karty { grid-template-columns: 1fr; } .stat { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+<div id="uklad">
+  <div id="scena"><div id="nakl"></div><div id="wskaznik" hidden></div><div id="podpis3d" hidden></div><div id="etykieta"></div></div>
+  <div id="panel">
+    <div id="naglowek"><div class="gora"><h1>📡 RFID – wprowadzenie</h1><a class="btn jasny" style="padding:4px 10px;font-size:12.5px;text-decoration:none" href="../">← Start</a></div><div id="nawig"></div></div>
+    <div id="tresc"></div>
+    <div id="stopka"><button class="btn jasny" id="bWstecz">◀ Wstecz</button><button class="btn" id="bDalej">Dalej ▶</button></div>
+  </div>
+</div>
+<script type="module" src="rfid/lekcja.js?v=50"></script>
+</body>
+</html>
