@@ -1,0 +1,5 @@
+ETAP 2 – BRAMKA
+
+Dochodzą: szyny zasilania, dioda zielona (D5), czerwona (D6), brzęczyk (D7) i przekaźnik (D4).
+
+Rozłóż model i odszukaj rezystory 220 Ω.

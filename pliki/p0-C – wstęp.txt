@@ -1,0 +1,6 @@
+UKŁAD CZYTNIKA RFID – WZORZEC
+
+Zbudujesz układ na płytce stykowej: moduł czytnika 13,56 MHz + mikrokontroler.
+
+Etap 1: odczyt UID karty. Etap 2: bramka (diody, brzęczyk, przekaźnik).
+Po złożeniu porównaj swój układ ze wzorcem.

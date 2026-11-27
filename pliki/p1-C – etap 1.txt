@@ -1,0 +1,5 @@
+ETAP 1 – ODCZYT UID
+
+7 przewodów SPI. Kolory przewodów we wzorcu = kolory w tabeli.
+
+Obejdź model i sprawdź: do których pinów trafiają przewody? Gdzie jest 3,3 V?

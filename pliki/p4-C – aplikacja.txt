@@ -1,0 +1,5 @@
+SPRAWDŹ W APLIKACJI AR
+
+Dokładniejsze nałożenie: wydrukuj matę ze znacznikiem i zeskanuj kod QR z planszy.
+
+Aplikacja prowadzi krok po kroku i zapisuje raport zgodności dla prowadzącego.
