@@ -14,16 +14,16 @@
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
   html, body { margin: 0; height: 100%; background: var(--tlo); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
-  #uklad { display: grid; grid-template-columns: 1fr minmax(360px, 34%); height: 100%; }
-  #scena { position: relative; min-height: 0; background: radial-gradient(120% 100% at 40% 30%, #22384d 0%, #0e1620 70%); }
+  #uklad { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 34%); height: 100%; height: 100dvh; }
+  #scena { position: relative; min-height: 0; min-width: 0; overflow: hidden; background: radial-gradient(120% 100% at 40% 30%, #22384d 0%, #0e1620 70%); }
   #scena canvas { width: 100%; height: 100%; display: block; touch-action: none; }
-  #panel { background: var(--panel); display: flex; flex-direction: column; min-height: 0; }
+  #panel { background: var(--panel); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
   #naglowek { padding: 10px 16px; border-bottom: 1px solid var(--linia); }
   #naglowek .gora { display: flex; align-items: center; gap: 8px; } #naglowek h1 { font-size: 13px; margin: 0; color: var(--t2); font-weight: 700; letter-spacing: .02em; text-transform: uppercase; flex: 1; }
   #czesc { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; font: 700 14px system-ui; color: var(--ink); cursor: pointer; }
   #czescTxt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } #czesc::after { content: "▾"; color: var(--t2); }
   #nawig { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; font-size: 16px; }
-  #tresc { flex: 1; overflow: auto; padding: 14px 18px 20px; }
+  #tresc { flex: 1; overflow-y: auto; overflow-x: hidden; min-width: 0; padding: 14px 18px 20px; overflow-wrap: anywhere; }
   #tresc h2 { margin: 0 0 6px; font-size: 21px; } #tresc h3 { font-size: 15px; margin: 16px 0 4px; } #tresc p { margin: 6px 0; } #tresc ul { margin: 6px 0; padding-left: 20px; } #tresc li { margin: 3px 0; }
   .ramka { background: #fff; border: 1px solid var(--linia); border-radius: 12px; padding: 10px 12px; margin: 10px 0; }
   .wzor { font: 600 14px ui-monospace, Menlo, Consolas, monospace; background: #eef3f7; border-radius: 8px; padding: 6px 10px; display: inline-block; margin: 2px 0; }
@@ -39,8 +39,8 @@
   canvas.sloty { width: 100%; height: 150px; background: #fff; border: 1px solid var(--linia); border-radius: 10px; display: block; }
   .stat { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; } .stat div { background: #fff; border: 1px solid var(--linia); border-radius: 10px; padding: 6px 8px; font-size: 12px; color: var(--t2); } .stat b { display: block; font-size: 18px; color: var(--ink); }
   .legenda { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--t2); } .legenda i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 4px; }
-  .log { font: 12.5px ui-monospace, Menlo, Consolas, monospace; background: #071018; color: #b8f5c8; border-radius: 10px; padding: 8px 10px; max-height: 150px; overflow: auto; white-space: pre; }
-  pre.kod { font: 12.5px ui-monospace, Menlo, Consolas, monospace; background: #0f1b26; color: #d7e6f3; border-radius: 10px; padding: 10px 12px; overflow: auto; }
+  .log { font: 12.5px ui-monospace, Menlo, Consolas, monospace; background: #071018; color: #b8f5c8; border-radius: 10px; padding: 8px 10px; max-height: 150px; overflow: auto; white-space: pre; max-width: 100%; overflow-wrap: normal; }
+  pre.kod { max-width: 100%; overflow-wrap: normal; font: 12.5px ui-monospace, Menlo, Consolas, monospace; background: #0f1b26; color: #d7e6f3; border-radius: 10px; padding: 10px 12px; overflow: auto; }
   .karty { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .karty .ramka { margin: 0; }
   .zad { border: 2px solid var(--akc); border-radius: 14px; padding: 10px 12px; margin: 12px 0; background: #f2f8ff; } .zad h3 { margin-top: 0 !important; } .zad .wynik { font-weight: 800; }
   .kosze { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 8px 0; } .kosz { border: 2px dashed #b9c6d2; border-radius: 12px; min-height: 110px; padding: 6px; background: #fff; } .kosz h4 { margin: 0 0 4px; font-size: 13px; } .kosz.nad { border-color: var(--akc); background: #eef6ff; }
@@ -51,10 +51,17 @@
   #podpis3d { position: absolute; left: 12px; bottom: 12px; color: #cfe3f5; font-size: 13px; background: #0008; border-radius: 10px; padding: 6px 10px; max-width: 70%; z-index: 2; }
   #wskaznik { position: absolute; right: 12px; top: 12px; z-index: 2; background: #000a; color: #fff; border-radius: 12px; padding: 8px 12px; font: 600 13px system-ui; min-width: 180px; } #wskaznik .pas { height: 8px; border-radius: 4px; background: #ffffff22; margin-top: 4px; overflow: hidden; } #wskaznik .pas i { display: block; height: 100%; background: var(--ok); }
   #stopka { display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--linia); background: #fff; } #stopka .btn { flex: 1; }
-  @media (max-width: 860px) { #uklad { grid-template-columns: 1fr; grid-template-rows: 42% 58%; } .karty { grid-template-columns: 1fr; } .stat { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 860px) { #uklad { grid-template-columns: minmax(0, 1fr); grid-template-rows: 42% 58%; } .log, pre.kod { font-size: 11.5px; } table.t { font-size: 12.5px; } .kosze { grid-template-columns: 1fr; } .kosz { min-height: 70px; } .karty { grid-template-columns: 1fr; } .stat { grid-template-columns: 1fr 1fr; }
     #nakl { left: 8px; top: 8px; right: 8px; gap: 4px; } #nakl .btn { padding: 5px 9px; font-size: 12px; border-radius: 8px; }
     #podpis3d { display: none; } #wskaznik { top: auto; bottom: 8px; right: 8px; min-width: 0; max-width: 62%; padding: 6px 9px; font-size: 11.5px; }
     #tresc { padding: 12px 14px 16px; font-size: 14.5px; } #tresc h2 { font-size: 19px; } #stopka { padding: 8px 12px; } #stopka .btn { padding: 9px; } #etykieta { max-width: 80%; } }
+  @media (orientation: landscape) and (max-height: 520px) {
+    #uklad { grid-template-columns: minmax(0, 56%) minmax(0, 44%); grid-template-rows: 100%; }
+    #naglowek { padding: 6px 12px; } #stopka { padding: 6px 10px; } #stopka .btn { padding: 7px; font-size: 13px; }
+    #tresc { padding: 10px 12px 14px; font-size: 13.5px; } #tresc h2 { font-size: 17px; } #tresc h3 { font-size: 14px; margin-top: 10px; }
+    .kosze { grid-template-columns: repeat(3, 1fr); } .karty, .stat { grid-template-columns: 1fr 1fr; }
+    #nakl .btn { padding: 4px 8px; font-size: 11.5px; } #wskaznik { font-size: 11px; max-width: 70%; }
+  }
 </style>
 </head>
 <body>
