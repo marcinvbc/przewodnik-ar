@@ -202,9 +202,102 @@ export function bramkaDostepu() {
   return g;
 }
 
+/* ================= TAG UHF NA METAL (twarda obudowa, antena łatkowa nad masą) ================= */
+export function tagNaMetal() {
+  const M = mat(), g = new THREE.Group(); g.name = "Tag UHF na metal";
+  const L = 0.08, S = 0.026, H = 0.0062;
+  const gora = zaokr(L, H * 0.32, S, 0.004, M.plastikBialy); gora.position.y = H * 0.34;
+  g.add(czesc(gora, "Obudowa ABS – pokrywa", "Twarda obudowa odporna na uderzenia i chemię – tag przykręca się lub przykleja do metalu.", [0, 0.03, 0]));
+  const lata = new THREE.Mesh(new THREE.BoxGeometry(L * 0.78, 0.00008, S * 0.72), M.miedz); lata.position.y = H * 0.17;
+  g.add(czesc(lata, "Antena łatkowa (patch)", "Płaska łatka miedziana – promieniuje w górę, od metalu. Metal pod spodem staje się częścią anteny (lustro), zamiast ją „zabijać”.", [0, 0.02, 0]));
+  const chip = zaokr(0.0016, 0.0004, 0.0016, 0.0002, M.epoksyd); chip.position.set(-L * 0.3, H * 0.17 + 0.0002, 0);
+  g.add(czesc(chip, "Chip EPC Gen2", "Ten sam typ chipu co w zwykłej etykiecie UHF – różni się tylko antena i konstrukcja.", [0, 0.026, 0]));
+  const zwora = new THREE.Mesh(new THREE.BoxGeometry(0.001, H * 0.36, S * 0.5), M.miedz); zwora.position.set(-L * 0.39, 0, 0);
+  g.add(czesc(zwora, "Zwarcie do masy (PIFA)", "Pasek łączący łatkę z masą – skraca antenę o połowę (antena typu PIFA), dzięki temu tag jest mały.", [-0.012, 0.01, 0]));
+  const dyst = new THREE.Mesh(new THREE.BoxGeometry(L * 0.94, H * 0.32, S * 0.9), new THREE.MeshStandardMaterial({ color: "#e9d89a", roughness: 0.8 })); dyst.position.y = 0;
+  g.add(czesc(dyst, "Przekładka dielektryczna (dystans)", "Odsuwa antenę od metalu o kilka milimetrów. Bez niej prąd indukowany w metalu wygasiłby pole – zwykła etykieta na puszce nie działa.", [0, 0.008, 0]));
+  const masa = new THREE.Mesh(new THREE.BoxGeometry(L * 0.94, 0.0001, S * 0.9), M.miedz); masa.position.y = -H * 0.17;
+  g.add(czesc(masa, "Płaszczyzna masy", "Miedziana warstwa od spodu – razem z metalowym podłożem tworzy „lustro” dla anteny.", [0, -0.006, 0]));
+  const dol = zaokr(L, H * 0.3, S, 0.004, M.plastikSzary); dol.position.y = -H * 0.34;
+  for (const x of [-1, 1]) { const o = new THREE.Mesh(new THREE.CylinderGeometry(0.0018, 0.0018, H * 0.32, 16), M.stal); o.position.set(x * L * 0.44, 0, 0); dol.add(o); }
+  g.add(czesc(dol, "Spód z otworami montażowymi", "Otwory na wkręty lub nity – tagi na kontenery, narzędzia, butle gazowe, regały.", [0, -0.02, 0]));
+  const blacha = new THREE.Mesh(new THREE.BoxGeometry(L * 1.6, 0.002, S * 2.2), M.stalSzczot); blacha.position.y = -H * 0.5 - 0.001;
+  g.add(czesc(blacha, "Podłoże metalowe (np. ściana kontenera)", "Pokazuje, gdzie tag pracuje: przykręcony do stali.", [0, -0.04, 0]));
+  return g;
+}
+
+/* ================= OPASKA NA RĘKĘ HF/NFC (silikon) ================= */
+export function opaskaHF() {
+  const M = mat(), g = new THREE.Group(); g.name = "Opaska RFID";
+  const sil = new THREE.MeshPhysicalMaterial({ color: "#1f7a8c", roughness: 0.55, clearcoat: 0.2 }), sil2 = new THREE.MeshPhysicalMaterial({ color: "#16606e", roughness: 0.5 });
+  const R = 0.032, sz = 0.016, gr = 0.0028, pkt = [];
+  for (let i = 0; i < 64; i++) { const a = i / 64 * Math.PI * 2; pkt.push(new THREE.Vector3(Math.cos(a) * R * 1.12, 0, Math.sin(a) * R * 0.92)); }
+  const ks = new THREE.Shape(); ks.moveTo(-sz / 2, -gr / 2); ks.lineTo(sz / 2, -gr / 2); ks.lineTo(sz / 2, gr / 2); ks.lineTo(-sz / 2, gr / 2); ks.lineTo(-sz / 2, -gr / 2);
+  const pas = new THREE.Mesh(new THREE.ExtrudeGeometry(ks, { steps: 128, extrudePath: new THREE.CatmullRomCurve3(pkt, true), bevelEnabled: false }), sil);
+  g.add(czesc(pas, "Pasek silikonowy", "Wodoodporny – opaski RFID działają na basenach, w szatniach, na festiwalach i w szpitalach.", [0, -0.03, 0]));
+  const glowa = new THREE.Group(); glowa.position.set(0, 0, -R * 0.92 - gr * 0.2);
+  const obud = zaokr(0.036, 0.007, 0.03, 0.009, sil2); obud.rotation.x = Math.PI / 2; obud.position.z = -0.0018;
+  obud.position.add(glowa.position);
+  g.add(czesc(obud, "Główka opaski (obudowa)", "Zalana silikonem – w środku antena i chip, całkowicie szczelne.", [0, 0.012, -0.03]));
+  const kp = []; for (let i = 0; i <= 5 * 48; i++) { const t = i / 48 * Math.PI * 2, r = 0.0115 - i / (5 * 48) * 0.0025; kp.push(new THREE.Vector3(Math.cos(t) * r, Math.sin(t) * r, -0.0026 - i * 0.000004)); }
+  const cewka = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(kp), 600, 0.00025, 5), M.miedz); cewka.position.copy(glowa.position);
+  g.add(czesc(cewka, "Antena – cewka okrągła", "Kilka zwojów na średnicy ok. 2 cm – taka sama zasada jak w karcie HF, tylko mniejsza powierzchnia, więc mniejszy zasięg (ok. 2–4 cm).", [0, 0.045, -0.012]));
+  const chip = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.003, 0.0006), M.epoksyd); chip.position.copy(glowa.position).add(new THREE.Vector3(0, 0, -0.0026));
+  g.add(czesc(chip, "Chip NFC / ISO 14443", "Np. układ typu NTAG lub MIFARE – numer UID, pamięć na saldo, numer szafki albo bilet.", [0, 0.07, -0.016]));
+  return g;
+}
+
+/* ================= BRAMKA UHF DO MONTAŻU (każda część osobno – do puzzli) ================= */
+export function bramkaMontaz({ strefa = false } = {}) {
+  const M = mat(), g = new THREE.Group(); g.name = strefa ? "Bramka UHF – strefa odczytu" : "Bramka UHF – montaż";
+  const szer = 2.0, wys = 2.1, kat = THREE.MathUtils.degToRad(15);
+  const czer = new THREE.MeshStandardMaterial({ color: "#e0e3e6", metalness: 0.6, roughness: 0.35 });
+  for (const s of [-1, 1]) {
+    const nz = s < 0 ? "lewa" : "prawa", nm = s < 0 ? "lewy" : "prawy";
+    const pod = zaokr(0.45, 0.025, 0.45, 0.02, M.stal); pod.position.set(s * szer / 2, 0.0125, 0);
+    for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const k = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.03, 12), M.stalSzczot); k.position.set(x * 0.18, 0.01, z * 0.18); pod.add(k); }
+    g.add(czesc(pod, `1. Podstawa ${nz}`, "Stalowa płyta kotwiona do posadzki 4 kołkami – najpierw wyznacz rozstaw bramki (tu 2 m).", [s * 0.5, -0.15, 0.4]));
+    const slup = zaokr(0.09, wys, 0.09, 0.012, czer); slup.position.set(s * szer / 2, wys / 2 + 0.025, 0);
+    g.add(czesc(slup, `2. Słup ${nm}`, "Profil aluminiowy – w środku prowadzi się kable antenowe i zasilanie.", [s * 0.7, 0, 0]));
+    for (const h of [0.75, 1.55]) { const a = antenaUHF(); a.position.set(s * (szer / 2 - 0.1), h, 0); a.rotation.y = -s * (Math.PI / 2 - kat);
+      a.name = `3. Antena ${s < 0 ? "L" : "P"}${h < 1 ? "1 (dolna)" : "2 (górna)"}`; a.userData.opis = "Antena panelowa skierowana do środka i lekko (ok. 15°) w stronę wejścia – strefa odczytu zaczyna się, zanim towar wjedzie w bramkę."; a.userData.rozklad = [s * 0.9, h < 1 ? -0.2 : 0.2, 0.3]; a.userData.baza = a.position.clone(); g.add(a); }
+  }
+  const belka = zaokr(szer + 0.09, 0.09, 0.09, 0.012, czer); belka.position.y = wys + 0.07;
+  g.add(czesc(belka, "4. Belka górna", "Usztywnia bramkę i przenosi kable między słupami.", [0, 0.6, 0]));
+  const czyt = new THREE.Group(); const ob = zaokr(0.32, 0.07, 0.22, 0.012, M.plastikCzarny); czyt.add(ob);
+  for (let i = 0; i < 4; i++) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.02, 12), M.zloto); p.rotation.x = Math.PI / 2; p.position.set(-0.11 + i * 0.07, 0, 0.115); czyt.add(p); }
+  const ld = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.004, 0.01), M.led); ld.position.set(0.12, 0.037, -0.07); czyt.add(ld);
+  czyt.position.set(szer / 2 + 0.2, 1.15, 0); czyt.rotation.z = Math.PI / 2;
+  g.add(czesc(czyt, "5. Czytnik UHF (4 porty)", "Każda antena na osobny port (ANT1–ANT4). Czytnik przełącza anteny po kolei i wykonuje antykolizję EPC Gen2.", [0.7, 0, 0]));
+  const skr = zaokr(0.3, 0.4, 0.15, 0.015, M.plastikSzary); skr.position.set(szer / 2 + 0.2, 0.45, 0);
+  const wy = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, 0.005), M.ledCzerw); wy.position.set(0, 0.12, 0.078); skr.add(wy);
+  g.add(czesc(skr, "6. Skrzynka sterująca (zasilacz, PLC, sieć)", "Zasilacz 24 V, sterownik PLC lub komputer przemysłowy i switch – łączy bramkę z systemem magazynowym.", [0.7, -0.1, 0]));
+  const kab = new THREE.Group(), cm = new THREE.MeshStandardMaterial({ color: "#1a1b1d", roughness: 0.6 });
+  const xc = szer / 2 + 0.2, porty = [[-0.11, 0], [-0.04, 1], [0.03, 2], [0.1, 3]], ant = [[-1, 0.75], [-1, 1.55], [1, 0.75], [1, 1.55]];
+  ant.forEach(([s, h], i) => { const ax = s * (szer / 2 - 0.1), py = 1.15 + porty[i][0]; const pts = s > 0
+      ? [new THREE.Vector3(ax, h - 0.12, -0.04), new THREE.Vector3(szer / 2, h - 0.15, -0.05), new THREE.Vector3(szer / 2 + 0.06, py, -0.06), new THREE.Vector3(xc - 0.03, py, -0.1)]
+      : [new THREE.Vector3(ax, h - 0.12, -0.04), new THREE.Vector3(-szer / 2, h, -0.05), new THREE.Vector3(-szer / 2, wys + 0.02, -0.06), new THREE.Vector3(szer / 2, wys + 0.02, -0.06), new THREE.Vector3(szer / 2 + 0.06, py, -0.06), new THREE.Vector3(xc - 0.03, py, -0.1)];
+    kab.add(tuba(pts, 0.006, cm)); });
+  kab.add(tuba([new THREE.Vector3(xc, 1.0, -0.06), new THREE.Vector3(xc + 0.05, 0.8, -0.06), new THREE.Vector3(xc, 0.66, -0.06)], 0.008, cm));
+  g.add(czesc(kab, "7. Kable antenowe (koncentryczne)", "Kabel o niskiej tłumienności, możliwie krótki – każdy metr to strata sygnału (ok. 0,2–0,5 dB/m). Wszystkie cztery tej samej długości.", [0, 0, -0.6]));
+  const fot = new THREE.Group(); for (const s of [-1, 1]) { const f = zaokr(0.05, 0.08, 0.04, 0.008, M.plastikCzarny); f.position.set(s * (szer / 2 - 0.07), 0.45, 0.35); const so = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.01, 16), M.ledCzerw); so.rotation.z = Math.PI / 2; so.position.set(-s * 0.026, 0, 0); f.add(so); fot.add(f); }
+  g.add(czesc(fot, "8. Fotokomórka (wyzwalanie odczytu)", "Para nadajnik–odbiornik na wejściu: przerwanie wiązki włącza odczyt, druga para mówi, w którą stronę jedzie towar.", [0, -0.2, 0.7]));
+  const lampa = new THREE.Group(); const kz = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.1, 24), M.led); kz.position.y = 0.05; const kc = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.1, 24), M.ledCzerw); kc.position.y = 0.15; lampa.add(kz, kc); lampa.position.set(0, wys + 0.115, 0);
+  g.add(czesc(lampa, "9. Lampa sygnalizacyjna", "Zielona – odczyt poprawny, czerwona – brak odczytu lub towar niezgodny z zamówieniem.", [0, 0.9, 0]));
+  if (strefa) {
+    const sm = c => new THREE.MeshStandardMaterial({ color: c, transparent: true, opacity: 0.22, depthWrite: false, roughness: 1, side: THREE.DoubleSide });
+    const st = new THREE.Group(); st.name = "Strefa odczytu";
+    ant.forEach(([s, h], i) => { const l = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 18), sm(i % 2 ? "#2bb3ff" : "#38d39f")); l.scale.set(0.75, 0.42, 0.6);
+      const d = new THREE.Vector3(-s * Math.cos(kat), 0, Math.sin(kat)); l.position.set(s * (szer / 2 - 0.1), h, 0).addScaledVector(d, 0.72); l.lookAt(l.position.clone().add(d)); l.rotateY(Math.PI / 2); st.add(l); });
+    const pod = new THREE.Mesh(new THREE.PlaneGeometry(szer, 2.2), sm("#ffd23f")); pod.rotation.x = -Math.PI / 2; pod.position.set(0, 0.005, 0.3); st.add(pod);
+    g.add(czesc(st, "Strefa odczytu (przybliżona)", "Cztery płaty promieniowania nakładają się w środku – tag jest widziany z każdej strony palety. Kąt 15° przesuwa strefę w stronę wejścia.", [0, 0, 0]));
+  }
+  return g;
+}
+
 /** animacja rozkładania: t = 0 (złożony) … 1 (rozłożony) */
 export function rozloz(g, t) {
   g.traverse(o => { if (o.userData.baza && o.userData.rozklad) { const r = o.userData.rozklad, k = t * t * (3 - 2 * t); o.position.set(o.userData.baza.x + r[0] * k, o.userData.baza.y + r[1] * k, o.userData.baza.z + r[2] * k); } });
 }
 export { mat as materialy };
-export const MODELE = { kartaHF, tagUHF, kapsulaLF, modulCzytnika, plytkaMCU, antenaUHF, bramkaUHF, paleta, bramkaDostepu };
+export const MODELE = { kartaHF, tagUHF, kapsulaLF, modulCzytnika, plytkaMCU, antenaUHF, bramkaUHF, paleta, bramkaDostepu, tagNaMetal, opaskaHF, bramkaMontaz, bramkaStrefa: () => bramkaMontaz({ strefa: true }) };
