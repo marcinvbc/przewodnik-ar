@@ -146,11 +146,11 @@ async function zbudujObiekt(o, k, gltf, urls) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(szer, szer * prop), mat); if (r === "film" || !blob) { const e = etykieta(`${IKONA[r]} ${f?.nazwa || o.assetData?.name || r}`); e.position.z = 0.01; m.add(e); } return m;
   }
   // model 3D
-  const g = new THREE.Group();
-  if (blob) { const u = URL.createObjectURL(blob); urls.push(u); try { const sc = (await gltf.loadAsync(u)).scene, bb = new THREE.Box3().setFromObject(sc), roz = bb.getSize(new THREE.Vector3()), max = Math.max(roz.x, roz.y, roz.z) || 1, k2 = s * C / max;
-      sc.scale.setScalar(k2); sc.position.copy(bb.getCenter(new THREE.Vector3()).multiplyScalar(-k2)); g.add(sc); return g; } catch (e) { console.warn("GLB", e); } }
+  const g = new THREE.Group(); let blad = "";
+  if (blob) { const u = URL.createObjectURL(blob); urls.push(u); try { await dekodery(gltf, blob); const sc = (await gltf.loadAsync(u)).scene, bb = new THREE.Box3().setFromObject(sc), roz = bb.getSize(new THREE.Vector3()), max = Math.max(roz.x, roz.y, roz.z) || 1, k2 = s * C / max;
+      sc.scale.setScalar(k2); sc.position.copy(bb.getCenter(new THREE.Vector3()).multiplyScalar(-k2)); g.add(sc); return g; } catch (e) { console.warn("GLB", f?.nazwa, e); blad = powodBledu(e, blob); } }
   const b = new THREE.Mesh(new THREE.BoxGeometry(s * C, s * C * 0.6, s * C * 0.6), new THREE.MeshStandardMaterial({ color: "#c9562f", transparent: true, opacity: 0.35, wireframe: false }));
-  b.add(new THREE.LineSegments(new THREE.EdgesGeometry(b.geometry), new THREE.LineBasicMaterial({ color: "#ffb27a" }))); const e = etykieta(`🧊 ${f?.nazwa || o.assetData?.name || "model"}${f?.pominiety ? " (nie pobrano)" : ""}`); e.position.y = s * C * 0.4; b.add(e); g.add(b); return g;
+  b.add(new THREE.LineSegments(new THREE.EdgesGeometry(b.geometry), new THREE.LineBasicMaterial({ color: "#ffb27a" }))); const e = etykieta(`🧊 ${f?.nazwa || o.assetData?.name || "model"}${f?.pominiety ? ` – nie pobrano: ${f.pominiety}` : blad ? ` – ⚠️ ${blad}` : ""}`); e.position.y = s * C * 0.4; b.add(e); g.add(b); const pow = f?.pominiety ? "nie pobrano – " + f.pominiety : blad; if (pow && o.guid) { const el = document.querySelector(`#obiekty .ob[data-guid="${CSS.escape(o.guid)}"]`); el?.insertAdjacentHTML("beforeend", `<div class="small" style="color:#b3401c;margin-top:4px">⚠️ Model nie wyświetlony: ${esc(pow)}</div>`); } return g;
 }
 async function scena3D(k) {
   const kont = $("#s3d"), r = new THREE.WebGLRenderer({ antialias: true, alpha: true }); r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); r.toneMapping = THREE.NeutralToneMapping; kont.prepend(r.domElement);
@@ -172,6 +172,31 @@ async function scena3D(k) {
   $$("#slajdy button").forEach(b => b.onclick = () => pokazSlajd(k, +b.dataset.s));
   pokazSlajd(k, 0);
 }
+/* Modele skompresowane (Draco, Meshopt, tekstury KTX2) – dekodery doczytywane z CDN tylko wtedy, gdy model ich wymaga. */
+const CDN3 = "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/";
+async function naglowekGlb(blob) {
+  const b = new DataView(await blob.slice(0, 20).arrayBuffer());
+  if (b.byteLength < 20 || b.getUint32(0, true) !== 0x46546c67) return null;
+  try { return JSON.parse(new TextDecoder().decode(await blob.slice(20, 20 + b.getUint32(12, true)).arrayBuffer())); } catch { return null; }
+}
+async function dekodery(gltf, blob) {
+  const j = await naglowekGlb(blob); if (!j) return;
+  const ext = new Set([...(j.extensionsUsed || []), ...(j.extensionsRequired || [])]);
+  if ((ext.has("EXT_meshopt_compression") || ext.has("KHR_meshopt_compression")) && !gltf.__meshopt) { const { MeshoptDecoder } = await import(CDN3 + "libs/meshopt_decoder.module.js"); await MeshoptDecoder.ready; gltf.setMeshoptDecoder(MeshoptDecoder); gltf.__meshopt = 1; }
+  if (ext.has("KHR_draco_mesh_compression") && !gltf.__draco) { const { DRACOLoader } = await import(CDN3 + "loaders/DRACOLoader.js"); const d = new DRACOLoader(); d.setDecoderPath(CDN3 + "libs/draco/gltf/"); gltf.setDRACOLoader(d); gltf.__draco = 1; }
+  if (ext.has("KHR_texture_basisu") && !gltf.__ktx2 && R3) { const { KTX2Loader } = await import(CDN3 + "loaders/KTX2Loader.js"); const k = new KTX2Loader(); k.setTranscoderPath(CDN3 + "libs/basis/"); k.detectSupport(R3.r); gltf.setKTX2Loader(k); gltf.__ktx2 = 1; }
+}
+function powodBledu(e, blob) {
+  const t = String(e?.message || e || "");
+  if (/meshopt/i.test(t)) return "kompresja Meshopt (brak dekodera)";
+  if (/draco/i.test(t)) return "kompresja Draco (brak dekodera)";
+  if (/ktx|basis/i.test(t)) return "tekstury KTX2 (brak dekodera)";
+  if (/fetch|import|module/i.test(t)) return "nie udało się doczytać dekodera z internetu";
+  if (/not valid JSON|Unexpected token|Unexpected end/i.test(t)) return "plik uszkodzony albo to nie jest GLB";
+  if (/Unsupported asset|version/i.test(t)) return "stary format glTF 1.0";
+  return "nie wczytano (" + t.slice(0, 60) + ")";
+}
+
 async function pokazSlajd(k, i) {
   if (!R3) return; slajd = i; const lista = slajdyKursu(k)[i] || [], { sc, kam, ster } = R3, gltf = new GLTFLoader();
   $$("#slajdy button").forEach(b => b.classList.toggle("wyb", +b.dataset.s === i));
@@ -202,7 +227,7 @@ function kartaObiektu(o, j, k, lista) {
        ${r === "awatar" ? `<div class="small" style="margin-top:4px">Płeć: ${o.thisAvatarGender === 1 ? "kobieta" : "mężczyzna"} · mowa: ${o.isHaveSpeech ? "tak" : "nie"} · mówi od razu: ${o.isStartSpeechOnStart || o.StartWithSlide ? "tak" : "nie"} · czat dla uczniów: ${o.isChatAvailableForStudents ? "tak" : "nie"}${f ? ` · głos: ${esc(f.nazwa)}` : ""}</div>${f?.plik && PLIKI[f.plik] && f.rodzaj === "dzwiek" ? `<audio controls preload="none" style="width:100%;margin-top:4px" data-glos="${esc(f.plik)}"></audio>` : ""}` : ""}
        ${r === "tekst" ? `<div class="small" style="margin-top:4px">czcionka ${Math.round(o.fontSize || 0)}${o.isBold ? ", pogrubiona" : ""}${o.isAutoFontSize ? ", auto" : ""} · ${o.isLeftAlignment ? "do lewej" : o.isRightAlignment ? "do prawej" : "wyśrodkowany"}</div>` : ""}
        ${(r === "film") ? `<div class="small" style="margin-top:4px">pętla: ${o.assetData?.isLooping ? "tak" : "nie"} · start automatyczny: ${o.assetData?.isPlayOnAwake ? "tak" : "nie"}</div>` : ""}`;
-  return `<div class="ob" data-j="${j}"><b>${IKONA[r]} ${NAZWA_RODZAJU[r] || r}</b> · ${esc(nazwa)}
+  return `<div class="ob" data-j="${j}" data-guid="${esc(o.guid || "")}"><b>${IKONA[r]} ${NAZWA_RODZAJU[r] || r}</b> · ${esc(nazwa)}
     ${r !== "dymek" ? `<div class="poz">poz. (${(+p.x || 0).toFixed(2)}, ${(+p.y || 0).toFixed(2)}, ${(+p.z || 0).toFixed(2)}) m · obrót ${Math.round(((+ro.y || 0) % 360 + 360) % 360)}° · skala ${s != null ? (+s).toFixed(2) : "–"}${r === "model" && s ? ` (≈ ${(s * C).toFixed(2)} m)` : ""}</div>` : ""}<div>${ustaw}</div></div>`;
 }
 function zaznacz(j, kamera) {

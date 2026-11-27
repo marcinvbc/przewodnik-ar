@@ -223,7 +223,7 @@
         <label><input type="checkbox" id="wsz" checked> zaznacz wszystkie</label>
         <div class="lista" style="max-height:260px;list-style:none;padding-left:0">${lista.map(k => `<label><input type="checkbox" data-k="${esc(k.id)}" checked> ${esc(k.title || "(bez tytułu)")} <span class="m">· ${esc(k.status || "")}${k.open ? " · publiczny" : ""}</span></label>`).join("")}</div></div>
       <div class="k"><b>Pliki do podglądu</b>
-        <label><input type="checkbox" id="mod" checked> modele 3D (GLB) do <input type="number" id="lim" value="25" min="1" max="200" style="width:64px"> MB każdy</label>
+        <label><input type="checkbox" id="mod" checked> modele 3D (GLB) do <input type="number" id="lim" value="60" min="1" max="200" style="width:64px"> MB każdy</label>
         <label><input type="checkbox" id="obr" checked> obrazy (JPG/PNG)</label>
         <label><input type="checkbox" id="dzw" checked> głosy awatarów i dźwięki (do 10 MB)</label>
         <p class="m">Filmy i PDF zostaną opisane w podglądzie, ale bez pobierania. Większe modele pokażą się jako zarys z nazwą.</p></div>
@@ -231,7 +231,7 @@
       `<button data-wr>← Wróć</button><button class="g" data-go>📥 Pobierz zaznaczone</button>`);
     $("#wsz").onchange = e => root.querySelectorAll("[data-k]").forEach(c => c.checked = e.target.checked);
     $("[data-wr]").onclick = oczekuj;
-    $("[data-go]").onclick = () => eksportuj([...root.querySelectorAll("[data-k]:checked")].map(c => c.dataset.k), { modele: $("#mod").checked, obrazy: $("#obr").checked, dzwieki: $("#dzw").checked, limit: Math.max(1, +$("#lim").value || 25) });
+    $("[data-go]").onclick = () => eksportuj([...root.querySelectorAll("[data-k]:checked")].map(c => c.dataset.k), { modele: $("#mod").checked, obrazy: $("#obr").checked, dzwieki: $("#dzw").checked, limit: Math.max(1, +$("#lim").value || 60) });
   }
   async function eksportuj(ids, o) {
     if (!ids.length) return alertKarta("Zaznacz co najmniej jeden kurs.");
