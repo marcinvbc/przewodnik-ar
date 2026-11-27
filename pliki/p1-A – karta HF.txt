@@ -1,0 +1,5 @@
+KARTA HF 13,56 MHz
+
+Rozłóż kartę. Policz zwoje cewki.
+
+Pole magnetyczne czytnika indukuje w cewce napięcie – to jedyne zasilanie karty. Dlatego działa tylko z bliska (kilka cm).

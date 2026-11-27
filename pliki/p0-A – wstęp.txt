@@ -1,0 +1,5 @@
+PRZEŚWIETLENIE TAGÓW
+
+Pięć tagów RFID – każdy zbudowany inaczej, każdy działa na tej samej zasadzie: antena + chip.
+
+Na kolejnych slajdach rozłóż każdy tag na części i znajdź antenę oraz chip. Pomyśl, dlaczego anteny tak bardzo się różnią.

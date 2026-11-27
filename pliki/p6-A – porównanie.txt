@@ -1,0 +1,6 @@
+PORÓWNANIE
+
+Zestaw wszystkie tagi obok siebie (plansza).
+
+Niższa częstotliwość: większa cewka, mniejszy zasięg, lepsza praca przy wodzie.
+Wyższa: mała antena, duży zasięg, wrażliwość na metal i wodę.

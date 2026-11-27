@@ -1,0 +1,5 @@
+INLAY UHF (EPC Gen2)
+
+Dipol λ/2 dla 868 MHz ma ok. 17 cm – tu zmieszczono go w 9,5 cm dzięki meandrom.
+
+Tag nie nadaje – odbija falę czytnika, zmieniając impedancję anteny (backscatter). Zasięg: kilka metrów.

@@ -1,0 +1,5 @@
+TAG UHF NA METAL
+
+Rozłóż tag i znajdź przekładkę między anteną a masą.
+
+Zwykła etykieta na metalu nie działa. Tu antena łatkowa jest odsunięta od metalu, a metal staje się jej „lustrem”.

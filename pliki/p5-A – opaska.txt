@@ -1,0 +1,5 @@
+OPASKA NFC
+
+Ta sama technika co w karcie HF, tylko cewka ma ok. 2 cm średnicy.
+
+Mniejsza cewka = mniejszy zasięg (2–4 cm). Silikon chroni chip przed wodą – stąd opaski na basenach i festiwalach.
