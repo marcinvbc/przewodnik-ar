@@ -73,7 +73,7 @@ async function start3D() {
   rozmiar(); const ro = new ResizeObserver(rozmiar); ro.observe(box);
   renderer.setAnimationLoop(() => { ster.update(); renderer.render(scene, camera); });
   R = { renderer, scene, camera, stop() { renderer.setAnimationLoop(null); ro.disconnect(); renderer.dispose(); renderer.domElement.remove(); } };
-  podpowiedz("Podgląd 3D na wirtualnej macie · przeciągaj, by obracać");
+  przyciskWyjscia(); podpowiedz("Podgląd 3D na wirtualnej macie · przeciągaj, by obracać");
   setTimeout(() => podpowiedz(""), 4000);
 }
 
@@ -96,7 +96,7 @@ async function startAR() {
     root = uchwyt; kotwica.group.add(uchwyt); zbuduj();
     const zgub = () => podpowiedz(`${img}<span>Wyceluj telefon w znacznik na macie. Trzymaj go nad płytką, ok. 30–40 cm.</span>`);
     kotwica.onTargetFound = () => podpowiedz(""); kotwica.onTargetLost = zgub;
-    await mindar.start(); zgub();
+    await mindar.start(); zgub(); przyciskWyjscia();
     renderer.setAnimationLoop(() => renderer.render(scene, camera));
     R = { renderer, scene, camera, video: mindar.video, ustaw, stop() { renderer.setAnimationLoop(null); try { mindar.stop(); } catch {} renderer.dispose(); $$("#scena > video, #scena > canvas, #scena .mindar-ui-overlay").forEach(e => e.remove()); } };
   } catch (e) {
@@ -104,7 +104,9 @@ async function startAR() {
     $("#start").hidden = false;
   }
 }
-function zatrzymaj() { if (R?.stop) R.stop(); R = null; W = null; root = null; }
+function zatrzymaj() { if (R?.stop) R.stop(); R = null; W = null; root = null; $("#bWyjdz")?.remove(); }
+function przyciskWyjscia() { const b = document.createElement("button"); b.id = "bWyjdz"; b.className = "btn"; b.textContent = "✕ Zakończ"; b.style.cssText = "position:absolute;left:10px;top:10px;z-index:20;box-shadow:0 2px 10px #0006";
+  b.onclick = () => { zatrzymaj(); podpowiedz(""); $("#korekta").hidden = true; $("#start").hidden = false; root = new THREE.Group(); zbuduj(); }; $("#scena").appendChild(b); }
 
 /* ---------- zdjęcie i raport ---------- */
 function pobierz(blob, nazwa) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nazwa; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }

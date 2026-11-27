@@ -461,14 +461,15 @@ function sumuj() {
 let idx = 0; const odwiedzone = new Set();
 $("#nawig").innerHTML = SEKCJE.map((s, i) => `<option value="${i}">${esc(s.tytul)}</option>`).join("");
 $("#nawig").onchange = e => pokazSekcje(+e.target.value);
-$("#bWstecz").onclick = () => pokazSekcje(Math.max(0, idx - 1)); $("#bDalej").onclick = () => pokazSekcje(Math.min(SEKCJE.length - 1, idx + 1));
+const wyjdz = () => { location.href = "../"; };   // wyjście z lekcji na panel główny (działa też po wejściu z kodu QR, bez historii)
+$("#bWstecz").onclick = () => idx === 0 ? wyjdz() : pokazSekcje(idx - 1); $("#bDalej").onclick = () => idx === SEKCJE.length - 1 ? wyjdz() : pokazSekcje(idx + 1);
 function pokazSekcje(i) {
   const zmiana = i !== idx || !akt; idx = i; odwiedzone.add(i); const s = SEKCJE[i]; history.replaceState(null, "", "#" + s.id);
   if (s.id !== "zadania") inw = null; if (s.id !== "pasma") wyrozniony = null;
   $("#tresc").innerHTML = typeof s.html === "function" ? s.html() : s.html; if (zmiana) $("#tresc").scrollTop = 0; s.po?.();
   $("#nawig").value = i; [...$("#nawig").options].forEach((o, k) => o.textContent = (odwiedzone.has(k) && k !== i ? "✓ " : "") + SEKCJE[k].tytul);
   $("#czescTxt").textContent = `📡 ${i + 1}/${SEKCJE.length} · ${s.tytul.replace(/^\d+\.\s*/, "")}`;
-  $("#bWstecz").disabled = i === 0; $("#bDalej").textContent = i === SEKCJE.length - 1 ? "✔ Koniec" : "Dalej ▶";
+  $("#bWstecz").disabled = false; $("#bWstecz").textContent = i === 0 ? "← Wyjdź" : "◀ Wstecz"; $("#bDalej").textContent = i === SEKCJE.length - 1 ? "✔ Zakończ lekcję" : "Dalej ▶";
   ustawScene(s.scena()); $("#etykieta").style.display = "none";
   if (i === SEKCJE.length - 1) zglos("rfid", "wynik", { pozycja: "Lekcja przejrzana do końca", czas: Math.round((performance.now() - t00) / 1000) });
 }
