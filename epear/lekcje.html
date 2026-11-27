@@ -26,7 +26,13 @@
   #tresc { flex: 1; min-height: 0; overflow: auto; padding: 14px 16px; }
   .scena { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 12px; height: 100%; min-height: 420px; }
   .scena3d { position: relative; background: radial-gradient(120% 100% at 40% 25%, #2b3e4f, #121c25 75%); border-radius: 14px; overflow: hidden; min-height: 380px; }
-  .scena3d canvas { width: 100%; height: 100%; display: block; }
+  .scena3d canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+  .nav3d { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 6px; z-index: 3; }
+  .nav3d button { width: 40px; height: 40px; border-radius: 12px; border: 0; background: #ffffffe6; font: 700 18px system-ui; cursor: pointer; box-shadow: 0 2px 8px #0005; }
+  .podglad { position: fixed; inset: 0; background: #0b1218d9; display: grid; place-items: center; z-index: 50; padding: 16px; }
+  .podglad .okno { position: relative; background: #fffdf8; border-radius: 16px; max-width: min(900px, 96vw); max-height: 92vh; overflow: auto; padding: 22px 24px; }
+  .podglad .txt { font: 18px/1.55 system-ui; white-space: normal; color: #1f2a2e; } .podglad img { max-width: 100%; max-height: 84vh; display: block; border-radius: 8px; }
+  .podglad .x { position: sticky; float: right; top: 0; border: 0; background: #1f2a2e; color: #fff; width: 34px; height: 34px; border-radius: 50%; font-size: 16px; cursor: pointer; margin: -8px -10px 6px 8px; }
   .slajdy { position: absolute; left: 10px; top: 10px; right: 10px; display: flex; gap: 4px; flex-wrap: wrap; z-index: 2; }
   .slajdy button { border: 0; border-radius: 99px; padding: 5px 11px; font: 700 12.5px system-ui; background: #ffffffd9; cursor: pointer; } .slajdy button.wyb { background: var(--accent); color: #fff; }
   .legenda3d { position: absolute; left: 10px; bottom: 10px; color: #d6e2ec; font-size: 12px; background: #0008; border-radius: 10px; padding: 6px 9px; z-index: 2; max-width: 75%; }
@@ -53,6 +59,6 @@
   <aside id="lista"><div class="szuk"><input type="text" id="szukaj" placeholder="Szukaj lekcji…"><select id="filtr"><option value="">Wszystkie</option><option value="scena">Ze sceną AR</option><option value="awatar">Z awatarem</option><option value="quiz">Z quizem</option><option value="bez">Bez sceny</option></select></div><div id="kursy"></div></aside>
   <section id="szczeg"></section>
 </div>
-<script type="module" src="lekcje.js?v=55"></script>
+<script type="module" src="lekcje.js?v=58"></script>
 </body>
 </html>

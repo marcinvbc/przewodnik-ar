@@ -89,7 +89,7 @@
       disassemblyAnimationTime: 1, priority: 2, disassembledType: 0, isHaveObjectPartTooltips: false, objectPartTooltipsScale: 0, objectPartTooltipsOffset: 0,
       isMovableByStudents: false, isRotatableByStudents: false, isScalableByStudents: false, isDisassemblableByStudents: false, animationSpeed: 1,
       objectPartsChanges: LISTA("Vobacom.ArPlus.Managers.ObjectPart, Assembly-CSharp", []), convertToMrtkShaders: false, showHierarchyToStudents: false,
-      isPuzzle: false, puzzlePrecisionNeeded: 0.3, position: V3(d.lokal || [0, 0, 0]), rotation: V3([0, 0, 0]), scale: V3([0, 0, 0]), color: V3([1, 1, 1]),
+      isPuzzle: false, puzzlePrecisionNeeded: 0.3, position: V3(d.lokal ? [d.lokal[0], d.lokal[1], -d.lokal[2]] : [0, 0, 0]), rotation: V3([0, 0, 0]), scale: V3([0, 0, 0]), color: V3([1, 1, 1]),
       BackgroundTransparecncy: 0, showInteractablePartsList: false, chosenAnimation: "", guid: crypto.randomUUID(), IsControllableByStudents: false };
   }
   function courseData(P) {

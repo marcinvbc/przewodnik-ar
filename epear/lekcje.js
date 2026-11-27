@@ -113,19 +113,19 @@ function zatrzymaj3D() { if (R3) { cancelAnimationFrame(R3.raf); R3.ro?.disconne
 const v3 = v => new THREE.Vector3(v?.x || 0, v?.y || 0, -(v?.z || 0));    // Unity (lewoskrętny) → three.js
 const rot = (obj, r) => obj.rotation.set(THREE.MathUtils.degToRad(-(r?.x || 0)), THREE.MathUtils.degToRad(-(r?.y || 0)), THREE.MathUtils.degToRad(r?.z || 0), "YXZ");
 function etykieta(tekst, kolor = "#1f2a2e", tlo = "#fffdf8") {
-  const c = document.createElement("canvas"), g = c.getContext("2d"), f = 30; g.font = `600 ${f}px system-ui`; const w = Math.min(900, g.measureText(tekst).width + 28);
-  c.width = w; c.height = f + 22; g.fillStyle = tlo; g.beginPath(); g.roundRect(0, 0, w, c.height, 14); g.fill(); g.fillStyle = kolor; g.font = `600 ${f}px system-ui`; g.fillText(tekst.length > 60 ? tekst.slice(0, 58) + "…" : tekst, 14, f + 4);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); s.scale.set(w / c.height * 0.12, 0.12, 1); s.renderOrder = 10; return s;
+  const c = document.createElement("canvas"), g = c.getContext("2d"), f = 56, txt = tekst.length > 60 ? tekst.slice(0, 58) + "…" : tekst; g.font = `600 ${f}px system-ui`; const w = Math.min(1800, g.measureText(txt).width + 52);
+  c.width = w; c.height = f + 40; g.fillStyle = tlo; g.beginPath(); g.roundRect(0, 0, w, c.height, 26); g.fill(); g.fillStyle = kolor; g.font = `600 ${f}px system-ui`; g.fillText(txt, 26, f + 6);
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 8; t.colorSpace = THREE.SRGBColorSpace; const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); s.scale.set(w / c.height * 0.12, 0.12, 1); s.renderOrder = 10; return s;
 }
 function panelTekstu(o) {
-  const txt = String(o.text || ""), szer = Math.max(0.3, 0.35 * (o.scale?.x || 1)), c = document.createElement("canvas"), g = c.getContext("2d"), W = 900, rozm = Math.max(18, Math.min(46, (o.fontSize || 24) * 1.4)) * (o.isAutoFontSize ? 1 : 1);
-  g.font = `${o.isBold ? 700 : 400} ${rozm}px system-ui`; const linie = []; for (const akapit of txt.split("\n")) { let l = ""; for (const w of akapit.split(" ")) { if (g.measureText(l + w).width > W - 60) { linie.push(l.trim()); l = ""; } l += w + " "; } linie.push(l.trim()); }
-  const H = Math.min(2400, Math.max(120, linie.length * rozm * 1.3 + 60)); c.width = W; c.height = H;
-  if (!o.isTransparentBackground && !o.TransparentBackground) { g.fillStyle = "#fffdf8"; g.beginPath(); g.roundRect(0, 0, W, H, 30); g.fill(); }
+  const txt = String(o.text || ""), szer = Math.max(0.3, 0.35 * (o.scale?.x || 1)), c = document.createElement("canvas"), g = c.getContext("2d"), W = 1800, rozm = 2 * Math.max(18, Math.min(46, (o.fontSize || 24) * 1.4));
+  g.font = `${o.isBold ? 700 : 400} ${rozm}px system-ui`; const linie = []; for (const akapit of txt.split("\n")) { let l = ""; for (const w of akapit.split(" ")) { if (g.measureText(l + w).width > W - 120) { linie.push(l.trim()); l = ""; } l += w + " "; } linie.push(l.trim()); }
+  const H = Math.min(4096, Math.max(240, linie.length * rozm * 1.3 + 120)); c.width = W; c.height = H;
+  if (!o.isTransparentBackground && !o.TransparentBackground) { g.fillStyle = "#fffdf8"; g.beginPath(); g.roundRect(0, 0, W, H, 60); g.fill(); }
   const kol = o.isCustomColor && o.colorText ? `rgb(${o.colorText.x * 255},${o.colorText.y * 255},${o.colorText.z * 255})` : "#1f2a2e";
   g.fillStyle = kol; g.font = `${o.isBold ? 700 : 400} ${o.isItalic ? "italic " : ""}${rozm}px system-ui`; g.textAlign = o.isLeftAlignment ? "left" : o.isRightAlignment ? "right" : "center";
-  const x = o.isLeftAlignment ? 30 : o.isRightAlignment ? W - 30 : W / 2; linie.forEach((l, i) => g.fillText(o.isUppercase ? l.toUpperCase() : l, x, 30 + rozm + i * rozm * 1.3));
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const x = o.isLeftAlignment ? 60 : o.isRightAlignment ? W - 60 : W / 2; linie.forEach((l, i) => g.fillText(o.isUppercase ? l.toUpperCase() : l, x, 60 + rozm + i * rozm * 1.3));
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
   return new THREE.Mesh(new THREE.PlaneGeometry(szer, szer * H / W), new THREE.MeshBasicMaterial({ map: t, transparent: true, side: THREE.DoubleSide }));
 }
 function awatar(o) {
@@ -148,14 +148,14 @@ async function zbudujObiekt(o, k, gltf, urls) {
   // model 3D
   const g = new THREE.Group(); let blad = "";
   if (blob) { const u = URL.createObjectURL(blob); urls.push(u); try { await dekodery(gltf, blob); const sc = (await gltf.loadAsync(u)).scene, bb = new THREE.Box3().setFromObject(sc), roz = bb.getSize(new THREE.Vector3()), max = Math.max(roz.x, roz.y, roz.z) || 1, k2 = s * C / max;
-      sc.scale.setScalar(k2); sc.position.copy(bb.getCenter(new THREE.Vector3()).multiplyScalar(-k2)); g.add(sc); return g; } catch (e) { console.warn("GLB", f?.nazwa, e); blad = powodBledu(e, blob); } }
+      sc.scale.setScalar(k2); sc.position.copy(bb.getCenter(new THREE.Vector3()).multiplyScalar(-k2)); g.add(sc); g.userData.norm = { k: k2, c: bb.getCenter(new THREE.Vector3()) }; return g; } catch (e) { console.warn("GLB", f?.nazwa, e); blad = powodBledu(e, blob); } }
   const b = new THREE.Mesh(new THREE.BoxGeometry(s * C, s * C * 0.6, s * C * 0.6), new THREE.MeshStandardMaterial({ color: "#c9562f", transparent: true, opacity: 0.35, wireframe: false }));
   b.add(new THREE.LineSegments(new THREE.EdgesGeometry(b.geometry), new THREE.LineBasicMaterial({ color: "#ffb27a" }))); const e = etykieta(`🧊 ${f?.nazwa || o.assetData?.name || "model"}${f?.pominiety ? ` – nie pobrano: ${f.pominiety}` : blad ? ` – ⚠️ ${blad}` : ""}`); e.position.y = s * C * 0.4; b.add(e); g.add(b); const pow = f?.pominiety ? "nie pobrano – " + f.pominiety : blad; if (pow && o.guid) { const el = document.querySelector(`#obiekty .ob[data-guid="${CSS.escape(o.guid)}"]`); el?.insertAdjacentHTML("beforeend", `<div class="small" style="color:#b3401c;margin-top:4px">⚠️ Model nie wyświetlony: ${esc(pow)}</div>`); } return g;
 }
 async function scena3D(k) {
   const kont = $("#s3d"), r = new THREE.WebGLRenderer({ antialias: true, alpha: true }); r.setPixelRatio(Math.min(2, devicePixelRatio || 1)); r.toneMapping = THREE.NeutralToneMapping; kont.prepend(r.domElement);
   const sc = new THREE.Scene(); sc.environment = new THREE.PMREMGenerator(r).fromScene(new RoomEnvironment(), 0.04).texture; const sw = new THREE.DirectionalLight("#fff", 1); sw.position.set(2, 5, 3); sc.add(sw);
-  const kam = new THREE.PerspectiveCamera(50, 1, 0.01, 200), ster = new OrbitControls(kam, r.domElement); ster.enableDamping = true;
+  const kam = new THREE.PerspectiveCamera(50, 1, 0.005, 200), ster = new OrbitControls(kam, r.domElement); ster.enableDamping = true; ster.zoomToCursor = true; ster.minDistance = 0.03; ster.maxDistance = 60; ster.screenSpacePanning = true;
   const siatka = new THREE.GridHelper(12, 24, "#6f8597", "#34495a"); sc.add(siatka);
   const start = new THREE.Group(); const ludzik = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.4, 16), new THREE.MeshStandardMaterial({ color: "#f2b705" })); ludzik.rotation.x = -Math.PI / 2; ludzik.position.set(0, 0.02, -0.15); start.add(ludzik);
   const es = etykieta("📍 punkt startu – patrzy w stronę sceny", "#1f2a2e", "#f2b705"); es.position.set(0, 0.35, 0); start.add(es); sc.add(start);
@@ -167,6 +167,11 @@ async function scena3D(k) {
   r.domElement.addEventListener("pointerdown", e => d0 = [e.clientX, e.clientY]);
   r.domElement.addEventListener("pointerup", e => { if (!d0 || Math.hypot(e.clientX - d0[0], e.clientY - d0[1]) > 5) return; const b = r.domElement.getBoundingClientRect(); m.set((e.clientX - b.left) / b.width * 2 - 1, -(e.clientY - b.top) / b.height * 2 + 1); ray.setFromCamera(m, kam);
     const h = ray.intersectObjects(R3.obiekty.map(x => x.obj), true)[0]; if (!h) return; const x = R3.obiekty.find(q => { let p = h.object; while (p) { if (p === q.obj) return true; p = p.parent; } return false; }); if (x) zaznacz(x.i, false); });
+  r.domElement.addEventListener("dblclick", e => { const b = r.domElement.getBoundingClientRect(); m.set((e.clientX - b.left) / b.width * 2 - 1, -(e.clientY - b.top) / b.height * 2 + 1); ray.setFromCamera(m, kam);
+    const h = ray.intersectObjects(R3.obiekty.map(x => x.obj), true)[0]; if (!h) return; const x = R3.obiekty.find(q => { let p = h.object; while (p) { if (p === q.obj) return true; p = p.parent; } return false; });
+    if (x) { zaznacz(x.i, true); const o = slajdyKursu(k)[slajd]?.[x.i], rr = o && rodzajObiektu(o); if (rr === "tekst" || rr === "obraz") podgladTresci(o, k); } });
+  const nav = document.createElement("div"); nav.className = "nav3d"; nav.innerHTML = `<button title="Cały slajd">⤢</button><button title="Przybliż">＋</button><button title="Oddal">－</button>`; kont.appendChild(nav);
+  const [bCaly, bPlus, bMinus] = nav.querySelectorAll("button"); bCaly.onclick = () => kadruj(); bPlus.onclick = () => dolly(0.7); bMinus.onclick = () => dolly(1 / 0.7);
   const slajdy = slajdyKursu(k);
   $("#slajdy").innerHTML = slajdy.map((l, i) => `<button data-s="${i}">Slajd ${i + 1} · ${l.filter(o => rodzajObiektu(o) !== "dymek").length} ob.</button>`).join("");
   $$("#slajdy button").forEach(b => b.onclick = () => pokazSlajd(k, +b.dataset.s));
@@ -202,19 +207,27 @@ async function pokazSlajd(k, i) {
   $$("#slajdy button").forEach(b => b.classList.toggle("wyb", +b.dataset.s === i));
   if (R3.grupa) sc.remove(R3.grupa); const g = R3.grupa = new THREE.Group(); sc.add(g); R3.obiekty = [];
   $("#obiekty").innerHTML = lista.map((o, j) => kartaObiektu(o, j, k, lista)).join("") || `<div class="muted small">Pusty slajd.</div>`;
-  $$("#obiekty .ob").forEach(el => el.onclick = () => zaznacz(+el.dataset.j, true));
+  $$("#obiekty .ob").forEach(el => el.onclick = () => { const j = +el.dataset.j, o = lista[j], rr = rodzajObiektu(o); zaznacz(j, true); if (rr === "tekst" || rr === "obraz") el.querySelector(".czytaj") || el.insertAdjacentHTML("beforeend", `<button class="btn sm czytaj" style="margin-top:6px">🔍 ${rr === "tekst" ? "Czytaj tekst" : "Pokaż obraz"}</button>`); const b = el.querySelector(".czytaj"); if (b) b.onclick = e => { e.stopPropagation(); podgladTresci(o, k); }; });
   $$("#obiekty audio[data-glos]").forEach(a => { const u = URL.createObjectURL(PLIKI[a.dataset.glos]); R3.urls.push(u); a.src = u; a.onclick = e => e.stopPropagation(); });
   $("#leg").textContent = "Wczytuję obiekty…";
   const wgGuid = {};
   for (const [j, o] of lista.entries()) { if (rodzajObiektu(o) === "dymek") continue; if (!R3 || R3.grupa !== g) return;
     const obj = await zbudujObiekt(o, k, gltf, R3.urls); obj.position.copy(v3(o.position)); rot(obj, o.rotation); g.add(obj); R3.obiekty.push({ i: j, obj }); wgGuid[o.guid] = { o, obj }; }
   for (const [j, o] of lista.entries()) { if (rodzajObiektu(o) !== "dymek") continue; const cel = wgGuid[o.objectId]; const e = etykieta("💬 " + (o.tooltipText || ""), "#fff", "#1f2a2ee6");
-    const lok = v3(o.position); if (cel) { const t = cel.o.scale?.x || 1; e.position.copy(cel.obj.position).add(lok.multiplyScalar(t * 0.5)).add(new THREE.Vector3(0, 0.15, 0)); } g.add(e); R3.obiekty.push({ i: j, obj: e }); }
-  // kadr: wszystko + punkt startu
-  const bb = new THREE.Box3().setFromObject(g).union(new THREE.Box3(new THREE.Vector3(-0.3, 0, -0.3), new THREE.Vector3(0.3, 1.7, 0.3))), c = bb.getCenter(new THREE.Vector3()), s = Math.max(2, bb.getSize(new THREE.Vector3()).length());
-  kam.position.set(c.x + s * 0.15, c.y + s * 0.45, c.z + s * 0.85); ster.target.copy(c); ster.update();
+    const d = new THREE.Group(); d.add(e);
+    if (cel) { const n = cel.obj.userData.norm, lok = v3(o.position), roz = new THREE.Box3().setFromObject(cel.obj).getSize(new THREE.Vector3()).length();
+      const pkt = n ? lok.sub(n.c).multiplyScalar(n.k) : lok.multiplyScalar(0.05);   // punkt na modelu (układ lokalny modelu → świat)
+      pkt.applyQuaternion(cel.obj.quaternion).add(cel.obj.position);
+      const nr = (cel.dymki = (cel.dymki || 0) + 1) - 1, wys = Math.max(0.04, Math.min(0.25, roz * 0.12)) * (1 + 0.55 * nr);   // kolejne dymki tego obiektu wyżej – mniej nakładania
+      const asp = e.scale.x / e.scale.y; e.material.sizeAttenuation = false; e.scale.set(0.042 * asp, 0.042, 1); e.center.set(0.5, 0);   // stała wielkość na ekranie – czytelne przy każdym przybliżeniu
+      e.position.copy(pkt).add(new THREE.Vector3(0, wys, 0));
+      const kropka = new THREE.Mesh(new THREE.SphereGeometry(Math.max(0.003, roz * 0.006), 12, 8), new THREE.MeshBasicMaterial({ color: "#f2b705", depthTest: false })); kropka.position.copy(pkt); kropka.renderOrder = 11;
+      const linia = new THREE.Line(new THREE.BufferGeometry().setFromPoints([pkt, e.position.clone()]), new THREE.LineBasicMaterial({ color: "#f2b705", depthTest: false })); linia.renderOrder = 11;
+      d.add(kropka, linia); }
+    g.add(d); R3.obiekty.push({ i: j, obj: d }); }
+  kadruj(true);
   const ile = {}; lista.forEach(o => { const r = rodzajObiektu(o); ile[r] = (ile[r] || 0) + 1; });
-  $("#leg").textContent = `Slajd ${i + 1}: ${Object.entries(ile).map(([r, n]) => `${IKONA[r]} ${n}`).join("  ")} · siatka co 0,5 m · przeciągaj, by obracać; kółko – przybliżenie. Rozmiary obrazów i tekstów są przybliżone.`;
+  $("#leg").textContent = `Slajd ${i + 1}: ${Object.entries(ile).map(([r, n]) => `${IKONA[r]} ${n}`).join("  ")} · przeciągaj – obrót · kółko/szczypanie – przybliżenie w miejsce kursora · prawy przycisk/2 palce – przesuwanie · dwuklik na obiekcie – najazd (tekst i obraz otworzą się do czytania).`;
 }
 function kartaObiektu(o, j, k, lista) {
   const r = rodzajObiektu(o), f = plikKursu(k, o.assetData?.pathOrUrl), p = o.position || {}, ro = o.rotation || {}, s = o.scale?.x;
@@ -230,11 +243,33 @@ function kartaObiektu(o, j, k, lista) {
   return `<div class="ob" data-j="${j}" data-guid="${esc(o.guid || "")}"><b>${IKONA[r]} ${NAZWA_RODZAJU[r] || r}</b> · ${esc(nazwa)}
     ${r !== "dymek" ? `<div class="poz">poz. (${(+p.x || 0).toFixed(2)}, ${(+p.y || 0).toFixed(2)}, ${(+p.z || 0).toFixed(2)}) m · obrót ${Math.round(((+ro.y || 0) % 360 + 360) % 360)}° · skala ${s != null ? (+s).toFixed(2) : "–"}${r === "model" && s ? ` (≈ ${(s * C).toFixed(2)} m)` : ""}</div>` : ""}<div>${ustaw}</div></div>`;
 }
+/* ---- kamera: kadr całego slajdu, najazd na obiekt, przybliżanie ---- */
+function lot(cel, poz, ms = 450) {
+  if (!R3) return; const { kam, ster } = R3, t0 = performance.now(), a = ster.target.clone(), b = kam.position.clone(), id = R3.lot = (R3.lot || 0) + 1;
+  R3.celLotu = { cel: cel.clone(), poz: poz.clone() };
+  const krok = () => { if (!R3 || R3.lot !== id) return; const u = Math.min(1, (performance.now() - t0) / ms), e = u < .5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2; ster.target.lerpVectors(a, cel, e); kam.position.lerpVectors(b, poz, e); if (u < 1) requestAnimationFrame(krok); else R3.celLotu = null; };
+  krok();
+}
+function kadruj(odRazu) {
+  if (!R3?.grupa) return; const bb = new THREE.Box3().setFromObject(R3.grupa).union(new THREE.Box3(new THREE.Vector3(-0.3, 0, -0.3), new THREE.Vector3(0.3, 1.7, 0.3))), c = bb.getCenter(new THREE.Vector3()), s = Math.max(2, bb.getSize(new THREE.Vector3()).length());
+  const poz = new THREE.Vector3(c.x + s * 0.15, c.y + s * 0.45, c.z + s * 0.85); if (odRazu) { R3.kam.position.copy(poz); R3.ster.target.copy(c); R3.ster.update(); } else lot(c, poz);
+}
+function najedz(obj) {
+  const bb = new THREE.Box3().setFromObject(obj), c = bb.getCenter(new THREE.Vector3()), r = Math.max(0.05, bb.getSize(new THREE.Vector3()).length() / 2), d = r / Math.sin(THREE.MathUtils.degToRad(R3.kam.fov / 2)) * 1.05;
+  const kier = R3.kam.position.clone().sub(R3.ster.target).normalize(); if (kier.y < 0.15) { kier.y = 0.3; kier.normalize(); } lot(c, c.clone().addScaledVector(kier, d));
+}
+function dolly(f) { if (!R3) return; const { kam, ster } = R3, t = R3.celLotu?.cel || ster.target.clone(), p = R3.celLotu?.poz || kam.position.clone(), v = p.clone().sub(t); if (f < 1 && v.length() * f < ster.minDistance) return; lot(t, t.clone().addScaledVector(v, f), 250); }
+function podgladTresci(o, k) {
+  const r = rodzajObiektu(o), f = plikKursu(k, o.assetData?.pathOrUrl), blob = f?.plik && PLIKI[f.plik];
+  const w = document.createElement("div"); w.className = "podglad"; w.innerHTML = `<div class="okno"><button class="x" title="Zamknij">✕</button>${r === "tekst" ? `<div class="txt">${esc(o.text || "").replace(/\n/g, "<br>")}</div>` : blob ? `<img alt="">` : `<p>Obraz nie został pobrany.</p>`}</div>`;
+  if (r === "obraz" && blob) { const u = URL.createObjectURL(blob); w.querySelector("img").src = u; R3?.urls.push(u); }
+  w.onclick = e => { if (e.target === w || e.target.classList.contains("x")) w.remove(); }; document.body.appendChild(w);
+}
 function zaznacz(j, kamera) {
   $$("#obiekty .ob").forEach(el => el.classList.toggle("wyb", +el.dataset.j === j)); const el = $(`#obiekty .ob[data-j="${j}"]`); el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   if (!R3) return; R3.sc.getObjectByName("__ramka")?.removeFromParent(); const x = R3.obiekty.find(q => q.i === j); if (!x) return;
   const h = new THREE.BoxHelper(x.obj, "#f2b705"); h.name = "__ramka"; R3.sc.add(h);
-  if (kamera) { const c = new THREE.Box3().setFromObject(x.obj).getCenter(new THREE.Vector3()); R3.ster.target.copy(c); }
+  if (kamera) najedz(x.obj);
 }
 
 /* ---------------- start, import, połączenie z Pomocnikiem ---------------- */
@@ -264,4 +299,4 @@ addEventListener("message", e => {
   if (e.data?.typ === "epear-lekcje" && e.data.eksport) { const pliki = {}; for (const f of e.data.pliki || []) pliki[f.nazwa] = f.blob; try { ustaw(e.data.eksport, pliki); window.focus(); } catch (err) { alert(err.message); } }
 });
 (async () => { const z = await wczytajZapisane(); if (z?.eksport) ustaw(z.eksport, z.pliki, false); else { rysujListe(); pokazKurs(null); } })();
-window.__lekcjeEpear = { ustaw, stan: () => ({ E, wybrany, slajd, obiekty: R3?.obiekty.length ?? 0 }), pokazKurs, pokazSlajd: i => { const k = E.kursy.find(x => x.id === wybrany); return pokazSlajd(k, i); }, zakladka: z => { zakladka = z; pokazKurs(wybrany); } };
+window.__lekcjeEpear = { ustaw, stan: () => ({ E, wybrany, slajd, obiekty: R3?.obiekty.length ?? 0 }), pokazKurs, pokazSlajd: i => { const k = E.kursy.find(x => x.id === wybrany); return pokazSlajd(k, i); }, zakladka: z => { zakladka = z; pokazKurs(wybrany); }, r3: () => R3, THREE, kadruj, podgladTresci: (j) => { const k = E.kursy.find(x => x.id === wybrany); podgladTresci(slajdyKursu(k)[slajd][j], k); } };

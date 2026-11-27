@@ -139,4 +139,4 @@ $("#bFoto").onclick = zdjecie; $("#bRaport").onclick = () => { if (!W) { root = 
 $("#bAR").onclick = startAR; $("#b3D").onclick = start3D;
 $$("#korekta button").forEach(b => b.onclick = () => { const k = b.dataset.k; if (k === "0") S.kor = { x: 0, z: 0 }; else S.kor[k[1]] += (k[0] === "+" ? 1 : -1) * 2; R?.ustaw?.(); });
 etapUI(); trybUI(); root = new THREE.Group(); zbuduj();
-window.__wzorzecRFID = { S, start3D, ocen, raport, get W() { return W; } };
+window.__wzorzecRFID = { S, start3D, ocen, raport, pokaz, lista, get W() { return W; }, get R() { return R; } };

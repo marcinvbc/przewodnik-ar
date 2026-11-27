@@ -9,6 +9,7 @@
 <script src="wersja.js"></script>
 <script>window.WERSJA = window.WERSJA || ""; window.zWersja = window.zWersja || (u => u);</script>
 <script src="atrakcje.js"></script>
+<script src="anioly/lib/qrcode.js"></script>
 <script src="lekcje/konfiguracja.js"></script>
 <style>
   :root {
@@ -109,6 +110,17 @@
   #avatar.speaking { animation: bob 1.2s ease-in-out infinite; }
   @keyframes bob { 50% { transform: translateY(-3px) rotate(-2deg); } }
   @media (max-width: 480px) { .steps { grid-template-columns: 1fr; } }
+  /* kody QR przy atrakcjach – do zeskanowania telefonem z ekranu komputera */
+  .qr-kafel { flex: none; margin-left: auto; width: 84px; height: 84px; background: #fff; border-radius: 10px; padding: 4px; cursor: zoom-in; box-shadow: 0 1px 4px #0002; display: grid; place-items: center; }
+  .qr-kafel img { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+  .item .qr-kafel { margin-left: 10px; }
+  .qr-okno { position: fixed; inset: 0; z-index: 100; background: #0e1418d9; display: grid; place-items: center; padding: 18px; }
+  .qr-okno > div { background: #fff; color: var(--ink); border-radius: 20px; padding: 22px; text-align: center; max-width: 420px; width: 100%; }
+  .qr-okno img { width: 100%; max-width: 340px; image-rendering: pixelated; }
+  .qr-okno h3 { margin: 0 0 4px; } .qr-okno code { display: block; font-size: 12px; color: var(--muted); word-break: break-all; margin: 8px 0 12px; }
+  .qr-okno button { border: 0; border-radius: 10px; padding: 10px 16px; font: 600 14px system-ui; cursor: pointer; background: var(--ink); color: #fff; margin: 0 4px; }
+  .qr-okno button.j { background: #eee; color: var(--ink); }
+  @media (max-width: 640px) { .qr-kafel { display: none; } }
 </style>
 </head>
 <body>
@@ -200,6 +212,29 @@ function renderHome() {
     <a href="lekcje/dzwig.html" style="display:flex;gap:12px;align-items:center;text-decoration:none;background:#3b3a1e;color:#fff;border-radius:16px;padding:14px 16px;margin-top:10px">
       <span style="font-size:28px">🏗</span><span><b>Operator żurawia wieżowego</b><br><small style="opacity:.8">Widok z kabiny: joysticki, przełączniki, STOP awaryjny; zaczep, unieś i przenieś ładunki do stref – z kołysaniem i ogranicznikiem udźwigu</small></span></a>
   </div>`;
+}
+
+/* ---------------- kody QR przy każdej atrakcji (panel główny) ---------------- */
+function kodQR(url, kom = 4) { try { const q = qrcode(0, "M"); q.addData(url); q.make(); return q.createDataURL(kom, 2); } catch { return ""; } }
+function dodajKodyQR() {
+  if (typeof qrcode !== "function") return;
+  const kafle = [...document.querySelectorAll(".wrap a.item, .wrap > a[href]")].filter(a => !a.hidden && getComputedStyle(a).display === "flex");
+  for (const a of kafle) {
+    const url = new URL(a.getAttribute("href"), location.href).href, tytul = (a.querySelector("h3, b")?.textContent || "").trim();
+    const k = document.createElement("span"); k.className = "qr-kafel"; k.title = "Zeskanuj telefonem – kliknij, aby powiększyć";
+    k.innerHTML = `<img alt="Kod QR: ${esc(tytul)}" src="${kodQR(url)}">`;
+    k.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); pokazKodQR(tytul, url); });
+    a.appendChild(k);
+  }
+}
+function pokazKodQR(tytul, url) {
+  const w = document.createElement("div"); w.className = "qr-okno";
+  w.innerHTML = `<div><h3>${esc(tytul)}</h3><p style="margin:0;color:var(--muted);font-size:14px">Zeskanuj aparatem telefonu</p><img alt="" src="${kodQR(url, 10)}"><code>${esc(url)}</code>
+    <button class="j" data-k>Kopiuj link</button><button data-z>Zamknij</button></div>`;
+  w.onclick = e => { if (e.target === w || e.target.dataset.z !== undefined) w.remove(); };
+  w.querySelector("[data-k]").onclick = async e => { try { await navigator.clipboard.writeText(url); e.target.textContent = "✓ Skopiowano"; } catch { prompt("Link:", url); } };
+  document.addEventListener("keydown", function esc_(e) { if (e.key === "Escape") { w.remove(); document.removeEventListener("keydown", esc_); } });
+  document.body.appendChild(w);
 }
 
 /* ---------------- strona atrakcji ---------------- */
@@ -425,7 +460,7 @@ function setupNarrator(sentences) {
 /* ---------------- router ---------------- */
 const id = new URLSearchParams(location.search).get("a");
 const found = id && ATRAKCJE.find(a => a.id === id);
-if (found) renderAttraction(found); else renderHome();
+if (found) renderAttraction(found); else { renderHome(); dodajKodyQR(); }
 </script>
 </body>
 </html>
