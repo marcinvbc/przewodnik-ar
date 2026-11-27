@@ -1,0 +1,5 @@
+STREFA ODCZYTU
+
+Cztery płaty anten nakładają się w środku bramki.
+
+Obejdź model: anteny są pochylone o ok. 15° w stronę wejścia. Dlaczego? Co się stanie, gdy moc będzie za duża?

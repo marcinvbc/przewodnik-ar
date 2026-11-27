@@ -1,0 +1,5 @@
+POZNAJ CZĘŚCI
+
+Rozłóż bramkę i otwórz listę części. Numery na liście = kolejność montażu.
+
+Zwróć uwagę: każda antena ma osobny kabel do osobnego portu czytnika.
