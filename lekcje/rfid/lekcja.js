@@ -368,7 +368,8 @@ const SEKCJE = [
     <h2>Podsumowanie i co dalej w laboratorium</h2>
     <ul><li>RFID = tag + czytnik + antena + host. Tag pasywny dostaje energię z pola czytnika.</li><li>HF/LF: sprzężenie indukcyjne w polu bliskim (zasięg cm); UHF: backscatter w polu dalekim (zasięg m).</li><li>Normy: ISO 11784/85 (LF), ISO 14443 / 15693 / NFC (HF), EPC Gen2 = ISO 18000-63 (UHF).</li><li>Odczyt wielu tagów wymaga antykolizji – optimum ALOHA, gdy liczba szczelin ≈ liczba tagów (≈36,8%).</li><li>Bramka to maszyna stanów z logiką uprawnień, anti-passbackiem i logowaniem; kierunek w UHF – z kolejności stref.</li><li>UID nie jest zabezpieczeniem – potrzebne uwierzytelnienie kryptograficzne.</li></ul>
     <div class="lab"><b>🔧 Plan laboratorium</b><ol style="margin:4px 0 0;padding-left:20px"><li>Odczyt UID karty modułem 13,56 MHz przez SPI.</li><li>Lista uprawnień w mikrokontrolerze, przekaźnik i sygnalizacja LED/brzęczyk.</li><li>Dwa czytniki: wejście/wyjście + anti-passback, log zdarzeń na serwer.</li><li>UHF: odczyt EPC/TID, wpływ mocy i Q, detekcja kierunku z dwóch anten.</li></ol></div>
-    <p>Modele z lekcji możesz obejrzeć w AR na telefonie (przyciski „Zobacz w AR”) i w kursie na platformie e-peAR.</p>` },
+    <p>Modele z lekcji możesz obejrzeć w AR na telefonie (przyciski „Zobacz w AR”) i w kursie na platformie e-peAR.</p>
+    <p><a class="btn" href="rfid-wzorzec.html" style="text-decoration:none">🔍 Sprawdź swój układ – wzorzec AR</a> <span style="font-size:12.5px;color:var(--t2)">Etapy 1–2 laboratorium: wzorzec połączeń nakładany na Twoją płytkę (mata ze znacznikiem do wydruku).</span></p>` },
 ];
 const ZAD3_N = 40;
 

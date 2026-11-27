@@ -295,9 +295,14 @@ export function bramkaMontaz({ strefa = false } = {}) {
   return g;
 }
 
+/** „duch” – półprzezroczysta kopia modelu jako wzorzec do porównania */
+export function duch(g, nazwa, kolor = "#4fc3f7", krycie = 0.32) {
+  const m = new THREE.MeshStandardMaterial({ color: kolor, transparent: true, opacity: krycie, depthWrite: false, roughness: 0.6, emissive: kolor, emissiveIntensity: 0.25 });
+  g.traverse(o => { if (o.isMesh || o.isInstancedMesh) o.material = m; }); if (nazwa) g.name = nazwa; return g;
+}
 /** animacja rozkładania: t = 0 (złożony) … 1 (rozłożony) */
 export function rozloz(g, t) {
   g.traverse(o => { if (o.userData.baza && o.userData.rozklad) { const r = o.userData.rozklad, k = t * t * (3 - 2 * t); o.position.set(o.userData.baza.x + r[0] * k, o.userData.baza.y + r[1] * k, o.userData.baza.z + r[2] * k); } });
 }
 export { mat as materialy };
-export const MODELE = { kartaHF, tagUHF, kapsulaLF, modulCzytnika, plytkaMCU, antenaUHF, bramkaUHF, paleta, bramkaDostepu, tagNaMetal, opaskaHF, bramkaMontaz, bramkaStrefa: () => bramkaMontaz({ strefa: true }) };
+export const MODELE = { kartaHF, tagUHF, kapsulaLF, modulCzytnika, plytkaMCU, antenaUHF, bramkaUHF, paleta, bramkaDostepu, tagNaMetal, opaskaHF, bramkaMontaz, bramkaStrefa: () => bramkaMontaz({ strefa: true }), bramkaWzorzec: () => duch(bramkaMontaz(), "Bramka UHF – wzorzec") };

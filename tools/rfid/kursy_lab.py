@@ -13,6 +13,7 @@ TP, TR = [-0.78, 1.23, -0.2], 8          # tekst
 P1, P1R = [-2.4, 1.4, 1.7], 316          # plansza z lewej
 P2, P2R = [2.4, 1.4, 1.7], 44            # plansza z prawej
 LINK = "https://marcinvbc.github.io/przewodnik-ar/lekcje/rfid.html"
+WZ = "https://marcinvbc.github.io/przewodnik-ar/lekcje/rfid-wzorzec.html"
 
 def img64(nazwa):
     im = Image.open(f"{REND}/{nazwa}.png").convert("RGB"); b = io.BytesIO(); im.save(b, "JPEG", quality=88)
@@ -29,7 +30,7 @@ table{border-collapse:collapse;width:100%;font-size:22px;background:#fff;border-
 def strona(tytul, pod, tresc): return f"<!doctype html><html><head><meta charset=utf-8><style>{CSS}</style></head><body><header><h1>{tytul}</h1><p>{pod}</p></header><main>{tresc}</main></body></html>"
 
 # ---------------------------------------------------------------- plansze
-def plansze():
+def plansze(qr=""):
     T = {}
     tagi = [("kartaHF_0.55", "Karta HF", "13,56 MHz · do 10 cm", "dostęp, legitymacje"),
             ("tagUHF_0", "Inlay UHF", "865–868 MHz · do 10 m", "logistyka, handel"),
@@ -104,6 +105,24 @@ def plansze():
              ("Fotokomórki", "przerwanie wiązki uruchamia odczyt, kierunek poprawny"), ("Lampa", "zielona przy komplecie, czerwona przy braku"), ("Sąsiednia bramka", "tagi obok bramki NIE są odczytywane")]
     T["B4"] = strona("Uruchomienie – lista kontrolna", "Odhacz każdy punkt, zanim zgłosisz bramkę do odbioru",
         '<div class="g" style="grid-template-columns:1fr 1fr">' + "".join(f'<div class="k" style="display:flex;gap:18px;align-items:center"><span style="flex:none;width:44px;height:44px;border:4px solid #1e88e5;border-radius:10px"></span><div><h3 style="margin:0">{t}</h3><p class="m">{d}</p></div></div>' for t, d in lista) + '</div>')
+    # ---- układ czytnika
+    E1 = [("3V3", "3.3V", "#e53935", "zasilanie 3,3 V – nie 5 V!"), ("GND", "GND", "#212121", "masa"), ("D10", "SDA", "#fb8c00", "wybór układu (SS)"), ("D13", "SCK", "#fdd835", "zegar SPI"),
+          ("D11", "MOSI", "#43a047", "dane MCU → czytnik"), ("D12", "MISO", "#1e88e5", "dane czytnik → MCU"), ("D9", "RST", "#8e24aa", "reset modułu"), ("–", "IRQ", "#bdbdbd", "niepodłączony")]
+    E2 = [("5V", "szyna +", "#e53935", "zasilanie elementów etapu 2"), ("GND", "szyna −", "#212121", "masa wspólna"), ("D5", "dioda zielona", "#43a047", "anoda; katoda przez 220 Ω do −"),
+          ("D6", "dioda czerwona", "#e53935", "anoda; katoda przez 220 Ω do −"), ("D7", "brzęczyk +", "#fdd835", "drugi pin do szyny −"), ("D4", "przekaźnik IN", "#00acc1", "stan wysoki = otwórz"),
+          ("szyna +", "przekaźnik VCC", "#e53935", "5 V"), ("szyna −", "przekaźnik GND", "#212121", "masa")]
+    tab = lambda L: '<table><tr><th>MCU</th><th>Dokąd</th><th>Przewód</th><th>Uwagi</th></tr>' + "".join(f'<tr><td>{a}</td><td>{b}</td><td><span style="display:inline-block;width:60px;height:14px;border-radius:7px;background:{k}"></span></td><td class="m">{u}</td></tr>' for a, b, k, u in L) + '</table>'
+    T["C1"] = strona("Układ czytnika RFID – co zbudujesz", "Moduł czytnika 13,56 MHz + mikrokontroler na płytce stykowej · etap 1: odczyt UID · etap 2: bramka",
+        f'<div class="g" style="grid-template-columns:900px 1fr;align-items:start"><img class="r" src="{img64("ukladEtap2_0")}">'
+        '<div class="k"><h3>Elementy</h3><ul><li>płytka mikrokontrolera (piny jak w standardzie „Uno”)</li><li>moduł czytnika 13,56 MHz (SPI)</li><li>płytka stykowa 830 pól</li><li>diody zielona i czerwona + 2 × 220 Ω</li><li>brzęczyk aktywny</li><li>moduł przekaźnika 5 V</li><li>przewody połączeniowe</li></ul>'
+        '<h3 style="margin-top:14px">Zasada</h3><p class="m">Złóż układ, a potem porównaj go ze wzorcem: w AR w e-peAR albo w aplikacji „Sprawdź swój układ” na macie ze znacznikiem.</p></div></div>')
+    T["C2"] = strona("Etap 1 – odczyt UID (SPI)", "7 przewodów. Kolory jak we wzorcu AR – łatwiej porównać", tab(E1) + '<div class="k" style="margin-top:20px"><span class="m">⚠️ Moduł czytnika zasilaj z <b>3,3 V</b>. Złącze modułu wpinasz w rząd <b>e</b>, przewody w rząd <b>d</b> tych samych kolumn.</span></div>')
+    T["C3"] = strona("Etap 2 – bramka", "Do układu z etapu 1 dochodzi 8 połączeń: szyny zasilania, diody, brzęczyk i przekaźnik", tab(E2) + '<div class="k" style="margin-top:20px"><span class="m">Dłuższa nóżka diody = anoda (+). Rezystor 220 Ω ogranicza prąd diody do ok. 10–15 mA.</span></div>')
+    T["C4"] = strona("Porównaj ze wzorcem", "Dwa sposoby: wzorzec w e-peAR obok płytki albo nałożenie wzorca na płytkę w aplikacji AR", f"""
+<div class="g" style="grid-template-columns:1fr 1fr">
+<div class="k"><h3>① W e-peAR</h3><ul><li>Na slajdzie „Nałóż wzorzec” wzorzec ma <b>prawdziwą wielkość</b>.</li><li>Przesuń i obróć go palcami tak, żeby leżał na Twojej płytce.</li><li>Kolorowe przewody wzorca = Twoje przewody. Szukaj różnic.</li></ul></div>
+<div class="k" style="display:grid;grid-template-columns:1fr 260px;gap:18px;align-items:center"><div><h3>② „Sprawdź swój układ” (znacznik)</h3><ul><li>Wydrukuj matę stanowiska (A4, 100%).</li><li>Połóż płytki w obrysach, wyceluj telefon w znacznik.</li><li>Wzorzec sam się nałoży – sprawdzaj przewód po przewodzie i zapisz raport.</li></ul></div><div style="background:#fff;padding:8px;border-radius:12px">{qr}</div></div></div>
+<div class="k" style="margin-top:22px"><h3>Najczęstsze błędy</h3><ul><li>czytnik podpięty do 5 V zamiast 3,3 V</li><li>zamienione MOSI i MISO</li><li>złącze modułu w jednej kolumnie (zwarte piny) zamiast w rzędzie</li><li>dioda odwrotnie (krótsza nóżka do pinu)</li></ul></div>""")
     return T
 
 # ---------------------------------------------------------------- kursy
@@ -162,7 +181,7 @@ def kursB():
     teksty = {
         "B – wstęp": "MONTAŻ BRAMKI UHF\n\nZbudujesz bramkę magazynową: 2 słupy, 4 anteny, czytnik, fotokomórki i lampę.\n\nNajpierw poznaj części, potem złóż bramkę jak puzzle, na końcu sprawdź strefę odczytu. Schemat połączeń – na planszy.",
         "B – części": "POZNAJ CZĘŚCI\n\nRozłóż bramkę i otwórz listę części. Numery na liście = kolejność montażu.\n\nZwróć uwagę: każda antena ma osobny kabel do osobnego portu czytnika.",
-        "B – puzzle": "ZŁÓŻ BRAMKĘ\n\nPrzeciągaj części na swoje miejsca w kolejności z planszy (1 → 9).\n\nAnteny muszą trafić dokładnie – ich ustawienie decyduje o strefie odczytu.",
+        "B – puzzle": "ZŁÓŻ BRAMKĘ WE WZORZEC\n\nNiebieski, półprzezroczysty model to wzorzec. Przeciągaj części na swoje miejsca w kolejności z planszy (1 → 9), aż pokryją się ze wzorcem.\n\nAnteny muszą trafić dokładnie – ich ustawienie decyduje o strefie odczytu.",
         "B – strefa": "STREFA ODCZYTU\n\nCztery płaty anten nakładają się w środku bramki.\n\nObejdź model: anteny są pochylone o ok. 15° w stronę wejścia. Dlaczego? Co się stanie, gdy moc będzie za duża?",
         "B – uruchomienie": "URUCHOMIENIE\n\nPrzejdź listę kontrolną z planszy, zanim zgłosisz bramkę do odbioru.\n\nNa koniec rozwiąż quiz – sprawdza montaż i konfigurację.",
     }
@@ -172,16 +191,17 @@ def kursB():
     for n, t in teksty.items(): plik(n + ".txt", "tekst", "text/plain", tekst=t)
     plik("Bramka UHF – montaż.glb", "model", "model/gltf-binary", src="modele/rfid/bramkaMontaz.glb")
     plik("Bramka UHF – strefa odczytu.glb", "model", "model/gltf-binary", src="modele/rfid/bramkaStrefa.glb")
+    plik("Bramka UHF – wzorzec.glb", "model", "model/gltf-binary", src="modele/rfid/bramkaWzorzec.glb")
     for n, k in [("Schemat połączeń – plansza.jpg", "B1"), ("Kolejność montażu – plansza.jpg", "B2"), ("Ustawienie anten – plansza.jpg", "B3"), ("Lista kontrolna – plansza.jpg", "B4")]: plik(n, "obraz", "image/jpeg", src="@" + k)
     def tekst(n): return {"rodzaj": "tekst", "plik": idx[n + ".txt"], "nazwa": n + ".txt", "poz": TP, "rotY": TR, "skala": 1.71, "tekst": teksty[n]}
     def obraz(n, lewa=True): return {"rodzaj": "obraz", "plik": idx[n], "nazwa": n, "poz": P1 if lewa else P2, "rotY": P1R if lewa else P2R, "skala": 38.2, "tekst": ""}
-    BM, BS = "Bramka UHF – montaż.glb", "Bramka UHF – strefa odczytu.glb"
+    BM, BS, BW = "Bramka UHF – montaż.glb", "Bramka UHF – strefa odczytu.glb", "Bramka UHF – wzorzec.glb"
     def bramka(n, cel=1.6, **f): h = cel * 2.415 / 2.592; return {"rodzaj": "model", "plik": idx[n], "nazwa": n, "poz": [0.5, round(h / 2, 3), 1.9], "rotY": 0, "skala": round(cel / C, 3), "tekst": "", **f}
     sl = [
         {"tytul": "Co zbudujesz", "obiekty": [tekst("B – wstęp"), obraz("Schemat połączeń – plansza.jpg"), bramka(BM, uczen=True, bezSkali=True)], "dymki": []},
         {"tytul": "Poznaj części", "obiekty": [tekst("B – części"), obraz("Kolejność montażu – plansza.jpg"), bramka(BM, uczen=True, rozklad=True, czesci=True)],
          "dymki": [{"cel": 2, "tekst": "Antena panelowa UHF (×4)", "lokal": [-0.9, 0.9, 0.05]}, {"cel": 2, "tekst": "Czytnik – 4 porty antenowe", "lokal": [1.2, 1.35, 0]}, {"cel": 2, "tekst": "Fotokomórka – wyzwala odczyt", "lokal": [-0.93, 0.55, 0.37]}, {"cel": 2, "tekst": "Lampa: zielona / czerwona", "lokal": [0, 2.32, 0]}]},
-        {"tytul": "Złóż bramkę", "obiekty": [tekst("B – puzzle"), obraz("Kolejność montażu – plansza.jpg"), bramka(BM, uczen=True, puzzle=True, czesci=True, precyzja=0.3)], "dymki": []},
+        {"tytul": "Złóż bramkę", "obiekty": [tekst("B – puzzle"), obraz("Kolejność montażu – plansza.jpg"), bramka(BM, uczen=True, puzzle=True, czesci=True, precyzja=0.3), bramka(BW)], "dymki": []},
         {"tytul": "Strefa odczytu", "obiekty": [tekst("B – strefa"), obraz("Ustawienie anten – plansza.jpg"), bramka(BS, uczen=True, bezSkali=True)], "dymki": []},
         {"tytul": "Uruchomienie", "obiekty": [tekst("B – uruchomienie"), obraz("Lista kontrolna – plansza.jpg"), obraz("Schemat połączeń – plansza.jpg", False)], "dymki": []},
     ]
@@ -203,17 +223,65 @@ def kursB():
             "czegoSieNauczysz": ["Wymienić elementy bramki UHF i ich rolę", "Złożyć bramkę we właściwej kolejności", "Połączyć anteny, czytnik, fotokomórki i lampę", "Wyjaśnić dobór ustawienia anten i mocy", "Uruchomić i przetestować bramkę według listy kontrolnej"]}
     return kurs, pliki, sl, quiz, ["B1", "B3"]
 
+def kursC():
+    teksty = {
+        "C – wstęp": "UKŁAD CZYTNIKA RFID – WZORZEC\n\nZbudujesz układ na płytce stykowej: moduł czytnika 13,56 MHz + mikrokontroler.\n\nEtap 1: odczyt UID karty. Etap 2: bramka (diody, brzęczyk, przekaźnik).\nPo złożeniu porównaj swój układ ze wzorcem.",
+        "C – etap 1": "ETAP 1 – ODCZYT UID\n\n7 przewodów SPI. Kolory przewodów we wzorcu = kolory w tabeli.\n\nObejdź model i sprawdź: do których pinów trafiają przewody? Gdzie jest 3,3 V?",
+        "C – etap 2": "ETAP 2 – BRAMKA\n\nDochodzą: szyny zasilania, dioda zielona (D5), czerwona (D6), brzęczyk (D7) i przekaźnik (D4).\n\nRozłóż model i odszukaj rezystory 220 Ω.",
+        "C – nałóż": "NAŁÓŻ WZORZEC NA SWOJĄ PŁYTKĘ\n\nWzorzec ma prawdziwą wielkość. Przesuń i obróć go palcami tak, żeby leżał dokładnie na Twojej płytce.\n\nPorównaj przewód po przewodzie. Różnica = błąd do poprawy.",
+        "C – aplikacja": "SPRAWDŹ W APLIKACJI AR\n\nDokładniejsze nałożenie: wydrukuj matę ze znacznikiem i zeskanuj kod QR z planszy.\n\nAplikacja prowadzi krok po kroku i zapisuje raport zgodności dla prowadzącego.",
+    }
+    pliki, idx = [], {}
+    def plik(nazwa, rodzaj, typ, src=None, tekst=None):
+        idx[nazwa] = len(pliki); pliki.append({"nazwa": nazwa, "typ": typ, "rodzaj": rodzaj, **({"tekst": tekst} if tekst else {}), "src": src}); return idx[nazwa]
+    for n, t in teksty.items(): plik(n + ".txt", "tekst", "text/plain", tekst=t)
+    U1, U2, UW = "Układ RFID – etap 1.glb", "Układ RFID – etap 2.glb", "Układ RFID – wzorzec.glb"
+    plik(U1, "model", "model/gltf-binary", src="modele/rfid/ukladEtap1.glb"); plik(U2, "model", "model/gltf-binary", src="modele/rfid/ukladEtap2.glb"); plik(UW, "model", "model/gltf-binary", src="modele/rfid/ukladWzorzec.glb")
+    for n, k in [("Układ czytnika – plansza.jpg", "C1"), ("Etap 1 – połączenia.jpg", "C2"), ("Etap 2 – połączenia.jpg", "C3"), ("Porównaj ze wzorcem – plansza.jpg", "C4")]: plik(n, "obraz", "image/jpeg", src="@" + k)
+    def tekst(n): return {"rodzaj": "tekst", "plik": idx[n + ".txt"], "nazwa": n + ".txt", "poz": TP, "rotY": TR, "skala": 1.71, "tekst": teksty[n]}
+    def obraz(n, lewa=True): return {"rodzaj": "obraz", "plik": idx[n], "nazwa": n, "poz": P1 if lewa else P2, "rotY": P1R if lewa else P2R, "skala": 38.2, "tekst": ""}
+    MAXD = 0.248   # największy wymiar układu [m]
+    def uklad(n, cel, y=1.0, **f): return {"rodzaj": "model", "plik": idx[n], "nazwa": n, "poz": [0.5, y, 1.6], "rotY": 0, "skala": round(cel / C, 3), "tekst": "", **f}
+    sl = [
+        {"tytul": "Co zbudujesz", "obiekty": [tekst("C – wstęp"), obraz("Układ czytnika – plansza.jpg"), uklad(U2, 0.75, uczen=True, bezSkali=True)], "dymki": []},
+        {"tytul": "Etap 1 – odczyt UID", "obiekty": [tekst("C – etap 1"), obraz("Etap 1 – połączenia.jpg"), uklad(U1, 0.75, uczen=True, bezSkali=True, czesci=True)],
+         "dymki": [{"cel": 2, "tekst": "3,3 V → czytnik (nie 5 V!)", "lokal": [0.032, 0.012, 0.05]}, {"cel": 2, "tekst": "Złącze czytnika: rząd e, przewody: rząd d", "lokal": [0.186, 0.014, 0.031]}]},
+        {"tytul": "Etap 2 – bramka", "obiekty": [tekst("C – etap 2"), obraz("Etap 2 – połączenia.jpg"), uklad(U2, 0.75, uczen=True, bezSkali=True, rozklad=True, czesci=True)],
+         "dymki": [{"cel": 2, "tekst": "D5 → dioda zielona", "lokal": [0.106, 0.022, 0.03]}, {"cel": 2, "tekst": "Przekaźnik: IN ← D4", "lokal": [0.093, 0.02, 0.086]}]},
+        {"tytul": "Nałóż wzorzec", "obiekty": [tekst("C – nałóż"), obraz("Porównaj ze wzorcem – plansza.jpg"), uklad(UW, MAXD, y=0.8, uczen=True)], "dymki": []},
+        {"tytul": "Sprawdź w aplikacji AR", "obiekty": [tekst("C – aplikacja"), obraz("Porównaj ze wzorcem – plansza.jpg"), obraz("Etap 2 – połączenia.jpg", False)], "dymki": []},
+    ]
+    quiz = {"tytul": "Układ czytnika – sprawdź się", "opis": "Połączenia czytnika 13,56 MHz z mikrokontrolerem i elementy bramki.", "instrukcje": "Jedna poprawna odpowiedź w każdym pytaniu.", "czas": 10, "pytania": [
+        {"pytanie": "Z jakiego napięcia zasilasz moduł czytnika 13,56 MHz?", "odpowiedzi": ["5 V", "3,3 V", "12 V", "9 V"], "poprawna": 1},
+        {"pytanie": "Do którego pinu MCU podłączasz SCK?", "odpowiedzi": ["D10", "D11", "D12", "D13"], "poprawna": 3},
+        {"pytanie": "Którędy płyną dane z czytnika do mikrokontrolera?", "odpowiedzi": ["MOSI", "MISO", "SCK", "RST"], "poprawna": 1},
+        {"pytanie": "Pin SDA modułu pełni w SPI rolę…", "odpowiedzi": ["zegara", "wyboru układu (SS)", "zasilania", "przerwania"], "poprawna": 1},
+        {"pytanie": "Po co rezystor 220 Ω przy diodzie?", "odpowiedzi": ["Ogranicza prąd diody", "Podnosi napięcie", "Filtruje zakłócenia RF", "Nie jest potrzebny"], "poprawna": 0},
+        {"pytanie": "Złącze modułu wpinasz wzdłuż jednej kolumny płytki stykowej (wszystkie piny w jednym pasku). Co się stanie?", "odpowiedzi": ["Nic, zadziała", "Wszystkie piny zostaną zwarte ze sobą", "Moduł będzie działał wolniej", "Zmieni się adres modułu"], "poprawna": 1},
+        {"pytanie": "Który pin MCU steruje przekaźnikiem zamka we wzorcu?", "odpowiedzi": ["D4", "D5", "D6", "D7"], "poprawna": 0},
+        {"pytanie": "Jak porównujesz układ ze wzorcem w aplikacji „Sprawdź swój układ”?", "odpowiedzi": ["Fotografujesz płytkę i wysyłasz e-mailem", "Kładziesz płytki w obrysach maty ze znacznikiem i celujesz telefonem w znacznik", "Skanujesz kod kreskowy płytki", "Wpisujesz numery pinów ręcznie"], "poprawna": 1},
+    ]}
+    kurs = {"tytul": "RFID – układ czytnika: wzorzec", "krotkiOpis": "Wzorzec układu laboratoryjnego: czytnik 13,56 MHz + mikrokontroler (etap 1: odczyt UID, etap 2: bramka). Złóż układ i porównaj go ze wzorcem AR nałożonym na płytkę.",
+            "przedmiot": "Laboratorium RFID", "czas": 30,
+            "opisHtml": f"<p>Wzorzec do pierwszych ćwiczeń w laboratorium RFID. Modele układu w obu etapach z kolorowymi przewodami, tabele połączeń oraz wzorzec w prawdziwej skali do nałożenia na płytkę studenta.</p><p>Dokładne nałożenie na znaczniku i raport zgodności: <a href=\"{WZ}\">{WZ}</a>.</p>",
+            "czegoSieNauczysz": ["Podłączyć moduł czytnika 13,56 MHz przez SPI", "Rozbudować układ o diody, brzęczyk i przekaźnik", "Porównać własny układ ze wzorcem w AR", "Rozpoznać typowe błędy połączeń"]}
+    return kurs, pliki, sl, quiz, ["C1", "C4"]
+
 async def main():
     os.makedirs(OUT, exist_ok=True)
-    T = plansze(); jpg = {}
+    jpg = {}
     async with async_playwright() as p:
         b = await p.chromium.launch(executable_path="/opt/pw-browsers/chromium-1243/chrome-linux64/chrome")
         pg = await b.new_page(viewport={"width": 1600, "height": 1000})
+        lib = open(f"{REPO}/anioly/lib/qrcode.js").read().split("\nexport")[0]
+        await pg.set_content("<html></html>"); await pg.add_script_tag(content=lib + ";window.qrcode=qrcode;")
+        qr = await pg.evaluate(f"(()=>{{const q=qrcode(0,'M');q.addData('{WZ}');q.make();return q.createSvgTag({{cellSize:6,margin:2,scalable:true}});}})()")
+        T = plansze(qr)
         for k, html in T.items():
             await pg.set_content(html); await pg.wait_for_timeout(200)
             jpg[k] = await pg.screenshot(type="jpeg", quality=86); open(f"{OUT}/{k}.jpg", "wb").write(jpg[k])
         await b.close()
-    for nazwaZip, (kurs, pliki, sl, quiz, gal) in [("kurs-prześwietlenie-tagów-e-peAR.zip", kursA()), ("kurs-montaż-bramki-e-peAR.zip", kursB())]:
+    for nazwaZip, (kurs, pliki, sl, quiz, gal) in [("kurs-prześwietlenie-tagów-e-peAR.zip", kursA()), ("kurs-montaż-bramki-e-peAR.zip", kursB()), ("kurs-układ-czytnika-wzorzec-e-peAR.zip", kursC())]:
         z = zipfile.ZipFile(f"{OUT}/{nazwaZip}", "w", zipfile.ZIP_DEFLATED)
         for i, f in enumerate(pliki):
             src = f.pop("src"); nz = f"p{i}-{f['nazwa']}"; f["plik"] = nz

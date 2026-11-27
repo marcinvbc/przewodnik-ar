@@ -5,7 +5,9 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { GLTFExporter } from "../burgery/GLTFExporter.js";
-import { MODELE, rozloz } from "../../lekcje/rfid/modele.js";
+import { MODELE as M0, rozloz, duch } from "../../lekcje/rfid/modele.js";
+import { ukladLab } from "../../lekcje/rfid/uklad.js";
+const MODELE = { ...M0, ukladEtap1: () => ukladLab(1, { etykiety: false }).grupa, ukladEtap2: () => ukladLab(2, { etykiety: false }).grupa, ukladWzorzec: () => { const u = ukladLab(2, { etykiety: false }); u.grupa.children.forEach(c => { if (!c.userData.polaczenie && !u.polaczenia.some(p => p.znaczniki === c)) duch(c); }); u.polaczenia.forEach(p => { p.obj.material.transparent = true; p.obj.material.opacity = 0.75; u.grupa.remove(p.znaczniki); }); u.grupa.name = "Układ RFID – wzorzec"; return u.grupa; } };
 const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); r.setSize(900, 650); r.toneMapping = THREE.NeutralToneMapping; document.body.append(r.domElement);
 const sc = new THREE.Scene(); sc.background = new THREE.Color("#eef0f2"); sc.environment = new THREE.PMREMGenerator(r).fromScene(new RoomEnvironment(), 0.04).texture;
 const d = new THREE.DirectionalLight("#fff", 1.2); d.position.set(1, 3, 2); sc.add(d);
